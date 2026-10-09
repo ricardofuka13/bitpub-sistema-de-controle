@@ -217,195 +217,10 @@ td.r,th.r{text-align:right}
 <div id="modal-root"></div>
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="config.js"></script>
 <script>
-/* BitPub: camada que roda fora do Claude.
-   1) banco local (guarda tudo no próprio aparelho)
-   2) impressão direta por Bluetooth (ESC/POS), com logo
-   3) download de arquivos (backup) */
-(function () {
-  'use strict';
-  var KEY = 'bitpub.v1';
-  var store = {};          // caminho completo do documento -> dados
-  var listeners = [];
-  var persistOk = true;
-  var saveT = 0;
-
-  var clone = function (x) { return x === undefined ? undefined : JSON.parse(JSON.stringify(x)); };
-  var rid = function () {
-    var s = '', c = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    for (var i = 0; i < 20; i++) s += c[Math.floor(Math.random() * c.length)];
-    return s;
-  };
-  var err = function (code, message) { var e = new Error(message || code); e.code = code; return e; };
-
-  /* ---------- exemplo inicial (primeira abertura) ---------- */
-  function seed() {
-    var d = {};
-    d['meta/config'] = { seeded: true, blockOut: true };
-    var st = {
-      pao: ['Pão brioche', 'un', 60, 20, 1.8], carne: ['Blend 120 g', 'un', 70, 25, 4.2],
-      cheddar: ['Queijo cheddar', 'fatia', 120, 40, 0.7], bacon: ['Bacon', 'fatia', 90, 30, 0.9],
-      alface: ['Alface americana', 'g', 1500, 500, 0.02], tomate: ['Tomate', 'g', 2000, 600, 0.008],
-      maionese: ['Maionese da casa', 'g', 2000, 500, 0.025], batata: ['Batata palito congelada', 'g', 8000, 2500, 0.015],
-      refri: ['Refrigerante lata', 'un', 48, 24, 3.5], cerveja: ['Cerveja long neck', 'un', 24, 12, 5.5],
-      sorvete: ['Sorvete de creme', 'g', 3000, 1000, 0.03], leite: ['Leite', 'ml', 5000, 1500, 0.005]
-    };
-    Object.keys(st).forEach(function (k) {
-      var a = st[k];
-      d['stock/' + k] = { name: a[0], unit: a[1], qty: a[2], min: a[3], cost: a[4] };
-    });
-    var R = function (a) { return a.map(function (x) { return { ing: x[0], qty: x[1] }; }); };
-    var mn = {
-      xburger: ['X-Burger', 'Burgers', 26, [['pao', 1], ['carne', 1], ['cheddar', 1], ['alface', 15], ['tomate', 20], ['maionese', 20]]],
-      xbacon: ['X-Bacon', 'Burgers', 32, [['pao', 1], ['carne', 1], ['cheddar', 1], ['bacon', 2], ['alface', 15], ['maionese', 20]]],
-      smash: ['Smash Duplo', 'Burgers', 36, [['pao', 1], ['carne', 2], ['cheddar', 2], ['maionese', 20]]],
-      batatafrita: ['Batata frita', 'Porções', 22, [['batata', 250], ['maionese', 30]]],
-      refrigerante: ['Refrigerante lata', 'Bebidas', 7, [['refri', 1]]],
-      cervejaln: ['Cerveja long neck', 'Bebidas', 14, [['cerveja', 1]]],
-      milkshake: ['Milkshake', 'Sobremesas', 18, [['sorvete', 150], ['leite', 200]]],
-      baconextra: ['Bacon extra', 'Adicionais', 6, [['bacon', 2]]],
-      queijoextra: ['Queijo extra', 'Adicionais', 4, [['cheddar', 1]]]
-    };
-    Object.keys(mn).forEach(function (k) {
-      var a = mn[k];
-      d['menu/' + k] = { name: a[0], cat: a[1], price: a[2], active: true, recipe: R(a[3]) };
-    });
-    return d;
-  }
-
-  /* ---------- persistência ---------- */
-  function load() {
-    var raw = null;
-    try { raw = localStorage.getItem(KEY); } catch (e) { persistOk = false; }
-    if (raw) {
-      try { var o = JSON.parse(raw); if (o && o.docs) { store = o.docs; return; } } catch (e) {}
-    }
-    store = seed();
-    save(true);
-  }
-  function save(now) {
-    clearTimeout(saveT);
-    var run = function () {
-      try { localStorage.setItem(KEY, JSON.stringify({ v: 1, docs: store })); persistOk = true; }
-      catch (e) { persistOk = false; }
-    };
-    if (now) run(); else saveT = setTimeout(run, 250);
-  }
-  window.addEventListener('pagehide', function () { save(true); });
-  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') save(true); });
-
-  /* ---------- consultas ---------- */
-  function inColl(path, coll) {
-    if (path.indexOf(coll + '/') !== 0) return false;
-    return path.slice(coll.length + 1).indexOf('/') < 0;
-  }
-  function match(d, f) {
-    var a = d[f[0]], op = f[1], b = f[2];
-    switch (op) {
-      case '==': return a === b;
-      case '!=': return a !== b;
-      case '<': return a < b;
-      case '<=': return a <= b;
-      case '>': return a > b;
-      case '>=': return a >= b;
-      case 'in': return Array.isArray(b) && b.indexOf(a) >= 0;
-      case 'not-in': return Array.isArray(b) && b.indexOf(a) < 0;
-      case 'array-contains': return Array.isArray(a) && a.indexOf(b) >= 0;
-    }
-    return false;
-  }
-  function snapDoc(path) {
-    var data = store[path], id = path.slice(path.lastIndexOf('/') + 1);
-    var frozen = data === undefined ? undefined : clone(data);
-    return { id: id, exists: data !== undefined, data: function () { return frozen; }, metadata: { fromCache: false, hasPendingWrites: false } };
-  }
-  function runQuery(q) {
-    var paths = Object.keys(store).filter(function (p) { return inColl(p, q.coll); });
-    paths = paths.filter(function (p) { return q.filters.every(function (f) { return match(store[p], f); }); });
-    if (q.order) {
-      var fld = q.order.field, dir = q.order.dir === 'desc' ? -1 : 1;
-      paths.sort(function (x, y) {
-        var a = store[x][fld], b = store[y][fld];
-        if (a === undefined && b === undefined) return 0;
-        if (a === undefined) return 1;
-        if (b === undefined) return -1;
-        return (a < b ? -1 : a > b ? 1 : 0) * dir;
-      });
-    } else {
-      paths.sort();
-    }
-    if (q.lim) paths = paths.slice(0, q.lim);
-    var docs = paths.map(snapDoc);
-    return { docs: docs, size: docs.length, empty: !docs.length, docChanges: function () { return []; }, metadata: { fromCache: false, hasPendingWrites: false } };
-  }
-  function makeQuery(coll, filters, order, lim) {
-    var q = { coll: coll, filters: filters || [], order: order || null, lim: lim || 0 };
-    return {
-      path: coll,
-      where: function (f, op, v) { return makeQuery(coll, q.filters.concat([[f, op, v]]), q.order, q.lim); },
-      orderBy: function (f, dir) { return makeQuery(coll, q.filters, { field: f, dir: dir }, q.lim); },
-      limit: function (n) { return makeQuery(coll, q.filters, q.order, n); },
-      get: function () { return Promise.resolve(runQuery(q)); },
-      onSnapshot: function (next) {
-        var l = { fire: function () { next(runQuery(q)); } };
-        listeners.push(l);
-        setTimeout(function () { if (listeners.indexOf(l) >= 0) l.fire(); }, 0);
-        return function () { var i = listeners.indexOf(l); if (i >= 0) listeners.splice(i, 1); };
-      },
-      doc: function (id) { return docRef(coll + '/' + (id || rid())); },
-      add: function (data) { var r = docRef(coll + '/' + rid()); return r.set(data).then(function () { return r; }); }
-    };
-  }
-  function notify() {
-    var ls = listeners.slice();
-    setTimeout(function () { ls.forEach(function (l) { if (listeners.indexOf(l) >= 0) l.fire(); }); }, 0);
-  }
-  function merge(dst, src) {
-    Object.keys(src).forEach(function (k) {
-      var v = src[k];
-      if (v && typeof v === 'object' && !Array.isArray(v) && v.__delete__ === true) { delete dst[k]; return; }
-      if (v && typeof v === 'object' && !Array.isArray(v) && dst[k] && typeof dst[k] === 'object' && !Array.isArray(dst[k])) merge(dst[k], v);
-      else dst[k] = clone(v);
-    });
-  }
-  function docRef(path) {
-    var id = path.slice(path.lastIndexOf('/') + 1);
-    return {
-      id: id, path: path,
-      get: function () { return Promise.resolve(snapDoc(path)); },
-      set: function (data) { store[path] = clone(data); save(); notify(); return Promise.resolve(); },
-      update: function (data) {
-        if (store[path] === undefined) return Promise.reject(err('invalid_argument', 'documento não existe'));
-        merge(store[path], data); save(); notify(); return Promise.resolve();
-      },
-      delete: function () { delete store[path]; save(); notify(); return Promise.resolve(); },
-      onSnapshot: function (next) {
-        var l = { fire: function () { next(snapDoc(path)); } };
-        listeners.push(l);
-        setTimeout(function () { if (listeners.indexOf(l) >= 0) l.fire(); }, 0);
-        return function () { var i = listeners.indexOf(l); if (i >= 0) listeners.splice(i, 1); };
-      },
-      collection: function (sub) { return makeQuery(path + '/' + sub); }
-    };
-  }
-  var DB = {
-    doc: function (p) { return docRef(p); },
-    collection: function (p) { return makeQuery(p); }
-  };
-
-  load();
-  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
-
-  window.__DB = {
-    exportAll: function () { return { v: 1, app: 'bitpub', exportedAt: new Date().toISOString(), docs: clone(store) }; },
-    importAll: function (o) {
-      if (!o || typeof o.docs !== 'object' || Array.isArray(o.docs)) throw new Error('invalid');
-      store = clone(o.docs); save(true); notify();
-    },
-    persistent: function () { return persistOk; }
-  };
-
-  /* ---------- download ---------- */
+(function(){'use strict';
+/* ---------- download ---------- */
   window.__dl = function (name, text) {
     var b = new Blob([text], { type: 'text/plain;charset=utf-8' });
     var u = URL.createObjectURL(b), a = document.createElement('a');
@@ -540,18 +355,448 @@ td.r,th.r{text-align:right}
     }
   };
 
-  /* ---------- faz o resto da página achar o "claude" ---------- */
-  if (!window.claude) {
-    window.claude = {
-      use: function (name) {
-        if (name === 'db') return Promise.resolve(DB);
-        if (name === 'downloads') {
-          return Promise.resolve({ save: function (r) { window.__dl(r.filename, r.data); return Promise.resolve({ status: 'saved' }); } });
+  
+})();
+/* ---------- banco online (Supabase, sem biblioteca) ---------- */
+(function () {
+  'use strict';
+  var CFG = window.BITPUB_CFG || {};
+  var BASE = String(CFG.url || '').replace(/\/+$/, '');
+  var KEY = CFG.key || '';
+  var SKEY = 'bitpub.session';
+  var WINDOW_DAYS = 45, POLL_MS = 3000, KEYS_MS = 30000;
+
+  var store = {}, listeners = [], loadedDays = {}, pending = {};
+  var session = null, lastSync = '1970-01-01T00:00:00+00:00', lastKeys = 0, wasOff = false;
+  var wq = Promise.resolve(), refreshing = null, polling = false;
+
+  var clone = function (x) { return x === undefined ? undefined : JSON.parse(JSON.stringify(x)); };
+  var rid = function () {
+    var s = '', c = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    for (var i = 0; i < 20; i++) s += c[Math.floor(Math.random() * c.length)];
+    return s;
+  };
+  var err = function (code, message) { var e = new Error(message || code); e.code = code; return e; };
+  var p2 = function (n) { return String(n).padStart(2, '0'); };
+  var dayStr = function (d) { return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); };
+  var cutoff = function () { var d = new Date(); d.setDate(d.getDate() - WINDOW_DAYS); return dayStr(d); };
+  var r3 = function (n) { return Math.round(Number(n) * 1000) / 1000; };
+
+  /* ---------- exemplo inicial (primeira abertura) ---------- */
+  function seed() {
+    var d = {};
+    d['meta/config'] = { seeded: true, blockOut: true };
+    var st = {
+      pao: ['Pão brioche', 'un', 60, 20, 1.8], carne: ['Blend 120 g', 'un', 70, 25, 4.2],
+      cheddar: ['Queijo cheddar', 'fatia', 120, 40, 0.7], bacon: ['Bacon', 'fatia', 90, 30, 0.9],
+      alface: ['Alface americana', 'g', 1500, 500, 0.02], tomate: ['Tomate', 'g', 2000, 600, 0.008],
+      maionese: ['Maionese da casa', 'g', 2000, 500, 0.025], batata: ['Batata palito congelada', 'g', 8000, 2500, 0.015],
+      refri: ['Refrigerante lata', 'un', 48, 24, 3.5], cerveja: ['Cerveja long neck', 'un', 24, 12, 5.5],
+      sorvete: ['Sorvete de creme', 'g', 3000, 1000, 0.03], leite: ['Leite', 'ml', 5000, 1500, 0.005]
+    };
+    Object.keys(st).forEach(function (k) {
+      var a = st[k];
+      d['stock/' + k] = { name: a[0], unit: a[1], qty: a[2], min: a[3], cost: a[4] };
+    });
+    var R = function (a) { return a.map(function (x) { return { ing: x[0], qty: x[1] }; }); };
+    var mn = {
+      xburger: ['X-Burger', 'Burgers', 26, [['pao', 1], ['carne', 1], ['cheddar', 1], ['alface', 15], ['tomate', 20], ['maionese', 20]]],
+      xbacon: ['X-Bacon', 'Burgers', 32, [['pao', 1], ['carne', 1], ['cheddar', 1], ['bacon', 2], ['alface', 15], ['maionese', 20]]],
+      smash: ['Smash Duplo', 'Burgers', 36, [['pao', 1], ['carne', 2], ['cheddar', 2], ['maionese', 20]]],
+      batatafrita: ['Batata frita', 'Porções', 22, [['batata', 250], ['maionese', 30]]],
+      refrigerante: ['Refrigerante lata', 'Bebidas', 7, [['refri', 1]]],
+      cervejaln: ['Cerveja long neck', 'Bebidas', 14, [['cerveja', 1]]],
+      milkshake: ['Milkshake', 'Sobremesas', 18, [['sorvete', 150], ['leite', 200]]],
+      baconextra: ['Bacon extra', 'Adicionais', 6, [['bacon', 2]]],
+      queijoextra: ['Queijo extra', 'Adicionais', 4, [['cheddar', 1]]]
+    };
+    Object.keys(mn).forEach(function (k) {
+      var a = mn[k];
+      d['menu/' + k] = { name: a[0], cat: a[1], price: a[2], active: true, recipe: R(a[3]) };
+    });
+    return d;
+  }
+
+  
+
+  /* ---------- tela de login / avisos ---------- */
+  var ovStyle = document.createElement('style');
+  ovStyle.textContent = '#bp-ov{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}' +
+    '#bp-ov .bp-card{width:100%;max-width:380px;background:var(--raised);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px}' +
+    '#bp-ov h2{font:700 30px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04em}' +
+    '#bp-ov p{color:var(--ink2)}#bp-ov .bp-err{color:var(--bad);font-size:13px;min-height:1em}';
+  document.head.appendChild(ovStyle);
+  function overlay(html, mount) {
+    var o = document.getElementById('bp-ov');
+    if (!o) { o = document.createElement('div'); o.id = 'bp-ov'; document.body.appendChild(o); }
+    o.innerHTML = '<div class="bp-card">' + html + '</div>';
+    if (mount) mount(o);
+    return o;
+  }
+  function closeOverlay() { var o = document.getElementById('bp-ov'); if (o) o.remove(); }
+  function netEvt(state) {
+    if (state === 'off' && !wasOff) { wasOff = true; window.dispatchEvent(new CustomEvent('bitpub-net', { detail: 'off' })); }
+    if (state === 'on' && wasOff) { wasOff = false; window.dispatchEvent(new CustomEvent('bitpub-net', { detail: 'on' })); }
+  }
+
+  /* ---------- autenticação ---------- */
+  function setSession(j) {
+    session = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000, email: (j.user && j.user.email) || (session && session.email) || '' };
+    window.__userEmail = session.email;
+    try { localStorage.setItem(SKEY, JSON.stringify(session)); } catch (e) {}
+  }
+  function clearSession() { session = null; try { localStorage.removeItem(SKEY); } catch (e) {} }
+  function authPost(grant, body) {
+    return fetch(BASE + '/auth/v1/token?grant_type=' + grant, {
+      method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); },
+      function () { throw err('unavailable', 'sem conexão'); });
+  }
+  function refresh() {
+    if (refreshing) return refreshing;
+    if (!session) return Promise.reject(err('auth'));
+    refreshing = authPost('refresh_token', { refresh_token: session.refresh_token }).then(function (x) {
+      refreshing = null;
+      if (!x.ok) { clearSession(); throw err('auth', 'sessão expirada'); }
+      setSession(x.j);
+    }, function (e) { refreshing = null; throw e; });
+    return refreshing;
+  }
+  function showLogin(msg) {
+    return new Promise(function (resolve) {
+      overlay('<h2>BitPub</h2><p>Entre com o e-mail e a senha da equipe.</p>' +
+        '<form id="bp-f" style="display:flex;flex-direction:column;gap:12px">' +
+        '<label>E-mail<input id="bp-email" type="email" autocomplete="username" required></label>' +
+        '<label>Senha<input id="bp-pw" type="password" autocomplete="current-password" required></label>' +
+        '<p class="bp-err" id="bp-e">' + (msg || '') + '</p>' +
+        '<button class="btn primary" type="submit" id="bp-go">Entrar</button></form>', function (o) {
+          var f = o.querySelector('#bp-f'), e = o.querySelector('#bp-e'), b = o.querySelector('#bp-go');
+          o.querySelector('#bp-email').focus();
+          f.addEventListener('submit', function (ev) {
+            ev.preventDefault(); e.textContent = ''; b.disabled = true; b.textContent = 'Entrando...';
+            authPost('password', { email: o.querySelector('#bp-email').value.trim(), password: o.querySelector('#bp-pw').value }).then(function (x) {
+              if (!x.ok) { b.disabled = false; b.textContent = 'Entrar'; e.textContent = 'E-mail ou senha incorretos.'; return; }
+              setSession(x.j); closeOverlay(); resolve();
+            }, function () { b.disabled = false; b.textContent = 'Entrar'; e.textContent = 'Sem conexão com a internet. Tente de novo.'; });
+          });
+        });
+    });
+  }
+  window.__logout = function () { clearSession(); location.reload(); };
+
+  /* ---------- HTTP ---------- */
+  function http(method, path, body, extra, retried) {
+    var pre = (session && session.expires_at - Date.now() < 60000 && !retried) ? refresh().catch(function (e) { if (e.code === 'auth') throw e; }) : Promise.resolve();
+    return pre.then(function () {
+      var h = { apikey: KEY, 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session ? session.access_token : KEY) };
+      if (extra) Object.keys(extra).forEach(function (k) { h[k] = extra[k]; });
+      return fetch(BASE + path, { method: method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) }).then(function (r) {
+        netEvt('on');
+        if (r.status === 401 && !retried) return refresh().then(function () { return http(method, path, body, extra, true); });
+        if (r.status === 401) throw err('auth');
+        if (!r.ok) {
+          return r.text().then(function (t) {
+            var code = r.status >= 500 ? 'unavailable' : (r.status === 403 || r.status === 404 ? 'invalid_argument' : 'invalid_argument');
+            throw err(code, 'HTTP ' + r.status + ' ' + t.slice(0, 200));
+          });
         }
-        return Promise.resolve(null);
-      }
+        if (r.status === 204) return null;
+        return r.text().then(function (t) { return t ? JSON.parse(t) : null; });
+      }, function () { netEvt('off'); throw err('unavailable', 'sem conexão'); });
+    });
+  }
+  var q = encodeURIComponent;
+  function fetchAll(filter) {
+    var out = [], off = 0, step = 1000;
+    function next() {
+      return http('GET', '/rest/v1/docs?select=coll,id,data,updated_at&order=id.asc&limit=' + step + '&offset=' + off + (filter ? '&' + filter : '')).then(function (rows) {
+        rows = rows || []; out = out.concat(rows);
+        if (rows.length === step) { off += step; return next(); }
+        return out;
+      });
+    }
+    return next();
+  }
+  var rowOf = function (path, data) { var i = path.lastIndexOf('/'); return { coll: path.slice(0, i), id: path.slice(i + 1), data: data }; };
+  var pathOf = function (r) { return r.coll + '/' + r.id; };
+  function upsertRows(rows) {
+    var i = 0;
+    function next() {
+      if (i >= rows.length) return Promise.resolve();
+      var part = rows.slice(i, i + 200); i += 200;
+      return http('POST', '/rest/v1/docs', part, { Prefer: 'resolution=merge-duplicates,return=minimal' }).then(next);
+    }
+    return next();
+  }
+  function enqueueWrite(fn) { var p = wq.then(fn); wq = p.then(function () {}, function () {}); return p; }
+
+  /* ---------- consultas (em cima do espelho local) ---------- */
+  function inColl(path, coll) {
+    if (path.indexOf(coll + '/') !== 0) return false;
+    return path.slice(coll.length + 1).indexOf('/') < 0;
+  }
+  function match(d, f) {
+    var a = d[f[0]], op = f[1], b = f[2];
+    switch (op) {
+      case '==': return a === b; case '!=': return a !== b; case '<': return a < b; case '<=': return a <= b;
+      case '>': return a > b; case '>=': return a >= b;
+      case 'in': return Array.isArray(b) && b.indexOf(a) >= 0;
+      case 'not-in': return Array.isArray(b) && b.indexOf(a) < 0;
+      case 'array-contains': return Array.isArray(a) && a.indexOf(b) >= 0;
+    }
+    return false;
+  }
+  function snapDoc(path) {
+    var data = store[path], id = path.slice(path.lastIndexOf('/') + 1), frozen = data === undefined ? undefined : clone(data);
+    return { id: id, exists: data !== undefined, data: function () { return frozen; }, metadata: { fromCache: false, hasPendingWrites: false } };
+  }
+  function runQuery(qq) {
+    var paths = Object.keys(store).filter(function (p) { return inColl(p, qq.coll); });
+    paths = paths.filter(function (p) { return qq.filters.every(function (f) { return match(store[p], f); }); });
+    if (qq.order) {
+      var fld = qq.order.field, dir = qq.order.dir === 'desc' ? -1 : 1;
+      paths.sort(function (x, y) {
+        var a = store[x][fld], b = store[y][fld];
+        if (a === undefined && b === undefined) return 0; if (a === undefined) return 1; if (b === undefined) return -1;
+        return (a < b ? -1 : a > b ? 1 : 0) * dir;
+      });
+    } else paths.sort();
+    if (qq.lim) paths = paths.slice(0, qq.lim);
+    var docs = paths.map(snapDoc);
+    return { docs: docs, size: docs.length, empty: !docs.length, docChanges: function () { return []; }, metadata: { fromCache: false, hasPendingWrites: false } };
+  }
+  // pedidos de dias antigos (fora da janela) são buscados sob demanda
+  function fetchDay(day) {
+    return fetchAll('coll=eq.orders&' + q('data->>payDay') + '=eq.' + q(day)).then(function (rows) {
+      var ch = false;
+      rows.forEach(function (r) { var p = pathOf(r); if (JSON.stringify(store[p]) !== JSON.stringify(r.data)) { store[p] = r.data; ch = true; } });
+      if (ch) notify();
+    }, function () { delete loadedDays[day]; });
+  }
+  function ensure(qq) {
+    if (qq.coll !== 'orders') return;
+    qq.filters.forEach(function (f) {
+      if ((f[0] === 'payDay') && f[1] === '==' && typeof f[2] === 'string' && f[2] < cutoff() && !loadedDays[f[2]]) { loadedDays[f[2]] = true; fetchDay(f[2]); }
+    });
+  }
+  function makeQuery(coll, filters, order, lim) {
+    var qq = { coll: coll, filters: filters || [], order: order || null, lim: lim || 0 };
+    return {
+      path: coll,
+      where: function (f, op, v) { return makeQuery(coll, qq.filters.concat([[f, op, v]]), qq.order, qq.lim); },
+      orderBy: function (f, dir) { return makeQuery(coll, qq.filters, { field: f, dir: dir }, qq.lim); },
+      limit: function (n) { return makeQuery(coll, qq.filters, qq.order, n); },
+      get: function () { ensure(qq); return Promise.resolve(runQuery(qq)); },
+      onSnapshot: function (next) {
+        var l = { fire: function () { next(runQuery(qq)); } };
+        listeners.push(l); ensure(qq);
+        setTimeout(function () { if (listeners.indexOf(l) >= 0) l.fire(); }, 0);
+        return function () { var i = listeners.indexOf(l); if (i >= 0) listeners.splice(i, 1); };
+      },
+      doc: function (id) { return docRef(coll + '/' + (id || rid())); },
+      add: function (data) { var r = docRef(coll + '/' + rid()); return r.set(data).then(function () { return r; }); }
     };
   }
+  function notify() {
+    var ls = listeners.slice();
+    setTimeout(function () { ls.forEach(function (l) { if (listeners.indexOf(l) >= 0) l.fire(); }); }, 0);
+  }
+  function merge(dst, src) {
+    Object.keys(src).forEach(function (k) {
+      var v = src[k];
+      if (v && typeof v === 'object' && !Array.isArray(v) && v.__delete__ === true) { delete dst[k]; return; }
+      if (v && typeof v === 'object' && !Array.isArray(v) && dst[k] && typeof dst[k] === 'object' && !Array.isArray(dst[k])) merge(dst[k], v);
+      else dst[k] = clone(v);
+    });
+  }
+  function write(path, apply, remote) {
+    var prev = clone(store[path]), existed = path in store;
+    apply();
+    pending[path] = (pending[path] || 0) + 1;
+    notify();
+    return enqueueWrite(remote).then(function (res) { pending[path]--; return res; }, function (e) {
+      pending[path]--;
+      if (existed) store[path] = prev; else delete store[path];
+      notify();
+      throw e;
+    });
+  }
+  function docRef(path) {
+    var id = path.slice(path.lastIndexOf('/') + 1);
+    return {
+      id: id, path: path,
+      get: function () { return Promise.resolve(snapDoc(path)); },
+      set: function (data) {
+        var c = clone(data);
+        return write(path, function () { store[path] = c; }, function () { return http('POST', '/rest/v1/docs', rowOf(path, c), { Prefer: 'resolution=merge-duplicates,return=minimal' }); });
+      },
+      update: function (data) {
+        if (store[path] === undefined) return Promise.reject(err('invalid_argument', 'documento não existe'));
+        var full;
+        return write(path, function () { merge(store[path], data); full = clone(store[path]); },
+          function () { return http('POST', '/rest/v1/docs', rowOf(path, full), { Prefer: 'resolution=merge-duplicates,return=minimal' }); });
+      },
+      delete: function () {
+        var i = path.lastIndexOf('/');
+        return write(path, function () { delete store[path]; },
+          function () { return http('DELETE', '/rest/v1/docs?coll=eq.' + q(path.slice(0, i)) + '&id=eq.' + q(path.slice(i + 1))); });
+      },
+      onSnapshot: function (next) {
+        var l = { fire: function () { next(snapDoc(path)); } };
+        listeners.push(l);
+        setTimeout(function () { if (listeners.indexOf(l) >= 0) l.fire(); }, 0);
+        return function () { var i = listeners.indexOf(l); if (i >= 0) listeners.splice(i, 1); };
+      },
+      collection: function (sub) { return makeQuery(path + '/' + sub); }
+    };
+  }
+  var DB = {
+    doc: function (p) { return docRef(p); },
+    collection: function (p) { return makeQuery(p); },
+    // soma/subtrai de um campo numérico direto no servidor (evita perder baixa quando dois celulares lançam juntos)
+    increment: function (path, field, delta) {
+      if (store[path] === undefined) return Promise.reject(err('invalid_argument', 'documento não existe'));
+      var old = store[path][field] || 0, i = path.lastIndexOf('/'), result;
+      store[path][field] = r3(old + delta);
+      pending[path] = (pending[path] || 0) + 1;
+      notify();
+      return enqueueWrite(function () {
+        return http('POST', '/rest/v1/rpc/inc_field', { p_coll: path.slice(0, i), p_id: path.slice(i + 1), p_field: field, p_delta: delta });
+      }).then(function (nv) {
+        pending[path]--;
+        if (typeof nv === 'number' && store[path]) { store[path][field] = nv; result = nv; notify(); }
+        return result;
+      }, function (e) {
+        pending[path]--;
+        if (store[path]) store[path][field] = r3((store[path][field] || 0) - delta);
+        notify(); throw e;
+      });
+    }
+  };
+
+  /* ---------- carga e sincronização ---------- */
+  function maxStamp(rows) { var m = lastSync; rows.forEach(function (r) { if (r.updated_at && r.updated_at > m) m = r.updated_at; }); return m; }
+  function loadAll() {
+    var cut = cutoff();
+    return Promise.all([
+      fetchAll('coll=neq.orders'),
+      fetchAll('coll=eq.orders&' + q('data->>day') + '=gte.' + q(cut)),
+      fetchAll('coll=eq.orders&' + q('data->>status') + '=eq.open')
+    ]).then(function (rs) {
+      var s = {}, all = [];
+      rs.forEach(function (rows) { all = all.concat(rows); rows.forEach(function (r) { s[pathOf(r)] = r.data; }); });
+      var days = Object.keys(loadedDays); loadedDays = {};
+      Object.keys(pending).forEach(function (p) { if (pending[p] > 0 && p in store) s[p] = store[p]; });
+      store = s;
+      lastSync = maxStamp(all);
+      notify();
+      days.forEach(function (d) { loadedDays[d] = true; fetchDay(d); });
+    });
+  }
+  function pollOnce() {
+    if (polling || !session) return Promise.resolve();
+    polling = true;
+    function loop() {
+      return http('GET', '/rest/v1/docs?select=coll,id,data,updated_at&order=updated_at.asc&limit=1000&updated_at=gt.' + q(lastSync)).then(function (rows) {
+        rows = rows || [];
+        if (window.__BPDEBUG) console.log('poll rows', rows.length, lastSync, JSON.stringify(Object.keys(pending)));
+        var ch = false;
+        rows.forEach(function (r) {
+          var p = pathOf(r);
+          if (!pending[p] && JSON.stringify(store[p]) !== JSON.stringify(r.data)) { store[p] = r.data; ch = true; }
+        });
+        if (rows.length) lastSync = maxStamp(rows);
+        if (ch) notify();
+        if (rows.length === 1000) return loop();
+      });
+    }
+    return loop().then(function () { polling = false; }, function (e) { polling = false; if (e && e.code === 'auth') { return showLogin('Sua sessão expirou. Entre de novo.').then(function () { return pollOnce(); }); } });
+  }
+  function keysCheck() {
+    lastKeys = Date.now();
+    return http('GET', '/rest/v1/docs?select=coll,id&coll=neq.orders&limit=5000').then(function (rows) {
+      var have = {}; (rows || []).forEach(function (r) { have[pathOf(r)] = 1; });
+      var ch = false;
+      Object.keys(store).forEach(function (p) { if (p.indexOf('orders/') !== 0 && !have[p] && !pending[p]) { delete store[p]; ch = true; } });
+      if (ch) notify();
+    }, function () {});
+  }
+  function startSync() {
+    setInterval(function () {
+      if (document.visibilityState !== 'visible') return;
+      pollOnce();
+      if (Date.now() - lastKeys > KEYS_MS) keysCheck();
+    }, POLL_MS);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { pollOnce(); keysCheck(); } });
+    window.addEventListener('online', function () { pollOnce(); keysCheck(); });
+    window.addEventListener('offline', function () { netEvt('off'); });
+  }
+  function firstRun() {
+    var docs = null;
+    try { var o = JSON.parse(localStorage.getItem('bitpub.v1') || 'null'); if (o && o.docs && Object.keys(o.docs).length) docs = o.docs; } catch (e) {}
+    var imported = !!docs;
+    if (!docs) docs = seed();
+    return upsertRows(Object.keys(docs).map(function (p) { return rowOf(p, docs[p]); })).then(function () {
+      return loadAll();
+    }).then(function () {
+      window.dispatchEvent(new CustomEvent('bitpub-note', { detail: imported ? 'Dados deste celular enviados para a nuvem.' : 'Exemplo carregado. Ajuste o cardápio e o estoque.' }));
+    });
+  }
+  function boot() {
+    return loadAll().then(function () { if (!Object.keys(store).length) return firstRun(); }).then(function () { lastKeys = Date.now(); startSync(); return DB; });
+  }
+  function init() {
+    if (!BASE || !KEY || /COLE|xxxx/i.test(BASE + KEY)) {
+      overlay('<h2>BitPub</h2><p>Falta configurar a conexão com o banco de dados. Abra o arquivo <b>config.js</b> e coloque o endereço e a chave do Supabase.</p>');
+      return new Promise(function () {});
+    }
+    try { session = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (session) window.__userEmail = session.email; } catch (e) { session = null; }
+    function attempt() {
+      return (session ? Promise.resolve() : showLogin()).then(boot).catch(function (e) {
+        if (e && e.code === 'auth') { clearSession(); return attempt(); }
+        return new Promise(function (resolve) {
+          overlay('<h2>BitPub</h2><p>Não foi possível conectar. Confira a internet e tente de novo.</p><button class="btn primary" id="bp-retry" type="button">Tentar de novo</button>', function (o) {
+            o.querySelector('#bp-retry').addEventListener('click', function () { closeOverlay(); resolve(attempt()); });
+          });
+        });
+      });
+    }
+    return attempt();
+  }
+
+  /* ---------- backup ---------- */
+  window.__DB = {
+    exportAll: function () {
+      return fetchAll('').then(function (rows) { var d = {}; rows.forEach(function (r) { d[pathOf(r)] = r.data; }); return { v: 1, app: 'bitpub', exportedAt: new Date().toISOString(), docs: d }; });
+    },
+    importAll: function (o) {
+      if (!o || typeof o.docs !== 'object' || Array.isArray(o.docs)) return Promise.reject(new Error('invalid'));
+      var keep = o.docs;
+      return fetchAll('').then(function (rows) {
+        var del = rows.filter(function (r) { return !(pathOf(r) in keep); });
+        var byColl = {}; del.forEach(function (r) { (byColl[r.coll] = byColl[r.coll] || []).push(r.id); });
+        var jobs = [];
+        Object.keys(byColl).forEach(function (c) {
+          for (var i = 0; i < byColl[c].length; i += 50) {
+            var ids = byColl[c].slice(i, i + 50).map(function (x) { return '"' + x.replace(/"/g, '') + '"'; }).join(',');
+            jobs.push(http('DELETE', '/rest/v1/docs?coll=eq.' + q(c) + '&id=in.(' + q(ids) + ')'));
+          }
+        });
+        return Promise.all(jobs);
+      }).then(function () { return upsertRows(Object.keys(keep).map(function (p) { return rowOf(p, keep[p]); })); }).then(loadAll);
+    },
+    persistent: function () { return true; }
+  };
+
+  /* ---------- faz o resto da página achar o "claude" ---------- */
+  var dbPromise = init();
+  window.claude = {
+    use: function (name) {
+      if (name === 'db') return dbPromise;
+      if (name === 'downloads') return Promise.resolve({ save: function (r) { window.__dl(r.filename, r.data); return Promise.resolve({ status: 'saved' }); } });
+      return Promise.resolve(null);
+    }
+  };
 })();
 
 </script>
@@ -605,7 +850,8 @@ async function applyStock(delta){
     var id=ids[i],d=delta[id],cur=S.stock[id];
     if(!cur||!d)continue;
     var nq=r3(cur.qty+d);
-    await db.doc('stock/'+id).update({qty:nq});
+    if(db.increment){var rv=await db.increment('stock/'+id,'qty',d);if(typeof rv==='number')nq=rv}
+    else await db.doc('stock/'+id).update({qty:nq});
     S.stock[id]=Object.assign({},cur,{qty:nq});
   }
 }
@@ -801,7 +1047,7 @@ function vAjExtra(){
   if(!window.BTP)return '';
   var sup=window.BTP.supported;
   return '<div class="two" style="margin-top:16px"><div class="card"><h3>Impressora Bluetooth</h3><p class="muted" style="margin-bottom:12px">'+(sup?'Toque em Imprimir numa comanda para enviar direto à impressora. Na primeira vez você escolhe a impressora na lista. Se ela não aparecer ou o teste falhar, use Copiar p/ impressora.':'Este navegador não permite imprimir por Bluetooth. Abra no Chrome do Android ou use Copiar p/ impressora.')+'</p>'+(sup?'<button type="button" class="btn" data-act="bttest">Testar impressão</button>':'')+'</div>'+
-  (window.__DB?'<div class="card"><h3>Backup dos dados</h3><p class="muted" style="margin-bottom:12px">Os dados ficam só neste aparelho. Baixe uma cópia de vez em quando e guarde no Drive ou no WhatsApp.</p><div class="acts"><button type="button" class="btn" data-act="bkexp">Baixar backup</button><button type="button" class="btn" data-act="bkimp">Restaurar backup</button></div><input type="file" id="bk-file" accept="application/json,.json" hidden></div>':'')+'</div>';
+  (window.__DB?'<div class="card"><h3>Backup dos dados</h3><p class="muted" style="margin-bottom:12px">'+(window.__logout?'Os dados ficam na nuvem. Baixe uma cópia de vez em quando e guarde no Drive ou no WhatsApp, por segurança.':'Os dados ficam só neste aparelho. Baixe uma cópia de vez em quando e guarde no Drive ou no WhatsApp.')+'</p><div class="acts"><button type="button" class="btn" data-act="bkexp">Baixar backup</button><button type="button" class="btn" data-act="bkimp">Restaurar backup</button></div><input type="file" id="bk-file" accept="application/json,.json" hidden></div>':'')+(window.__logout?'<div class="card"><h3>Conta</h3><p class="muted" style="margin-bottom:12px">Conectado como <b style="color:var(--ink)">'+esc(window.__userEmail||'')+'</b>. As comandas e o estoque aparecem em todos os celulares da equipe.</p><button type="button" class="btn" data-act="logout">Sair</button></div>':'')+'</div>';
 }
 function vAjustes(){return vAjustes0()+vAjExtra()}
 document.addEventListener('click',function(e){
@@ -812,7 +1058,7 @@ document.addEventListener('click',function(e){
 document.addEventListener('change',function(e){
   var t=e.target;
   if(t.id==='st-logo-file'&&t.files&&t.files[0]){processLogo(t.files[0]).then(function(u){S.pendLogo=u;updLogoUi();updPrev()},function(){toast('Não foi possível ler essa imagem.','err')});t.value=''}
-  if(t.id==='bk-file'&&t.files&&t.files[0]){var fr=new FileReader();fr.onload=function(){try{window.__DB.importAll(JSON.parse(fr.result));toast('Backup restaurado')}catch(er){toast('Arquivo de backup inválido.','err')}};fr.readAsText(t.files[0]);t.value=''}
+  if(t.id==='bk-file'&&t.files&&t.files[0]){var fr=new FileReader();fr.onload=function(){var obj;try{obj=JSON.parse(fr.result)}catch(er){toast('Arquivo de backup inválido.','err');return}Promise.resolve().then(function(){return window.__DB.importAll(obj)}).then(function(){toast('Backup restaurado')},function(){toast('Arquivo de backup inválido.','err')})};fr.readAsText(t.files[0]);t.value=''}
 });
 function curLogo(){return S.pendLogo!==undefined?S.pendLogo:((S.cfg&&S.cfg.logo)||'')}
 function updLogoUi(){
@@ -1051,7 +1297,7 @@ function saveThermal(){
 }
 
 /* ---------- events ---------- */
-var READ={tab:1,sel:1,back:1,cat:1,copy:1,copyt:1,savet:1,btprint:1,bttest:1,bkexp:1,bkimp:1};
+var READ={tab:1,sel:1,back:1,cat:1,copy:1,copyt:1,savet:1,btprint:1,bttest:1,bkexp:1,bkimp:1,logout:1};
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-act]');if(!t||t.closest('#modal-root'))return;
   var a=t.dataset.act,d=t.dataset;
@@ -1069,7 +1315,8 @@ document.addEventListener('click',function(e){
     case 'copyt':copyThermal();break;
     case 'btprint':btPrint(S.sel,false);break;
     case 'bttest':btPrint(null,true);break;
-    case 'bkexp':if(window.__DB&&window.__dl){window.__dl('bitpub-backup-'+dayKey()+'.json',JSON.stringify(window.__DB.exportAll()));toast('Backup baixado')}break;
+    case 'logout':if(window.__logout)window.__logout();break;
+    case 'bkexp':if(window.__DB&&window.__dl){Promise.resolve(window.__DB.exportAll()).then(function(o){window.__dl('bitpub-backup-'+dayKey()+'.json',JSON.stringify(o));toast('Backup baixado')},function(){toast('Não foi possível gerar o backup.','err')})}break;
     case 'bkimp':armed(t,'Confirmar: substitui os dados atuais',function(){var f=$('#bk-file');if(f)f.click()});break;
     case 'savet':saveThermal();break;
     case 'cancel':armed(t,'Confirmar cancelamento',function(){var id=S.sel;S.sel=null;cancelOrder(id);draw()});break;
@@ -1116,6 +1363,8 @@ function start(){
   subReport();
   setInterval(function(){if(S.tab==='comandas'&&ready()&&!$('#modal-root').firstChild)draw()},30000);
 }
+window.addEventListener('bitpub-net',function(e){toast(e.detail==='off'?'Sem internet. Aguarde a conexão voltar para lançar.':'Conexão restabelecida.',e.detail==='off'?'err':'')});
+window.addEventListener('bitpub-note',function(e){toast(e.detail)});
 draw();
 if(window.claude&&window.claude.use){
   window.claude.use('downloads').then(function(d){if(d){S.dl=d;draw()}}).catch(function(){});
