@@ -349,6 +349,15 @@ td.r,th.r{text-align:right}
   window.BTP = {
     supported: !!(navigator.bluetooth && navigator.bluetooth.requestDevice),
     _build: build,
+    mode: function () { try { return localStorage.getItem('bitpub.pmode') || 'rawbt'; } catch (e) { return 'rawbt'; } },
+    setMode: function (m) { try { localStorage.setItem('bitpub.pmode', m); } catch (e) {} },
+    // RawBT (app gratuito): serve para impressoras Bluetooth "clássicas" que o Chrome não enxerga
+    printRaw: function (text, opt) {
+      return build(text, opt).then(function (u) {
+        var bin = '', i; for (i = 0; i < u.length; i++) bin += String.fromCharCode(u[i]);
+        window.location.href = 'rawbt:base64,' + btoa(bin);
+      });
+    },
     print: function (text, opt) {
       if (!window.BTP.supported) return Promise.reject(new Error('unsupported'));
       return Promise.all([connect(), build(text, opt)]).then(function (r) { return writeAll(r[0], r[1]); });
@@ -948,7 +957,7 @@ function vTicket(id){
     var s=a<1?'Sem estoque':(a<=5&&a!==Infinity?'Restam '+a:'');
     return '<button type="button" class="mi" data-act="add" data-id="'+x[0]+'"'+(block?' disabled':'')+'><span class="mi-n">'+esc(m.name)+'</span><span class="mi-p">'+brl(m.price)+'</span>'+(s?'<span class="mi-s">'+s+'</span>':'')+'</button>'}).join('')+'</div>'
     :'<div class="empty"><b>Cardápio vazio</b>Cadastre os itens na aba Cardápio.</div>';
-  return '<div class="tk-head"><button type="button" class="btn ghost sm back" data-act="back">← Comandas</button><div class="ttl"><h2>'+esc(o.label)+'</h2><p class="meta">#'+pad(o.num)+' · aberta às '+hhmm(o.openedAt)+' · há '+ago(o.openedAt)+'</p></div><div class="tk-tools">'+(window.BTP&&window.BTP.supported?'<button type="button" class="btn sm primary" data-act="btprint">Imprimir</button>':'')+'<button type="button" class="btn sm" data-act="copy">Copiar</button><button type="button" class="btn sm" data-act="copyt">Copiar p/ impressora</button>'+(S.dl?'<button type="button" class="btn sm" data-act="savet">Salvar .txt</button>':'')+'<button type="button" class="btn sm danger" data-act="cancel" data-id="'+id+'">Cancelar comanda</button></div></div>'+
+  return '<div class="tk-head"><button type="button" class="btn ghost sm back" data-act="back">← Comandas</button><div class="ttl"><h2>'+esc(o.label)+'</h2><p class="meta">#'+pad(o.num)+' · aberta às '+hhmm(o.openedAt)+' · há '+ago(o.openedAt)+'</p></div><div class="tk-tools">'+(window.BTP&&(window.BTP.supported||(window.BTP.mode&&window.BTP.mode()==='rawbt'))?'<button type="button" class="btn sm primary" data-act="btprint">Imprimir</button>':'')+'<button type="button" class="btn sm" data-act="copy">Copiar</button><button type="button" class="btn sm" data-act="copyt">Copiar p/ impressora</button>'+(S.dl?'<button type="button" class="btn sm" data-act="savet">Salvar .txt</button>':'')+'<button type="button" class="btn sm danger" data-act="cancel" data-id="'+id+'">Cancelar comanda</button></div></div>'+
   lines+'<div class="picker"><div class="chips" role="group" aria-label="Categorias">'+cats.map(function(c){return '<button type="button" data-act="cat" data-id="'+esc(c)+'" aria-pressed="'+(c===cat)+'">'+esc(c)+'</button>'}).join('')+'</div>'+grid+'</div>'+
   '<div class="tk-foot"><div class="tot"><small>Subtotal</small>'+brl(subOf(o))+'</div><button type="button" class="btn primary" data-act="pay"'+(items.length?'':' disabled')+'>Fechar conta</button></div>';
 }
@@ -1029,6 +1038,7 @@ function btPrint(id,test){
   var c=S.cfg||{};
   var text=thermalText(o,c);
   var opt=c.logo?{logo:c.logo,paper:Number(c.paper)===80?576:384,size:c.logoSize||60}:null;
+  if(window.BTP.mode&&window.BTP.mode()==='rawbt'){toast('Abrindo o RawBT...');window.BTP.printRaw(text,opt).catch(function(){toast('Não foi possível enviar ao RawBT. Confira se o app está instalado.','err')});return}
   toast('Conectando à impressora...');
   window.BTP.print(text,opt).then(function(){toast('Enviado para a impressora')},function(e){
     var m=(e&&e.message)||'';
@@ -1045,8 +1055,8 @@ function processLogo(file){
 }
 function vAjExtra(){
   if(!window.BTP)return '';
-  var sup=window.BTP.supported;
-  return '<div class="two" style="margin-top:16px"><div class="card"><h3>Impressora Bluetooth</h3><p class="muted" style="margin-bottom:12px">'+(sup?'Toque em Imprimir numa comanda para enviar direto à impressora. Na primeira vez você escolhe a impressora na lista. Se ela não aparecer ou o teste falhar, use Copiar p/ impressora.':'Este navegador não permite imprimir por Bluetooth. Abra no Chrome do Android ou use Copiar p/ impressora.')+'</p>'+(sup?'<button type="button" class="btn" data-act="bttest">Testar impressão</button>':'')+'</div>'+
+  var sup=window.BTP.supported,pm=window.BTP.mode?window.BTP.mode():'direct';
+  return '<div class="two" style="margin-top:16px"><div class="card"><h3>Impressora Bluetooth</h3><p class="muted" style="margin-bottom:12px">Como imprimir neste celular:</p><div class="acts" style="margin-bottom:12px"><button type="button" class="btn'+(pm==='rawbt'?' primary':'')+'" data-act="pmraw">Pelo app RawBT</button><button type="button" class="btn'+(pm==='direct'?' primary':'')+'" data-act="pmdir">Direto (Chrome)</button></div><p class="muted" style="margin-bottom:12px">'+(pm==='rawbt'?'O RawBT recebe a comanda e imprime. Instale o app RawBT na Play Store e conecte a impressora lá uma vez.':'')+(sup?' Modo direto: toque em Imprimir numa comanda para enviar direto à impressora. Na primeira vez você escolhe a impressora na lista. Se ela não aparecer ou o teste falhar, use Copiar p/ impressora.':'Este navegador não permite imprimir por Bluetooth. Abra no Chrome do Android ou use Copiar p/ impressora.')+'</p>'+((sup||pm==='rawbt')?'<button type="button" class="btn" data-act="bttest">Testar impressão</button>':'')+'</div>'+
   (window.__DB?'<div class="card"><h3>Backup dos dados</h3><p class="muted" style="margin-bottom:12px">'+(window.__logout?'Os dados ficam na nuvem. Baixe uma cópia de vez em quando e guarde no Drive ou no WhatsApp, por segurança.':'Os dados ficam só neste aparelho. Baixe uma cópia de vez em quando e guarde no Drive ou no WhatsApp.')+'</p><div class="acts"><button type="button" class="btn" data-act="bkexp">Baixar backup</button><button type="button" class="btn" data-act="bkimp">Restaurar backup</button></div><input type="file" id="bk-file" accept="application/json,.json" hidden></div>':'')+(window.__logout?'<div class="card"><h3>Conta</h3><p class="muted" style="margin-bottom:12px">Conectado como <b style="color:var(--ink)">'+esc(window.__userEmail||'')+'</b>. As comandas e o estoque aparecem em todos os celulares da equipe.</p><button type="button" class="btn" data-act="logout">Sair</button></div>':'')+'</div>';
 }
 function vAjustes(){return vAjustes0()+vAjExtra()}
@@ -1297,7 +1307,7 @@ function saveThermal(){
 }
 
 /* ---------- events ---------- */
-var READ={tab:1,sel:1,back:1,cat:1,copy:1,copyt:1,savet:1,btprint:1,bttest:1,bkexp:1,bkimp:1,logout:1};
+var READ={tab:1,sel:1,back:1,cat:1,copy:1,copyt:1,savet:1,btprint:1,bttest:1,pmraw:1,pmdir:1,bkexp:1,bkimp:1,logout:1};
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-act]');if(!t||t.closest('#modal-root'))return;
   var a=t.dataset.act,d=t.dataset;
@@ -1315,6 +1325,8 @@ document.addEventListener('click',function(e){
     case 'copyt':copyThermal();break;
     case 'btprint':btPrint(S.sel,false);break;
     case 'bttest':btPrint(null,true);break;
+    case 'pmraw':window.BTP.setMode('rawbt');draw();break;
+    case 'pmdir':window.BTP.setMode('direct');draw();break;
     case 'logout':if(window.__logout)window.__logout();break;
     case 'bkexp':if(window.__DB&&window.__dl){Promise.resolve(window.__DB.exportAll()).then(function(o){window.__dl('bitpub-backup-'+dayKey()+'.json',JSON.stringify(o));toast('Backup baixado')},function(){toast('Não foi possível gerar o backup.','err')})}break;
     case 'bkimp':armed(t,'Confirmar: substitui os dados atuais',function(){var f=$('#bk-file');if(f)f.click()});break;
