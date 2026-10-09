@@ -282,12 +282,19 @@ td.r,th.r{text-align:right}
     return step();
   }
 
+  // \x02 no início da linha = letra grande em negrito (cozinha)
   function textBytes(text) {
-    var out = [];
-    for (var i = 0; i < text.length; i++) {
-      var c = text.charCodeAt(i);
-      out.push(c === 10 ? 10 : (c >= 32 && c < 127 ? c : 63));
-    }
+    var out = [], lines = String(text).split('\n');
+    lines.forEach(function (ln, li) {
+      var big = ln.charCodeAt(0) === 2;
+      if (big) { ln = ln.slice(1); out.push(0x1B, 0x21, 0x38, 0x1B, 0x45, 1); }
+      for (var i = 0; i < ln.length; i++) {
+        var c = ln.charCodeAt(i);
+        out.push(c >= 32 && c < 127 ? c : 63);
+      }
+      if (big) out.push(0x1B, 0x21, 0x00, 0x1B, 0x45, 0);
+      if (li < lines.length - 1) out.push(10);
+    });
     return out;
   }
   // logo -> bytes GS v 0 (imagem raster, 1 bit, com pontilhado)
@@ -966,7 +973,7 @@ function vTicket(id){
     '<div><div class="ln-n">'+esc(it.name)+'</div><button type="button" class="ln-note'+(it.note?'':' add')+'" data-act="note" data-lid="'+it.lid+'">'+(it.note?esc(it.note):'+ observação')+'</button></div><div class="ln-p">'+brl(it.price*it.qty)+'</div></li>'}).join('')+'</ul>'
     :'<div class="ph"><b>Comanda vazia</b>Toque num item do cardápio abaixo para lançar.</div>';
   var grid='<div id="pgrid">'+gridHtml(cat)+'</div>';
-  return '<div class="tk-head"><button type="button" class="btn ghost sm back" data-act="back">← Comandas</button><div class="ttl"><h2>'+esc(o.label)+'</h2><p class="meta">#'+pad(o.num)+' · aberta às '+hhmm(o.openedAt)+' · há '+ago(o.openedAt)+'</p></div><div class="tk-tools">'+(window.BTP&&(window.BTP.supported||(window.BTP.mode&&window.BTP.mode()==='rawbt'))?'<button type="button" class="btn sm primary" data-act="btprint">Imprimir</button>':'')+'<button type="button" class="btn sm" data-act="copy">Copiar</button><button type="button" class="btn sm" data-act="copyt">Copiar p/ impressora</button>'+(S.dl?'<button type="button" class="btn sm" data-act="savet">Salvar .txt</button>':'')+'<button type="button" class="btn sm danger" data-act="cancel" data-id="'+id+'">Cancelar comanda</button></div></div>'+
+  return '<div class="tk-head"><button type="button" class="btn ghost sm back" data-act="back">← Comandas</button><div class="ttl"><h2>'+esc(o.label)+'</h2><p class="meta">#'+pad(o.num)+' · aberta às '+hhmm(o.openedAt)+' · há '+ago(o.openedAt)+'</p></div><div class="tk-tools">'+(window.BTP&&(window.BTP.supported||(window.BTP.mode&&window.BTP.mode()==='rawbt'))?'<button type="button" class="btn sm primary" data-act="btprint">Imprimir</button>':'')+''+(kitchenLines(o,false).length||hasKit(o)?'<button type="button" class="btn sm primary" data-act="kprint">Cozinha'+(kPending(o)?' ('+kPending(o)+')':'')+'</button>':'')+'<button type="button" class="btn sm" data-act="copy">Copiar</button><button type="button" class="btn sm" data-act="copyt">Copiar p/ impressora</button>'+(S.dl?'<button type="button" class="btn sm" data-act="savet">Salvar .txt</button>':'')+'<button type="button" class="btn sm danger" data-act="cancel" data-id="'+id+'">Cancelar comanda</button></div></div>'+
   lines+'<div class="picker"><div class="srch"><input type="search" id="mi-q" placeholder="Buscar item (ex: bacon, suco, heineken)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" value="'+esc(S.q||'')+'" aria-label="Buscar item no cardápio"></div><div class="chips" role="group" aria-label="Categorias">'+cats.map(function(c){return '<button type="button" data-act="cat" data-id="'+esc(c)+'" aria-pressed="'+(c===cat&&!(S.q||'').trim())+'">'+esc(c)+'</button>'}).join('')+'</div>'+grid+'</div>'+
   '<div class="tk-foot"><div class="tot"><small>Subtotal</small>'+brl(subOf(o))+'</div><button type="button" class="btn primary" data-act="pay"'+(items.length?'':' disabled')+'>Fechar conta</button></div>';
 }
@@ -978,7 +985,7 @@ function vCardapio(){
       return '<div class="row'+(m.active===false?' paused':'')+'"><div class="grow"><b>'+esc(m.name)+'</b><small>'+esc(recipeText(m))+'</small></div>'+
       '<div class="num">'+brl(m.price)+'<small class="muted" style="display:block;font-size:12px">custo '+brl(cost)+' · margem '+mg+'%</small></div>'+
       '<span class="pill '+(a<1?'zero':'ok')+'">'+(a===Infinity?'Sem receita':(a<1?'Sem estoque':'Dá para '+a))+'</span>'+
-      '<div class="acts"><button type="button" class="btn sm" data-act="mactive" data-id="'+x[0]+'" aria-pressed="'+(m.active!==false)+'">'+(m.active===false?'Pausado':'No cardápio')+'</button><button type="button" class="btn sm" data-act="medit" data-id="'+x[0]+'">Editar</button></div></div>'}).join('')+'</div></div>'}).join('');
+      '<div class="acts"><button type="button" class="btn sm" data-act="mactive" data-id="'+x[0]+'" aria-pressed="'+(m.active!==false)+'">'+(m.active===false?'Pausado':'No cardápio')+'</button><button type="button" class="btn sm" data-act="mkit" data-id="'+x[0]+'" aria-pressed="'+(!!m.kitchen)+'">'+(m.kitchen?'Cozinha: sim':'Cozinha: não')+'</button><button type="button" class="btn sm" data-act="medit" data-id="'+x[0]+'">Editar</button></div></div>'}).join('')+'</div></div>'}).join('');
   return '<div class="sec-h"><div><h2>Cardápio</h2><p class="sub">Preço, receita e margem de cada item</p></div><div class="acts"><button type="button" class="btn" data-act="cats">Categorias</button><button type="button" class="btn primary" data-act="mnew">Novo item</button></div></div>'+(groups||'<div class="empty"><b>Cardápio vazio</b>Cadastre o primeiro item e informe quais insumos ele consome.</div>');
 }
 function vEstoque(){
@@ -1173,6 +1180,7 @@ function openMenuEdit(id){
   var stockIds=Object.keys(S.stock).sort(function(a,b){return S.stock[a].name.localeCompare(S.stock[b].name,'pt-BR')});
   var body='<form id="mf"><label>Nome<input id="mf-name" required maxlength="60" autocomplete="off" value="'+esc(m.name)+'"></label>'+
   '<div class="row2"><label>Categoria<select id="mf-cat">'+getCats().map(function(c){return opt(c,c,c===m.cat)}).join('')+'</select></label><label>Preço (R$)<input id="mf-price" inputmode="decimal" required value="'+inpN(m.price||'')+'"></label></div>'+
+  '<label class="chk" style="display:flex;gap:10px;align-items:center;margin:4px 0 12px"><input type="checkbox" id="mf-kit"'+(m.kitchen?' checked':'')+' style="width:22px;height:22px"> <span>Preparar na cozinha (sai na impressão da cozinha)</span></label>'+
   '<fieldset><legend>Receita: o que sai do estoque a cada venda</legend><div id="mf-rows"></div><button type="button" class="btn sm" id="mf-add">+ Insumo</button></fieldset>'+
   '<p class="calc" id="mf-calc"></p><p class="err" id="mf-e"></p><div class="actions">'+(id?'<button type="button" class="btn danger" id="mf-del">Excluir item</button>':'')+'<button class="btn primary" type="submit">Salvar</button></div></form>';
   openModal(id?'Editar item':'Novo item',body,function(sh){
@@ -1193,7 +1201,7 @@ function openMenuEdit(id){
       var name=$('#mf-name',sh).value.trim(),price=r2(parseN($('#mf-price',sh).value));
       if(!name||price<=0){$('#mf-e',sh).textContent='Informe o nome e um preço maior que zero.';return}
       var rec=rows.filter(function(r){return r.ing&&r.qty>0}).map(function(r){return {ing:r.ing,qty:r3(r.qty)}});
-      var doc=Object.assign({},m,{name:name,cat:$('#mf-cat',sh).value,price:price,recipe:rec,active:m.active!==false});
+      var doc=Object.assign({},m,{name:name,cat:$('#mf-cat',sh).value,price:price,recipe:rec,kitchen:!!$('#mf-kit',sh).checked,active:m.active!==false});
       enqueue(function(){return id?db.doc('menu/'+id).set(doc):db.collection('menu').add(doc)}).then(function(){closeModal();toast('Item salvo')});
     });
     paintRows();
@@ -1284,6 +1292,42 @@ var plain=function(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').r
 function wrapTxt(s,w){var out=[],cur='';String(s).split(' ').forEach(function(wd){while(wd.length>w){if(cur){out.push(cur);cur=''}out.push(wd.slice(0,w));wd=wd.slice(w)}if((cur?cur.length+1:0)+wd.length<=w){cur=cur?cur+' '+wd:wd}else{out.push(cur);cur=wd}});if(cur)out.push(cur);return out}
 function lr(l,r){var sp=W-l.length-r.length;return l+(sp>0?new Array(sp+1).join(' '):' ')+r}
 function ctr(s){var sp=Math.max(0,Math.floor((W-s.length)/2));return new Array(sp+1).join(' ')+s}
+/* ---------- impressão da cozinha ---------- */
+function isKit(it){var m=S.menu[it.k];return !!(m&&m.kitchen)}
+function hasKit(o){return (o.items||[]).some(isKit)}
+function kPending(o){return (o.items||[]).reduce(function(t,it){return t+(isKit(it)?Math.max(0,it.qty-(it.kSent||0)):0)},0)}
+function kitchenLines(o,all){return (o.items||[]).filter(function(it){return isKit(it)&&(all?it.qty>0:it.qty-(it.kSent||0)>0)})}
+function kitchenText(o,all){
+  var cfg=S.cfg||{},w=Number(cfg.paper)===80?48:32,hw=Math.floor(w/2)-1,dash=new Array(w+1).join('-'),eq=new Array(w+1).join('=');
+  var L=[],B=function(s){wrapTxt(plain(s),hw).forEach(function(x){L.push('\x02'+x)})};
+  var it=kitchenLines(o,all);
+  L.push(eq);B('COZINHA');if(all)L.push('(REIMPRESSAO - TUDO)');L.push(eq);
+  B(o.label);
+  L.push('Comanda #'+pad(o.num)+'  Hora '+hhmm(Date.now()));
+  L.push(dash);
+  it.forEach(function(x){
+    var q=all?x.qty:x.qty-(x.kSent||0);
+    B(q+'x '+x.name);
+    if(x.note)wrapTxt('>> '+plain(x.note),hw).forEach(function(t){L.push('\x02'+t)});
+    L.push(dash);
+  });
+  L.push(eq);L.push('');L.push('');
+  return L.join('\n');
+}
+function kPrint(id){
+  var o=S.open[id];if(!o||!window.BTP)return;
+  var all=!kPending(o);
+  if(all&&!kitchenLines(o,true).length){toast('Nenhum item da cozinha nesta comanda.','err');return}
+  var text=kitchenText(o,all);
+  var send=(window.BTP.mode&&window.BTP.mode()==='rawbt')?window.BTP.printRaw(text,null):window.BTP.print(text,null);
+  toast(all?'Reimprimindo tudo para a cozinha...':'Enviando para a cozinha...');
+  Promise.resolve(send).then(function(){
+    toast('Enviado para a cozinha');
+    if(all)return;
+    return enqueue(function(){var cur=S.open[id];if(!cur)return;var items=(cur.items||[]).map(function(x){return isKit(x)?Object.assign({},x,{kSent:x.qty}):x});
+      return db.doc('orders/'+id).update({items:items}).then(function(){S.open[id]=Object.assign({},cur,{items:items});render()})});
+  },function(e){var m=(e&&e.message)||'';if(e&&e.name==='NotFoundError'&&/cancel/i.test(m)){$('#toast').hidden=true;return}toast('Não foi possível imprimir na cozinha.','err')});
+}
 function thermalText(o,cfg){
   cfg=cfg||S.cfg||{};
   W=Number(cfg.paper)===80?48:32;
@@ -1318,7 +1362,7 @@ function saveThermal(){
 }
 
 /* ---------- events ---------- */
-var READ={tab:1,sel:1,back:1,cat:1,copy:1,copyt:1,savet:1,btprint:1,bttest:1,pmraw:1,pmdir:1,bkexp:1,bkimp:1,logout:1};
+var READ={tab:1,sel:1,back:1,cat:1,copy:1,copyt:1,savet:1,btprint:1,kprint:1,bttest:1,pmraw:1,pmdir:1,bkexp:1,bkimp:1,logout:1};
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-act]');if(!t||t.closest('#modal-root'))return;
   var a=t.dataset.act,d=t.dataset;
@@ -1348,6 +1392,8 @@ document.addEventListener('click',function(e){
     case 'mnew':openMenuEdit(null);break;
     case 'cats':openCats();break;
     case 'medit':openMenuEdit(d.id);break;
+    case 'mkit':enqueue(function(){var m=S.menu[d.id];return db.doc('menu/'+d.id).update({kitchen:!m.kitchen})});break;
+    case 'kprint':kPrint(S.sel);break;
     case 'mactive':enqueue(function(){var m=S.menu[d.id];return db.doc('menu/'+d.id).update({active:m.active===false})});break;
     case 'snew':openStockEdit(null);break;
     case 'sedit':openStockEdit(d.id);break;
