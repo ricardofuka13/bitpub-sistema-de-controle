@@ -1602,9 +1602,14 @@ function thermalText(o,cfg){
   L.push(ctr(new Date(o.openedAt).toLocaleDateString('pt-BR')+' '+hhmm(o.openedAt)));
   L.push(dash);
   (o.items||[]).forEach(function(it){
-    var price=plain(brl(it.price*it.qty)),name=plain(it.qty+'x '+it.name),room=W-price.length-1;
-    var parts=wrapTxt(name,room);
-    parts.forEach(function(p,i){L.push(i===0?lr(p,price):p)});
+    var price=plain(brl(it.price*it.qty)),name=plain(it.qty+'x '+it.name);
+    if(it.qty>1){
+      wrapTxt(name,W).forEach(function(p){L.push(p)});
+      L.push(lr('   '+it.qty+' x '+plain(brl(it.price)),price));
+    }else{
+      var parts=wrapTxt(name,W-price.length-1);
+      parts.forEach(function(p,i){L.push(i===0?lr(p,price):p)});
+    }
     if(it.note)wrapTxt('> '+plain(it.note),W-2).forEach(function(p){L.push('  '+p)});
   });
   L.push(dash);
