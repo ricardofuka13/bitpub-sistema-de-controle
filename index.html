@@ -236,7 +236,7 @@ legend{padding:0 6px;font-size:13px;font-weight:500;color:var(--ink2)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:22px}
 .kpis .box{background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .kpis small{display:block;font:500 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:8px}
-.kpis b{font:600 32px/1 var(--f-display)}
+.kpis b{font:600 clamp(22px,7vw,32px)/1 var(--f-display);display:block;overflow-wrap:anywhere}
 .kpis em{display:block;font-style:normal;font-size:13px;color:var(--ink2);margin-top:6px}
 .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:22px}
 .card{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
@@ -277,6 +277,12 @@ td.r,th.r{text-align:right}
 .prevlogo img{background:#fff;border:1px dashed var(--line2);border-radius:6px;padding:6px;max-width:100%}
 .calc{font-size:14px;color:var(--ink2)}
 .calc b{color:var(--ink)}
+.vrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.vrow .v-n{flex:1 1 120px;min-width:0}.vrow .v-ing{flex:1 1 150px;min-width:0}.vrow .v-q{width:60px}
+.goal-h{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}.goal-h h3{margin:0}
+.goal-b{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:8px}.goal-b b{font:600 30px/1 var(--f-display)}.goal-b span{color:var(--ink2);font-size:14px}
+.gt{height:14px;border-radius:99px;background:var(--line);overflow:hidden}.gt i{display:block;height:100%;background:var(--accent);border-radius:99px}.gt.sm{height:7px}
+.goal-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px}.goal-g div{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.goal-g small{display:block;color:var(--ink2);font-size:12px;margin-bottom:4px}.goal-g b{font:600 17px var(--f-mono)}
+.goal-p{margin-top:10px;font-size:13px}.goal-s{margin-top:12px;font-weight:600}.goal-l{margin-top:16px;padding-top:12px;border-top:1px dashed var(--line2);font-size:13px;color:var(--ink2)}.goal-l .gt{margin:6px 0}
 .paybox{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
 .paybox div{display:flex;justify-content:space-between;font:500 14px var(--f-mono)}
 .paybox .big{font:600 34px/1 var(--f-display);padding-top:8px;border-top:2px dashed var(--line2);align-items:baseline}
@@ -940,7 +946,8 @@ var stSt=function(s){return s.qty<=0?'zero':(s.qty<=s.min?'low':'ok')};
 var stLabel={ok:'Ok',low:'Baixo',zero:'Zerado'};
 var lowList=function(){return Object.keys(S.stock).map(function(k){return [k,S.stock[k]]}).filter(function(x){return stSt(x[1])!=='ok'}).sort(function(a,b){return a[1].qty/(a[1].min||1)-b[1].qty/(b[1].min||1)})};
 var costOf=function(m){return r2((m.recipe||[]).reduce(function(t,r){var s=S.stock[r.ing];return t+(s?s.cost*r.qty:0)},0))};
-function optN(o){var s=S.stock[o.ing];return s?Math.max(0,Math.floor(s.qty/(o.qty>0?o.qty:1)+1e-9)):0}
+function optName(o){var s=S.stock[o.ing];return o.name||(s?s.name:'?')}
+function optN(o){if(!o.ing&&o.name)return Infinity;var s=S.stock[o.ing];return s?Math.max(0,Math.floor(s.qty/(o.qty>0?o.qty:1)+1e-9)):0}
 function avail(m){var r=m.recipe||[],a=Infinity;r.forEach(function(x){var s=S.stock[x.ing];if(!s||!(x.qty>0))return;a=Math.min(a,Math.floor(s.qty/x.qty+1e-9))});
   (m.choices||[]).forEach(function(g){if(!(g.opts||[]).length)return;a=Math.min(a,g.opts.reduce(function(t,o){return t+optN(o)},0))});return Math.max(a,0)}
 function recOk(rec){return (rec||[]).every(function(r){var s=S.stock[r[0]];return !s||s.qty>=r[1]-1e-9})}
@@ -970,8 +977,8 @@ function addItem(orderId,menuId,sel){
     if(blk&&avail(m)<1){toast('Sem estoque para '+m.name,'err');return}
     var rec=(m.recipe||[]).map(function(r){return [r.ing,r.qty]}),extra=0,cost=costOf(m),sig='',nm=m.name;
     if(sel&&sel.length){
-      sel.forEach(function(s){rec.push([s.ing,s.qty]);extra+=s.extra||0;var st=S.stock[s.ing];cost+=st?st.cost*s.qty:0});
-      sig=sel.map(function(s){return s.ing}).join('|');nm=m.name+' + '+sel.map(function(s){return s.name}).join(' + ');
+      var cost0=cost;sel.forEach(function(s){if(s.ing)rec.push([s.ing,s.qty]);extra+=s.extra||0;var st=S.stock[s.ing];if(st&&!(s.v&&cost0>0))cost+=st.cost*s.qty});
+      sig=sel.map(function(s){return s.ing||('v:'+s.name)}).join('|');nm=m.name+' + '+sel.map(function(s){return s.name}).join(' + ');
       if(blk&&!recOk(rec)){toast('Sem estoque da opção escolhida.','err');return}
     }
     var items=(o.items||[]).map(function(x){return Object.assign({},x)});
@@ -988,10 +995,10 @@ function openChoice(oid,mid){
   var blk=S.cfg.blockOut!==false;
   var body=gs.map(function(g,gi){return '<div class="chg"><div class="chg-t">'+esc(g.label||'Escolha')+'</div><div class="chg-o">'+g.opts.map(function(o,oi){
     var s=S.stock[o.ing],n=optN(o),b=blk&&n<1;
-    return '<button type="button" class="chb" data-g="'+gi+'" data-o="'+oi+'" aria-pressed="false"'+(b?' aria-disabled="true"':'')+'><b>'+esc(s?s.name:'?')+'</b>'+(o.extra>0?'<small>+ '+brl(o.extra)+'</small>':'')+'</button>'}).join('')+'</div></div>'}).join('')+
+    return '<button type="button" class="chb" data-g="'+gi+'" data-o="'+oi+'" aria-pressed="false"'+(b?' aria-disabled="true"':'')+'><b>'+esc(optName(o))+'</b>'+(o.extra>0?'<small>+ '+brl(o.extra)+'</small>':'')+'</button>'}).join('')+'</div></div>'}).join('')+
     (gs.length>1?'<div class="actions"><button type="button" class="btn primary" id="ch-ok" disabled>Adicionar à comanda</button></div>':'');
   openModal(m.name,body,function(sh){
-    function done(){var sel=pick.map(function(oi,gi){var o=gs[gi].opts[oi],s=S.stock[o.ing];return {g:gs[gi].label||'',ing:o.ing,qty:o.qty>0?o.qty:1,extra:o.extra||0,name:s?s.name:'?'}});
+    function done(){var sel=pick.map(function(oi,gi){var o=gs[gi].opts[oi],s=S.stock[o.ing];return {g:gs[gi].label||'',ing:o.ing||'',qty:o.qty>0?o.qty:1,extra:o.extra||0,v:!!gs[gi].var,name:optName(o)}});
       closeModal();addItem(oid,mid,sel).then(function(){draw()})}
     sh.addEventListener('click',function(e){var b=e.target.closest('.chb');if(!b)return;if(b.getAttribute('aria-disabled')==='true'){toast('Sem estoque desta opção. Veja a aba Estoque.','err');return}
       var gi=+b.dataset.g;pick[gi]=+b.dataset.o;
@@ -1074,7 +1081,7 @@ function setView(v){try{localStorage.setItem('bitpub.view',v)}catch(e){}}
 function mrBody(m,a,s){
   var rec=(m.recipe||[]).map(function(r){var st=S.stock[r.ing];if(!st)return '';return (st.unit==='un'||st.unit==='fatia'?(r.qty>1?fmt(r.qty)+'× ':''):fmt(r.qty)+' '+st.unit+' ')+st.name}).filter(Boolean).join(', ');
   var chs=(m.choices||[]).filter(function(g){return (g.opts||[]).length}).map(function(g){
-    return '<div class="mr-ch"><b>'+esc(g.label||'Escolha')+':</b> '+g.opts.map(function(o){var st=S.stock[o.ing],n=optN(o);return '<span>'+esc(st?st.name:'?')+(o.extra>0?' (+'+brl(o.extra)+')':'')+'</span>'}).join(' · ')+'</div>'}).join('');
+    return '<div class="mr-ch"><b>'+esc(g.label||'Escolha')+':</b> '+g.opts.map(function(o){var n=optN(o);return '<span>'+esc(optName(o))+(o.extra>0?' (+'+brl(o.extra)+')':'')+'</span>'}).join(' · ')+'</div>'}).join('');
   var st=a===Infinity?'':(a<1?'<span class="pill zero">Sem estoque</span>':(a<=5?'<span class="pill warnp">Restam '+a+'</span>':'<span class="pill ok">Dá para '+a+'</span>'));
   return '<span class="mr-n"><span class="mr-h"><span class="mi-n">'+esc(m.name)+'</span>'+(m.kitchen?'<span class="tag">Cozinha</span>':'')+'<span class="tag cat">'+esc(m.cat||'')+'</span></span>'+
     (rec?'<small class="mr-d">Leva: '+esc(rec)+'</small>':'')+chs+'</span><span class="mr-r"><span class="mi-p">'+brl(m.price)+'</span></span>';
@@ -1253,7 +1260,7 @@ function vCaixaP(){
     dayRows='<div class="card" style="margin-bottom:16px"><h3>Vendas por dia <span style="text-transform:none;letter-spacing:0;font-weight:400">(valor · comandas)</span></h3>'+(list.length?list.map(function(d){var b=byDay[d]||{v:0,n:0};return '<div class="bar"><span>'+WD[dparse(d).getDay()]+' '+dbr(d)+'</span><span class="t"><i style="width:'+(b.v/maxD*100)+'%"></i></span><span>'+brl(b.v)+(b.n?' · '+b.n:'')+'</span></div>'}).join(''):'<p class="muted">Nenhuma venda neste período.</p>')+'</div>'}
   var openNow=Object.keys(S.open).length;
   var table=n?'<div class="tbl"><table><thead><tr><th>Comanda</th>'+(multi?'<th>Dia</th>':'')+'<th>Fechada</th><th>Pagamento</th><th class="r">Total</th><th></th></tr></thead><tbody>'+paid.slice(0,300).map(function(x){var o=x[1];return '<tr><td><b class="mono">#'+pad(o.num)+'</b> '+esc(o.label)+'</td>'+(multi?'<td class="mono">'+dbr(o.payDay||'0000-00-00')+'</td>':'')+'<td class="mono">'+hhmm(o.closedAt)+'</td><td>'+(PAYN[o.pay]||'')+(o.fee>0?' <span class="muted" style="font-size:12px">· taxa '+brl(o.fee)+(o.machine?' ('+esc(o.machine)+')':'')+'</span>':'')+'</td><td class="r mono">'+brl(o.total)+'</td><td class="r"><button type="button" class="btn sm ghost" data-act="reopen" data-id="'+x[0]+'">Reabrir</button></td></tr>'}).join('')+'</tbody></table></div>':'<p class="muted">Nenhuma comanda paga neste dia.</p>';
-  return hdr+'<div class="kpis"><div class="box"><small>Vendas</small><b>'+brl(vendas)+'</b><em>'+(svc?'+ '+brl(svc)+' de taxa de serviço':'sem taxa de serviço')+'</em></div><div class="box"><small>Comandas pagas</small><b>'+n+'</b><em>'+openNow+' em aberto agora</em></div><div class="box"><small>Ticket médio</small><b>'+brl(avg)+'</b><em>por comanda</em></div><div class="box"><small>Margem bruta</small><b>'+gm+'%</b><em>'+brl(gp)+' sobre o custo dos insumos</em></div></div>'+
+  return hdr+goalCard()+'<div class="kpis"><div class="box"><small>Vendas</small><b>'+brl(vendas)+'</b><em>'+(svc?'+ '+brl(svc)+' de taxa de serviço':'sem taxa de serviço')+'</em></div><div class="box"><small>Comandas pagas</small><b>'+n+'</b><em>'+openNow+' em aberto agora</em></div><div class="box"><small>Ticket médio</small><b>'+brl(avg)+'</b><em>por comanda</em></div><div class="box"><small>Margem bruta</small><b>'+gm+'%</b><em>'+brl(gp)+' sobre o custo dos insumos</em></div></div>'+
   '<div class="two"><div class="card"><h3>Recebido por forma de pagamento</h3>'+payBars+feeBox+'</div><div class="card"><h3>Mais vendidos</h3>'+topBars+'</div></div>'+dayRows+'<div class="card"><h3>Comandas pagas</h3>'+(n&&S.dl?'<div style="margin-bottom:12px"><button type="button" class="btn sm" data-act="ccsv">Baixar planilha (CSV)</button></div>':'')+table+(n>300?'<p class="muted" style="margin-top:8px">Mostrando as 300 mais recentes. A planilha leva todas.</p>':'')+'</div>';
 }
 
@@ -1397,6 +1404,31 @@ function openNote(orderId,line){
 function machines(){var m=S.cfg&&S.cfg.machines;return Array.isArray(m)?m:[]}
 function machById(id){var l=machines();return l.find(function(x){return x.id===id})||l.find(function(x){return x.id===(S.cfg&&S.cfg.maqAtiva)})||l[0]||null}
 function feePctOf(m,pay){if(!m)return 0;return pay==='debito'?(+m.deb||0):pay==='credito'?(+m.cred||0):0}
+function mkeys(){var t=new Date(),a=new Date(t.getFullYear(),t.getMonth(),1),b=new Date(t.getFullYear(),t.getMonth()+1,0);return {a:dayKey(a),b:dayKey(b),dim:b.getDate(),dd:t.getDate(),name:t.toLocaleDateString('pt-BR',{month:'long'}),key:dayKey(a)}}
+function subMonth(){var k=mkeys();if(S.mkey===k.key&&S.mUnsub)return;S.mkey=k.key;if(S.mUnsub)S.mUnsub();S.loaded.mpaid=false;S.mpaid={};
+  S.mUnsub=db.collection('orders').where('payDay','>=',k.a).where('payDay','<=',k.b).onSnapshot(function(s){S.mpaid=toMap(s);S.loaded.mpaid=true;render()},function(){})}
+function goalCard(){
+  var k=mkeys(),c=S.cfg||{},gr=+c.goalRev||0,gl=+c.goalProfit||0;
+  var head='<div class="goal-h"><h3>Meta do mês · '+esc(k.name)+'</h3><button type="button" class="btn sm" data-act="goal">'+(gr||gl?'Editar metas':'Definir meta')+'</button></div>';
+  var wrap=function(x){return '<div class="card goal" style="margin-bottom:16px">'+head+x+'</div>'};
+  if(!gr&&!gl)return wrap('<p class="muted">Defina quanto você quer faturar neste mês e acompanhe quanto falta para chegar lá.</p>');
+  if(!S.loaded.mpaid)return wrap('<p class="muted">Calculando…</p>');
+  var v=0,cost=0;Object.keys(S.mpaid||{}).forEach(function(id){var o=S.mpaid[id];if(o.status!=='paid')return;v+=subOf(o)-(o.discount||0);(o.items||[]).forEach(function(it){cost+=(it.cost||0)*it.qty})});
+  v=r2(v);var lucro=r2(v-cost),rem=Math.max(1,k.dim-k.dd+1),h='';
+  if(gr){var falta=Math.max(0,r2(gr-v)),avg=v/k.dd,proj=avg*k.dim;
+    h+='<div class="goal-b"><b>'+brl(v)+'</b><span>de '+brl(gr)+' · '+Math.round(v/gr*100)+'% da meta de faturamento</span></div><div class="gt" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.round(Math.min(100,v/gr*100))+'"><i style="width:'+Math.min(100,v/gr*100)+'%"></i></div>';
+    if(falta<=0)h+='<p class="goal-s">Meta batida! Você passou '+brl(r2(v-gr))+' da meta.</p>';
+    else h+='<div class="goal-g"><div><small>Falta vender</small><b>'+brl(falta)+'</b></div><div><small>Por dia ('+rem+(rem===1?' dia':' dias')+', contando hoje)</small><b>'+brl(falta/rem)+'</b></div><div><small>Média por dia até agora</small><b>'+brl(avg)+'</b></div></div><p class="muted goal-p">No ritmo atual, o mês fecha em cerca de '+brl(proj)+(proj>=gr?', acima da meta.':', abaixo da meta (faltariam '+brl(gr-proj)+').')+'</p>'}
+  if(gl){var lf=Math.max(0,r2(gl-lucro));h+='<div class="goal-l"><span>Meta de lucro: <b style="color:var(--ink)">'+brl(lucro)+'</b> de '+brl(gl)+' · '+Math.round(lucro/gl*100)+'%</span><div class="gt sm"><i style="width:'+Math.max(0,Math.min(100,lucro/gl*100))+'%"></i></div><span>'+(lf<=0?'Meta de lucro batida.':'Faltam '+brl(lf)+' (cerca de '+brl(lf/rem)+' por dia). Lucro = vendas menos o custo dos insumos.')+'</span></div>'}
+  return wrap(h)}
+function openGoal(){
+  var c=S.cfg||{};
+  openModal('Metas do mês','<form id="gf"><label>Meta de faturamento mensal (R$)<input id="gf-r" inputmode="decimal" placeholder="Ex.: 30000" value="'+inpN(c.goalRev||'')+'"></label><label>Meta de lucro mensal (R$, opcional)<input id="gf-l" inputmode="decimal" placeholder="Ex.: 9000" value="'+inpN(c.goalProfit||'')+'"></label><p class="muted" style="font-size:13px">O faturamento é o total vendido no mês (sem a taxa de serviço). O lucro é o faturamento menos o custo dos insumos. Deixe em branco para não usar. As metas valem para todos os meses.</p><div class="actions"><button class="btn primary" type="submit">Salvar metas</button></div></form>',function(sh){
+    $('#gf',sh).addEventListener('submit',function(e){e.preventDefault();
+      if(!canWrite){toast('Você está no modo leitura.','err');return}
+      var r=Math.max(0,r2(parseN($('#gf-r',sh).value))),l=Math.max(0,r2(parseN($('#gf-l',sh).value)));
+      enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{goalRev:r,goalProfit:l}))}).then(function(){closeModal();toast('Metas salvas');draw()})})});
+}
 function openPay(){
   var id=S.sel,o=S.open[id];if(!o||!(o.items||[]).length)return;
   var st={svc:false,disc:0,pay:'pix',recv:0,mq:(machById(null)||{}).id||''};
@@ -1435,13 +1467,15 @@ function openMenuEdit(id,op){
   op=op||{};
   var m=id?S.menu[id]:{name:'',cat:getCats()[0],price:0,active:true,recipe:[]};if(!m)return;
   var rows=(m.recipe||[]).map(function(r){return {ing:r.ing,qty:r.qty}});
-  var chs=(m.choices||[]).map(function(g){return {label:g.label||'',opts:(g.opts||[]).map(function(o){return {ing:o.ing,qty:o.qty||1,extra:o.extra||0}})}});
+  var vr0=(m.choices||[]).find(function(g){return g.var}),vr={label:vr0?(vr0.label||'Variação'):'Sabor',opts:vr0?(vr0.opts||[]).map(function(o){return {name:o.name||'',ing:o.ing||'',qty:o.qty||1}}):[]};
+  var chs=(m.choices||[]).filter(function(g){return !g.var}).map(function(g){return {label:g.label||'',opts:(g.opts||[]).map(function(o){return {ing:o.ing,qty:o.qty||1,extra:o.extra||0}})}});
   if(op.choice&&!chs.length)chs.push({label:'Bebida',opts:[]});
   var isDrink=function(n){return /refri|coca|guaran|fanta|sprite|pepsi|suco|agua|água|cerveja|heineken|brahma|skol|spaten|stella|budweiser|corona|colorado|baden|zev|original|long neck|chopp|vinho|energ|schweppes|soda|h2o/i.test(n)};
   var stockIds=Object.keys(S.stock).sort(function(a,b){return S.stock[a].name.localeCompare(S.stock[b].name,'pt-BR')});
   var body='<form id="mf"><label>Nome<input id="mf-name" required maxlength="60" autocomplete="off" value="'+esc(m.name)+'"></label>'+
   '<div class="row2"><label>Categoria<select id="mf-cat">'+getCats().map(function(c){return opt(c,c,c===m.cat)}).join('')+'</select></label><label>Preço (R$)<input id="mf-price" inputmode="decimal" required value="'+inpN(m.price||'')+'"></label></div>'+
   '<label class="chk" style="display:flex;gap:10px;align-items:center;margin:4px 0 12px"><input type="checkbox" id="mf-kit"'+(m.kitchen?' checked':'')+' style="width:22px;height:22px"> <span>Preparar na cozinha (sai na impressão da cozinha)</span></label>'+
+  '<fieldset><legend>Variações (sabores, tamanhos…)</legend><p class="muted" style="font-size:13px;margin:0 0 8px">Cadastre o item uma vez só (ex.: a marca da cerveja) e liste as variações. Ao lançar na comanda, o garçom escolhe a variação. Preço, custo e margem continuam os do item. Se a variação tiver estoque próprio, escolha o insumo dela: ele baixa além da receita do item (então tire da receita o que for específico da variação).</p><div id="mf-vr"></div></fieldset>'+
   '<fieldset><legend>Escolha de bebida (para combos)</legend><p class="muted" style="font-size:13px;margin:0 0 8px">O garçom escolhe a bebida do cliente ao lançar este item, e só a escolhida baixa do estoque. Use só nos combos.</p><div id="mf-ch"></div><button type="button" class="btn sm" id="mf-addg">+ Escolha de bebida</button></fieldset>'+
   '<fieldset><legend>Receita: o que sai do estoque a cada venda</legend><div id="mf-rows"></div><button type="button" class="btn sm" id="mf-add">+ Insumo</button></fieldset>'+
   '<p class="calc" id="mf-calc"></p><p class="err" id="mf-e"></p><div class="actions">'+(id?'<button type="button" class="btn danger" id="mf-del">Excluir item</button>':'')+'<button class="btn primary" type="submit">Salvar</button></div></form>';
@@ -1464,6 +1498,19 @@ function openMenuEdit(id,op){
       else if(c.contains('g-multi')){var have={};g.opts.forEach(function(o){have[o.ing]=1});gEl.querySelectorAll('.multi-l input:checked').forEach(function(i){if(!have[i.value])g.opts.push({ing:i.value,qty:1,extra:0})});paintCh()}});
     $('#mf-addg',sh).addEventListener('click',function(){if(!stockIds.length){$('#mf-e',sh).textContent='Cadastre os insumos na aba Estoque primeiro.';return}chs.push({label:chs.length?'':'Bebida',opts:[]});paintCh()});
     paintCh();
+    var vb=$('#mf-vr',sh);
+    function paintVr(){
+      vb.innerHTML='<label>Nome da variação<input id="vr-lab" maxlength="30" autocomplete="off" placeholder="Ex.: Sabor, Tamanho" value="'+esc(vr.label)+'"></label><div style="margin-top:10px">'+vr.opts.map(function(o,oi){return '<div class="vrow" data-o="'+oi+'"><input class="v-n" maxlength="40" autocomplete="off" aria-label="Nome da variação" placeholder="Ex.: Limão" value="'+esc(o.name)+'"><select class="v-ing" aria-label="Estoque da variação"><option value="">Sem estoque próprio</option>'+stockIds.map(function(k){return opt(k,S.stock[k].name,k===o.ing)}).join('')+'</select>'+(o.ing?'<input class="v-q" inputmode="decimal" aria-label="Quantidade que baixa" value="'+inpN(o.qty||'')+'">':'')+'<button type="button" class="btn sm ghost v-del">Remover</button></div>'}).join('')+'</div>'+
+      '<div class="vrow"><input id="vr-bulk" class="v-n" maxlength="200" autocomplete="off" placeholder="Várias de uma vez: Limão, Maracujá, Original"><button type="button" class="btn sm primary" id="vr-addb">Adicionar</button></div><button type="button" class="btn sm" id="vr-add">+ Uma variação</button>'}
+    vb.addEventListener('input',function(e){var c=e.target.classList,oEl=e.target.closest('[data-o]');if(e.target.id==='vr-lab'){vr.label=e.target.value;return}
+      if(oEl){var o=vr.opts[+oEl.dataset.o];if(c.contains('v-n'))o.name=e.target.value;if(c.contains('v-q'))o.qty=parseN(e.target.value)}});
+    vb.addEventListener('change',function(e){var oEl=e.target.closest('[data-o]');if(oEl&&e.target.classList.contains('v-ing')){vr.opts[+oEl.dataset.o].ing=e.target.value;paintVr()}});
+    vb.addEventListener('click',function(e){var t=e.target;
+      if(t.classList.contains('v-del')){vr.opts.splice(+t.closest('[data-o]').dataset.o,1);paintVr()}
+      else if(t.id==='vr-add'){vr.opts.push({name:'',ing:'',qty:1});paintVr()}
+      else if(t.id==='vr-addb'){var inp=$('#vr-bulk',sh),have={};vr.opts.forEach(function(o){have[o.name.trim().toLowerCase()]=1});String(inp.value).split(/[,;\n]/).map(function(x){return x.trim()}).filter(Boolean).forEach(function(n){if(!have[n.toLowerCase()]){have[n.toLowerCase()]=1;vr.opts.push({name:n,ing:'',qty:1})}});paintVr()}});
+    paintVr();
+    function varChoice(){var os=vr.opts.filter(function(o){return o.name.trim()}).map(function(o){return {name:o.name.trim(),ing:o.ing||'',qty:o.ing?r3(o.qty>0?o.qty:1):1,extra:0}});return os.length?[{label:(vr.label||'').trim()||'Variação',var:true,opts:os}]:[]}
     function paintRows(){
       box.innerHTML=rows.map(function(r,i){var s=S.stock[r.ing];return '<div class="rrow"><select data-i="'+i+'" class="r-ing" aria-label="Insumo">'+stockIds.map(function(k){return opt(k,S.stock[k].name,k===r.ing)}).join('')+'</select><input class="r-qty" data-i="'+i+'" inputmode="decimal" aria-label="Quantidade" value="'+inpN(r.qty||'')+'"><span class="u">'+esc(s?s.unit:'')+'</span><button type="button" class="btn sm ghost r-del" data-i="'+i+'" aria-label="Remover insumo">Remover</button></div>'}).join('')||'<p class="muted" style="margin-bottom:10px">Sem insumos: o item não baixa estoque.</p>';
       calc();
@@ -1480,7 +1527,7 @@ function openMenuEdit(id,op){
       var name=$('#mf-name',sh).value.trim(),price=r2(parseN($('#mf-price',sh).value));
       if(!name||price<=0){$('#mf-e',sh).textContent='Informe o nome e um preço maior que zero.';return}
       var rec=rows.filter(function(r){return r.ing&&r.qty>0}).map(function(r){return {ing:r.ing,qty:r3(r.qty)}});
-      var doc=Object.assign({},m,{name:name,cat:$('#mf-cat',sh).value,price:price,recipe:rec,kitchen:!!$('#mf-kit',sh).checked,choices:chs.map(function(g){return {label:(g.label||'').trim()||'Escolha',opts:g.opts.filter(function(o){return o.ing&&o.qty>0}).map(function(o){return {ing:o.ing,qty:r3(o.qty),extra:r2(o.extra||0)}})}}).filter(function(g){return g.opts.length}),active:m.active!==false});
+      var doc=Object.assign({},m,{name:name,cat:$('#mf-cat',sh).value,price:price,recipe:rec,kitchen:!!$('#mf-kit',sh).checked,choices:varChoice().concat(chs.map(function(g){return {label:(g.label||'').trim()||'Escolha',opts:g.opts.filter(function(o){return o.ing&&o.qty>0}).map(function(o){return {ing:o.ing,qty:r3(o.qty),extra:r2(o.extra||0)}})}}).filter(function(g){return g.opts.length})),active:m.active!==false});
       enqueue(function(){return id?db.doc('menu/'+id).set(doc):db.collection('menu').add(doc)}).then(function(){closeModal();toast('Item salvo')});
     });
     paintRows();
@@ -1820,6 +1867,7 @@ document.addEventListener('click',function(e){
     case 'bttest':btPrint(null,true);break;
     case 'pmraw':window.BTP.setMode('rawbt');draw();break;
     case 'pmdir':window.BTP.setMode('direct');draw();break;
+    case 'goal':openGoal();break;
     case 'mqadd':syncMq();var nid='m'+Date.now().toString(36);S.mq.list.push({id:nid,name:'',deb:0,cred:0});if(!S.mq.act)S.mq.act=nid;mqPaint();break;
     case 'mqdel':syncMq();S.mq.list.splice(+d.i,1);if(!S.mq.list.some(function(m){return m.id===S.mq.act}))S.mq.act=S.mq.list.length?S.mq.list[0].id:'';mqPaint();break;
     case 'mqon':syncMq();S.mq.act=(S.mq.list[+d.i]||{}).id||'';mqPaint();break;
@@ -1881,8 +1929,8 @@ function start(){
   db.collection('orders').where('status','==','open').onSnapshot(function(s){S.open=toMap(s);S.loaded.open=true;render()},err);
   db.collection('customers').onSnapshot(function(s){S.cust=toMap(s);render()},function(){});
   db.doc('meta/config').onSnapshot(function(s){S.cfg=s.data()||{};S.loaded.cfg=true;render()},err);
-  subReport();
-  setInterval(function(){if(S.tab==='comandas'&&ready()&&!$('#modal-root').firstChild)draw()},30000);
+  subReport();subMonth();
+  setInterval(function(){subMonth();if(S.tab==='comandas'&&ready()&&!$('#modal-root').firstChild)draw()},30000);
 }
 window.addEventListener('bitpub-net',function(e){toast(e.detail==='off'?'Sem internet. Aguarde a conexão voltar para lançar.':'Conexão restabelecida.',e.detail==='off'?'err':'')});
 window.addEventListener('bitpub-note',function(e){toast(e.detail)});
