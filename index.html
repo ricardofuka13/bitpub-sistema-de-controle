@@ -1055,10 +1055,14 @@ function cancelOrder(id){
 }
 
 /* ---------- views ---------- */
+var isStaff=function(){if(!window.__userEmail)return false;if(!S.loaded.cfg)return true;var l=(S.cfg&&S.cfg.staff)||[];return l.indexOf(String(window.__userEmail).toLowerCase())>=0};
+var staffCanPay=function(){return !!(S.cfg&&S.cfg.staffPay)};
 function navHtml(){
   var open=Object.keys(S.open).length,low=lowList().length;
+  var st=isStaff();
   var t=[['comandas','Comandas',open,''],['clientes','Clientes',0,''],['cardapio','Cardápio',0,''],['estoque','Estoque',low,'warn'],['caixa','Caixa',0,''],['ajustes','Ajustes',0,'']];
-  return t.map(function(x){return '<button type="button" data-act="tab" data-id="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+x[1]+(x[2]?'<span class="badge '+x[3]+'">'+x[2]+'</span>':'')+'</button>'}).join('');
+  if(st)t=[t[0]];
+  return t.map(function(x){return '<button type="button" data-act="tab" data-id="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+x[1]+(x[2]?'<span class="badge '+x[3]+'">'+x[2]+'</span>':'')+'</button>'}).join('')+(st&&window.__logout?'<button type="button" data-act="logout">Sair</button>':'');
 }
 function alertStrip(){
   var l=lowList();if(!l.length)return '';
@@ -1123,9 +1127,9 @@ function vTicket(id){
     '<div><div class="ln-n">'+esc(it.name)+'</div><button type="button" class="ln-note'+(it.note?'':' add')+'" data-act="note" data-lid="'+it.lid+'">'+(it.note?esc(it.note):'+ observação')+'</button></div><div class="ln-p">'+brl(it.price*it.qty)+'</div></li>'}).join('')+'</ul>'
     :'<div class="ph"><b>Comanda vazia</b>Toque num item do cardápio abaixo para lançar.</div>';
   var grid='<div id="pgrid">'+gridHtml(cat)+'</div>';
-  return '<div class="tk-head"><button type="button" class="btn ghost sm back" data-act="back">← Comandas</button><div class="ttl"><h2>'+esc(o.label)+'</h2><p class="meta">#'+pad(o.num)+' · aberta às '+hhmm(o.openedAt)+' · há '+ago(o.openedAt)+'</p></div><div class="tk-tools"><button type="button" class="btn sm danger" data-act="cancel" data-id="'+id+'">Cancelar comanda</button></div></div>'+
+  return '<div class="tk-head"><button type="button" class="btn ghost sm back" data-act="back">← Comandas</button><div class="ttl"><h2>'+esc(o.label)+'</h2><p class="meta">#'+pad(o.num)+' · aberta às '+hhmm(o.openedAt)+' · há '+ago(o.openedAt)+'</p></div><div class="tk-tools">'+(isStaff()?'':'<button type="button" class="btn sm danger" data-act="cancel" data-id="'+id+'">Cancelar comanda</button>')+'</div></div>'+
   custStrip(o)+lines+'<div class="picker"><div class="srch srch-v"><input type="search" id="mi-q" placeholder="Buscar item" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" value="'+esc(S.q||'')+'" aria-label="Buscar item no cardápio">'+viewToggle()+'</div><div class="chips" role="group" aria-label="Categorias">'+cats.map(function(c){return '<button type="button" data-act="cat" data-id="'+esc(c)+'" aria-pressed="'+(c===cat&&!(S.q||'').trim())+'">'+esc(c)+'</button>'}).join('')+'</div>'+grid+'</div>'+printBar(o)+
-  '<div class="tk-foot"><div class="tot"><small>Subtotal</small>'+brl(subOf(o))+'</div><button type="button" class="btn primary" data-act="pay"'+(items.length?'':' disabled')+'>Fechar conta</button></div>';
+  '<div class="tk-foot"><div class="tot"><small>Subtotal</small>'+brl(subOf(o))+'</div>'+(isStaff()&&!staffCanPay()?'':'<button type="button" class="btn primary" data-act="pay"'+(items.length?'':' disabled')+'>Fechar conta</button>')+'</div>';
 }
 function vCardapio(){
   var groups=getCats().map(function(c){
@@ -1331,7 +1335,16 @@ function mqInner(){
 function vMaq(){var c=S.cfg||{};S.mq={list:machines().map(function(m){return {id:m.id,name:m.name,deb:m.deb||0,cred:m.cred||0}}),act:c.maqAtiva||'',pass:!!c.passFee};return '<div class="card" id="mq-card" style="margin-top:16px">'+mqInner()+'</div>'}
 function syncMq(){var rows=document.querySelectorAll('#mq-card .mq-row');if(!S.mq)return;S.mq.list=[].map.call(rows,function(r,i){var o=S.mq.list[i]||{};return {id:o.id,name:r.querySelector('.mq-n').value.trim(),deb:clampP(parseN(r.querySelector('.mq-d').value)),cred:clampP(parseN(r.querySelector('.mq-c').value))}});var p=$('#mq-pass');if(p)S.mq.pass=p.checked}
 function mqPaint(){var el=$('#mq-card');if(el)el.innerHTML=mqInner()}
-function vAjustes(){return vAjustes0()+vMaq()+vAjExtra()}
+function vStaff(){
+  if(!window.__logout)return '';
+  var c=S.cfg||{},l=c.staff||[];
+  return '<div class="card" id="staff-card" style="margin-top:16px"><h3>Acesso da equipe (atendentes)</h3><p class="muted" style="margin-bottom:12px">O atendente entra com o próprio e-mail e vê só a tela de Comandas: lança os pedidos e imprime. Não vê Estoque, Caixa, Cardápio, Clientes nem Ajustes.</p>'+
+  (l.length?l.map(function(e,i){return '<div class="row" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="overflow-wrap:anywhere">'+esc(e)+'</span><button type="button" class="btn sm ghost" data-act="staffdel" data-i="'+i+'">Remover</button></div>'}).join(''):'<p class="muted" style="margin-bottom:8px">Nenhum atendente cadastrado. Quem não está nesta lista tem acesso a tudo.</p>')+
+  '<label style="margin-top:12px">E-mail do atendente<input id="staff-email" type="email" inputmode="email" autocomplete="off" autocapitalize="off" placeholder="atendente@exemplo.com"></label><p class="err" id="staff-e"></p>'+
+  '<div class="acts" style="margin-bottom:12px"><button type="button" class="btn primary" data-act="staffadd">Adicionar atendente</button></div>'+
+  '<label class="toggle"><input type="checkbox" id="staff-pay"'+(c.staffPay?' checked':'')+'>Atendente também pode fechar a conta (receber)</label>'+
+  '<p class="muted" style="margin-top:12px;font-size:13px">Antes, crie o login dele no Supabase: Authentication → Users → Add user → Create new user (e-mail e senha, marque Auto Confirm User). Depois cadastre o mesmo e-mail aqui. Isto esconde as telas; não é uma trava de segurança do banco de dados.</p></div>'}
+function vAjustes(){return vAjustes0()+vStaff()+vMaq()+vAjExtra()}
 document.addEventListener('click',function(e){
   var t=e.target;if(!t.closest)return;
   if(t.closest('#st-logo-pick')){var f=$('#st-logo-file');if(f)f.click()}
@@ -1359,6 +1372,7 @@ function draw(){
   if(a&&a.dataset&&a.dataset.act&&!a.closest('#modal-root')){fk='[data-act="'+a.dataset.act+'"]'+(a.dataset.id?'[data-id="'+a.dataset.id+'"]':'')+(a.dataset.lid?'[data-lid="'+a.dataset.lid+'"]':'')+(a.dataset.dl?'[data-dl="'+a.dataset.dl+'"]':'')}
   var v=$('#view');
   if(S.dbState==='none'){$('#nav').innerHTML='';v.innerHTML='<div class="empty"><b>Entre na sua conta para usar</b>Comandas, cardápio e estoque ficam guardados na sua conta Claude. Abra esta página logado para continuar.</div>';return}
+  if(isStaff()&&S.tab!=='comandas')S.tab='comandas';
   $('#nav').innerHTML=navHtml();
   if(S.err){v.innerHTML='<div class="empty"><b>Não foi possível carregar os dados</b>Recarregue a página. Se continuar, verifique sua conexão.</div>';return}
   if(!ready()){v.innerHTML='<div class="empty"><b>Carregando</b>Buscando comandas, cardápio e estoque.</div>';return}
@@ -1436,6 +1450,7 @@ function openGoal(){
 }
 function openPay(){
   var id=S.sel,o=S.open[id];if(!o||!(o.items||[]).length)return;
+  if(isStaff()&&!staffCanPay())return;
   var st={svc:false,disc:0,pay:'pix',recv:0,mq:(machById(null)||{}).id||''};
   var body='<form id="pf"><div class="paybox" id="pf-box"></div>'+
   (svcPct()>0?'<label class="toggle"><input type="checkbox" id="pf-svc">Incluir taxa de serviço de '+fmt(svcPct())+'%</label>':'')+
@@ -1845,6 +1860,8 @@ var READ={efil:1,cview:1,rsort:1,rcat:1,rcsv:1,cmode:1,cnav:1,ctoday:1,cquick:1,
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-act]');if(!t||t.closest('#modal-root'))return;
   var a=t.dataset.act,d=t.dataset;
+  if(isStaff()){var SB={reopen:1,mnew:1,medit:1,mchoice:1,mkit:1,mactive:1,cats:1,snew:1,sedit:1,sin:1,scount:1,goal:1,mqadd:1,mqdel:1,mqon:1,mqsave:1,bkexp:1,bkimp:1,ccsv:1,rcsv:1,cancel:1,bttest:1,pmraw:1,pmdir:1,cview:1,cmode:1,cnav:1,ctoday:1,cquick:1,rsort:1,rcat:1,rall:1,staffadd:1,staffdel:1,cnew:1,cprof:1,cfilter:1};
+    if(SB[a]||(a==='pay'&&!staffCanPay())||(a==='tab'&&d.id!=='comandas')){toast('Sem permissão para esta função.','err');return}}
   if(!canWrite&&!READ[a]){toast('Você está no modo leitura.','err');return}
   switch(a){
     case 'tab':S.tab=d.id;draw();window.scrollTo(0,0);break;
@@ -1878,6 +1895,12 @@ document.addEventListener('click',function(e){
     case 'pmraw':window.BTP.setMode('rawbt');draw();break;
     case 'pmdir':window.BTP.setMode('direct');draw();break;
     case 'goal':openGoal();break;
+    case 'staffadd':{var em=($('#staff-email')||{}).value||'';em=em.trim().toLowerCase();var se=$('#staff-e'),sl=(S.cfg&&S.cfg.staff||[]).slice();
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){se.textContent='Digite um e-mail válido.';break}
+      if(em===String(window.__userEmail||'').toLowerCase()){se.textContent='Você não pode se colocar como atendente: perderia o acesso às telas de gestão.';break}
+      if(sl.indexOf(em)>=0){se.textContent='Esse e-mail já está na lista.';break}
+      sl.push(em);enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{staff:sl}))}).then(function(){toast('Atendente adicionado');draw()});break}
+    case 'staffdel':{var sl2=(S.cfg&&S.cfg.staff||[]).slice();sl2.splice(+d.i,1);enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{staff:sl2}))}).then(function(){toast('Atendente removido');draw()});break}
     case 'mqadd':syncMq();var nid='m'+Date.now().toString(36);S.mq.list.push({id:nid,name:'',deb:0,cred:0});if(!S.mq.act)S.mq.act=nid;mqPaint();break;
     case 'mqdel':syncMq();S.mq.list.splice(+d.i,1);if(!S.mq.list.some(function(m){return m.id===S.mq.act}))S.mq.act=S.mq.list.length?S.mq.list[0].id:'';mqPaint();break;
     case 'mqon':syncMq();S.mq.act=(S.mq.list[+d.i]||{}).id||'';mqPaint();break;
@@ -1909,6 +1932,7 @@ document.addEventListener('change',function(e){
   if(t.id==='rep-date'&&t.value){S.date=t.value;subReport();draw()}
   if(t.id==='rep-from'&&t.value){S.cfrom=t.value;if(!S.cto)S.cto=t.value;subReport();draw()}
   if(t.id==='rep-to'&&t.value){S.cto=t.value;if(!S.cfrom)S.cfrom=t.value;subReport();draw()}
+  if(t.id==='staff-pay'){var pv=t.checked;enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{staffPay:pv}))});return}
   if(t.id==='blk'){if(!canWrite){t.checked=!t.checked;toast('Você está no modo leitura.','err');return}var v=t.checked;enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{blockOut:v}))})}
 });
 
