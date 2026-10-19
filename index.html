@@ -255,6 +255,7 @@ td.r,th.r{text-align:right}
 
 .setgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px;align-items:start}
 .setgrid form.card{display:flex;flex-direction:column;gap:14px}
+.pv-t{display:inline-block;font-weight:700;transform:scaleY(1.7);transform-origin:left top;margin-bottom:.85em}
 .paper{margin:0;padding:14px 12px;font:13px/1.35 var(--f-mono);background:var(--surface);color:var(--ink);border:1px dashed var(--line2);border-radius:8px;overflow-x:auto;white-space:pre;max-width:100%}
 /* modal */
 .scrim{position:fixed;inset:0;z-index:50;background:rgba(10,12,12,.55);display:flex;align-items:flex-end;justify-content:center}
@@ -367,13 +368,16 @@ td.r,th.r{text-align:right}
   function textBytes(text) {
     var out = [], lines = String(text).split('\n');
     lines.forEach(function (ln, li) {
-      var big = ln.charCodeAt(0) === 2;
-      if (big) { ln = ln.slice(1); out.push(0x1B, 0x21, 0x38, 0x1B, 0x45, 1); }
+      var mk = ln.charCodeAt(0), big = mk === 2, tall = mk === 3, bld = mk === 4;
+      if (mk >= 2 && mk <= 4) ln = ln.slice(1);
+      if (big) out.push(0x1B, 0x21, 0x38, 0x1B, 0x45, 1);
+      else if (tall) out.push(0x1B, 0x21, 0x10, 0x1B, 0x45, 1);
+      else if (bld) out.push(0x1B, 0x45, 1);
       for (var i = 0; i < ln.length; i++) {
         var c = ln.charCodeAt(i);
         out.push(c >= 32 && c < 127 ? c : 63);
       }
-      if (big) out.push(0x1B, 0x21, 0x00, 0x1B, 0x45, 0);
+      if (big || tall || bld) out.push(0x1B, 0x21, 0x00, 0x1B, 0x45, 0);
       if (li < lines.length - 1) out.push(10);
     });
     return out;
@@ -424,7 +428,7 @@ td.r,th.r{text-align:right}
     });
   }
   function build(text, opt) {
-    var head = [0x1B, 0x40];
+    var head = [0x1B, 0x40, 0x1B, 0x4D, 0x00];
     var p = Promise.resolve([]);
     if (opt && opt.logo) {
       p = logoBytes(opt.logo, opt.paper || 384, opt.size).then(function (img) {
@@ -1281,14 +1285,15 @@ function vAjustes0(){
   (window.BTP?'<div><div class="muted" style="font-size:13px;font-weight:500;margin-bottom:8px">Logo no topo da impressão</div><div class="logo-row"><img id="st-logo-img" alt="Logo"'+(c.logo?' src="'+c.logo+'"':' hidden')+'><div class="acts"><button type="button" class="btn sm" id="st-logo-pick">Escolher imagem</button><button type="button" class="btn sm ghost" id="st-logo-del"'+(c.logo?'':' hidden')+'>Remover</button></div></div><input type="file" id="st-logo-file" accept="image/*" hidden></div><label>Tamanho do logo<select id="st-logo-size">'+opt('40','Pequeno',Number(c.logoSize)===40)+opt('60','Médio',!c.logoSize||Number(c.logoSize)===60)+opt('90','Grande',Number(c.logoSize)===90)+'</select></label>':'')+
   '<div class="row2"><label>Largura do papel<select id="st-paper">'+opt('58','58 mm (32 colunas)',Number(c.paper)!==80)+opt('80','80 mm (48 colunas)',Number(c.paper)===80)+'</select></label>'+
   '<label>Taxa de serviço (%)<input id="st-svc" inputmode="decimal" value="'+inpN(svcPct())+'"></label></div>'+
+  '<label>Tamanho da letra na comanda<select id="st-fs">'+opt('g','Grande (itens em letra alta) - mais legível',c.fs!=='n'&&c.fs!=='c')+opt('n','Média (negrito, total grande)',c.fs==='n')+opt('c','Compacta (menor, gasta menos papel)',c.fs==='c')+'</select></label>'+
   '<label class="toggle"><input type="checkbox" id="st-fisc"'+(c.fiscal?' checked':'')+'>Imprimir aviso "Não é documento fiscal"</label>'+
   '<p class="err" id="st-e"></p><div class="actions"><button class="btn primary" type="submit">Salvar ajustes</button></div></form>'+
-  '<div class="card"><h3>Prévia da comanda</h3>'+(window.BTP?'<div class="prevlogo"><img id="st-prev-logo" alt="Logo"'+(c.logo?' src="'+c.logo+'"':' hidden')+' style="width:'+(Number(c.logoSize)||60)+'%"></div>':'')+'<pre class="paper" id="st-prev" aria-label="Prévia da comanda impressa">'+esc(thermalText(SAMPLE,c))+'</pre><p class="muted" style="margin-top:10px;font-size:13px">A prévia usa uma comanda de exemplo e muda enquanto você digita. Acentos saem sem til e cedilha na impressão para evitar caracteres estranhos.'+(window.BTP?' O logo só sai na impressão direta (botão Imprimir); no Copiar p/ impressora sai só o texto.':'')+'</p></div></div>';
+  '<div class="card"><h3>Prévia da comanda</h3>'+(window.BTP?'<div class="prevlogo"><img id="st-prev-logo" alt="Logo"'+(c.logo?' src="'+c.logo+'"':' hidden')+' style="width:'+(Number(c.logoSize)||60)+'%"></div>':'')+'<pre class="paper" id="st-prev" aria-label="Prévia da comanda impressa">'+prevHtml(thermalText(SAMPLE,c))+'</pre><p class="muted" style="margin-top:10px;font-size:13px">A prévia usa uma comanda de exemplo e muda enquanto você digita. Acentos saem sem til e cedilha na impressão para evitar caracteres estranhos.'+(window.BTP?' O logo só sai na impressão direta (botão Imprimir); no Copiar p/ impressora sai só o texto.':'')+'</p></div></div>';
 }
 function readSet(){
   var v=function(id){return ($('#'+id)||{}).value||''};
   var svc=parseN(v('st-svc'));
-  return {name:v('st-name').trim(),tagline:v('st-tag').trim(),address:v('st-addr').trim(),phone:v('st-phone').trim(),cnpj:v('st-cnpj').trim(),pix:v('st-pix').trim(),msg:v('st-msg').trim(),paper:Number(v('st-paper'))||58,svcPct:Math.min(Math.max(svc,0),30),fiscal:!!($('#st-fisc')||{}).checked,logo:curLogo(),logoSize:Number(v('st-logo-size'))||(S.cfg&&S.cfg.logoSize)||60,cats:(S.cfg&&S.cfg.cats)||undefined};
+  return {name:v('st-name').trim(),tagline:v('st-tag').trim(),address:v('st-addr').trim(),phone:v('st-phone').trim(),cnpj:v('st-cnpj').trim(),pix:v('st-pix').trim(),msg:v('st-msg').trim(),paper:Number(v('st-paper'))||58,fs:v('st-fs')||'g',svcPct:Math.min(Math.max(svc,0),30),fiscal:!!($('#st-fisc')||{}).checked,logo:curLogo(),logoSize:Number(v('st-logo-size'))||(S.cfg&&S.cfg.logoSize)||60,cats:(S.cfg&&S.cfg.cats)||undefined};
 }
 function btPrint(id,test){
   var o=test?SAMPLE:S.open[id];if(!o||!window.BTP)return;
@@ -1660,39 +1665,44 @@ function kPrint(id){
 function thermalText(o,cfg){
   cfg=cfg||S.cfg||{};
   W=Number(cfg.paper)===80?48:32;
+  var fs=(cfg.fs==='c'||cfg.fs==='n')?cfg.fs:'g';
+  var B=fs==='c'?'':'\x04',T=fs==='c'?'':'\x03',IP=fs==='g'?'\x03':B;
   var dash=new Array(W+1).join('-'),L=[];
-  var ctrAll=function(s,up){if(!s)return;wrapTxt(plain(s)[up?'toUpperCase':'toString'](),W).forEach(function(x){L.push(ctr(x))})};
+  var ctrAll=function(s,up){if(!s)return;wrapTxt(plain(s)[up?'toUpperCase':'toString'](),W).forEach(function(x){L.push(B+ctr(x))})};
   ctrAll(cfg.name,true);ctrAll(cfg.tagline);ctrAll(cfg.address);
   if(cfg.phone)ctrAll('Tel: '+cfg.phone);
   if(cfg.cnpj)ctrAll('CNPJ: '+cfg.cnpj);
   if(L.length)L.push(dash);
-  L.push(ctr('COMANDA '+pad(o.num)));
-  wrapTxt(plain(o.label).toUpperCase(),W).forEach(function(x){L.push(ctr(x))});
-  L.push(ctr(new Date(o.openedAt).toLocaleDateString('pt-BR')+' '+hhmm(o.openedAt)));
+  var head='COMANDA '+pad(o.num)+' - '+plain(o.label).toUpperCase();
+  if(head.length<=W)L.push(T+ctr(head));
+  else{L.push(T+ctr('COMANDA '+pad(o.num)));wrapTxt(plain(o.label).toUpperCase(),W).forEach(function(x){L.push(T+ctr(x))})}
+  L.push(B+ctr(new Date(o.openedAt).toLocaleDateString('pt-BR')+' '+hhmm(o.openedAt)));
   L.push(dash);
   (o.items||[]).forEach(function(it){
     var price=plain(brl(it.price*it.qty)),name=plain(it.qty+'x '+it.name);
     if(it.qty>1){
-      wrapTxt(name,W).forEach(function(p){L.push(p)});
-      L.push(lr('   '+it.qty+' x '+plain(brl(it.price)),price));
+      wrapTxt(name,W).forEach(function(p){L.push(IP+p)});
+      L.push(IP+lr('   '+it.qty+' x '+plain(brl(it.price)),price));
     }else{
       var parts=wrapTxt(name,W-price.length-1);
-      parts.forEach(function(p,i){L.push(i===0?lr(p,price):p)});
+      parts.forEach(function(p,i){L.push(IP+(i===0?lr(p,price):p))});
     }
-    if(it.note)wrapTxt('> '+plain(it.note),W-2).forEach(function(p){L.push('  '+p)});
+    if(it.note)wrapTxt('> '+plain(it.note),W-2).forEach(function(p){L.push(B+'  '+p)});
   });
   L.push(dash);
-  L.push(lr('SUBTOTAL',plain(brl(subOf(o)))));
-  if(cfg.pix){L.push('');wrapTxt('PIX: '+plain(cfg.pix),W).forEach(function(x){L.push(x)})}
-  if(cfg.msg){L.push('');ctrAll(cfg.msg)}
-  if(cfg.fiscal){L.push('');ctrAll('Nao e documento fiscal')}
-  L.push('','','');
+  L.push(T+lr('SUBTOTAL',plain(brl(subOf(o)))));
+  if(cfg.pix){L.push('');wrapTxt('PIX: '+plain(cfg.pix),W).forEach(function(x){L.push(B+x)})}
+  if(cfg.msg)ctrAll(cfg.msg);
+  if(cfg.fiscal)ctrAll('Nao e documento fiscal');
+  L.push('','');
   return L.join('\n');
 }
-function copyThermal(){var o=S.open[S.sel];if(!o)return;copyText(thermalText(o),'Texto da impressora copiado')}
+function thermalPlain(o,cfg){return thermalText(o,cfg).replace(/[\x02-\x04]/g,'')}
+function prevHtml(t){return t.split('\n').map(function(ln){var c=ln.charCodeAt(0),x=esc(ln.replace(/^[\x02-\x04]/,''));return c===3?'<span class="pv-t">'+x+'</span>':(c===4?'<b>'+x+'</b>':x)}).join('\n')}
+function copyThermal(){var o=S.open[S.sel];if(!o)return;copyText(thermalPlain(o),'Texto da impressora copiado')}
 function saveThermal(){
   var o=S.open[S.sel];if(!o||!S.dl)return;
-  S.dl.save({filename:'comanda-'+pad(o.num)+'.txt',data:thermalText(o)}).then(function(){toast('Arquivo salvo')},function(e){if(e&&e.code!=='declined')toast('Não foi possível salvar o arquivo.','err')});
+  S.dl.save({filename:'comanda-'+pad(o.num)+'.txt',data:thermalPlain(o)}).then(function(){toast('Arquivo salvo')},function(e){if(e&&e.code!=='declined')toast('Não foi possível salvar o arquivo.','err')});
 }
 
 /* ---------- clientes ---------- */
@@ -1902,7 +1912,7 @@ document.addEventListener('change',function(e){
   if(t.id==='blk'){if(!canWrite){t.checked=!t.checked;toast('Você está no modo leitura.','err');return}var v=t.checked;enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{blockOut:v}))})}
 });
 
-function updPrev(){var p=$('#st-prev');if(p)p.textContent=thermalText(SAMPLE,readSet())}
+function updPrev(){var p=$('#st-prev');if(p)p.innerHTML=prevHtml(thermalText(SAMPLE,readSet()))}
 document.addEventListener('input',function(e){
   var t=e.target;
   if(t&&t.id==='es-q'){S.eq=t.value;var el=$('#es-list');if(el)el.innerHTML=esListHtml();return}
