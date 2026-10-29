@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>BitPub | Painel de pedidos</title>
+<meta name="theme-color" content="#141414">
+<link rel="icon" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--laranja:#F96A05;--preto:#141414;--amarelo:#F7B500;--papel:#fff;--cinza:#F1F1F1;--linha:#DADADA;--texto:#1D1D1D;--suave:#5A5A5A;--erro:#B3261E;--ok:#1B7F3B;
+--f-titulo:'Anton','Arial Narrow',Impact,sans-serif;--f-corpo:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cinza);color:var(--texto);font:16px/1.45 var(--f-corpo)}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+:focus-visible{outline:3px solid var(--laranja);outline-offset:2px}
+[hidden]{display:none!important}
+.topo{background:var(--preto);color:#fff;position:sticky;top:0;z-index:10}
+.topo-in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.topo h1{margin:0;font:400 26px/1 var(--f-titulo);color:var(--amarelo);margin-right:auto}
+.abas{display:flex;gap:6px}
+.aba{background:transparent;color:#fff;border:2px solid #fff;padding:8px 14px;font-weight:700;min-height:42px}
+.aba[aria-selected="true"]{background:var(--laranja);border-color:var(--laranja);color:var(--preto)}
+.aba .n{background:var(--amarelo);color:var(--preto);padding:0 7px;margin-left:6px;font-weight:800}
+.sair{background:none;border:0;color:#cfcfcf;text-decoration:underline;min-height:42px}
+main{max-width:980px;margin:0 auto;padding:16px 16px 60px}
+.login{max-width:380px;margin:12vh auto 0;background:var(--papel);border:3px solid var(--preto);padding:22px;display:flex;flex-direction:column;gap:14px}
+.login h1{font:400 34px/1 var(--f-titulo);margin:0}
+label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-size:15px}
+input[type=text],input[type=password],input[type=email],input[type=search],input[type=number]{border:2px solid var(--preto);background:#fff;padding:10px 12px;min-height:44px;border-radius:0;font-weight:500;width:100%}
+.principal{background:var(--laranja);color:var(--preto);border:2px solid var(--preto);font-weight:800;min-height:48px;padding:0 18px;border-radius:0}
+.sec{background:#fff;color:var(--preto);border:2px solid var(--preto);font-weight:700;min-height:42px;padding:0 14px;border-radius:0}
+.erro{color:var(--erro);font-weight:600;margin:0;min-height:1.3em}
+.filtros{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px}
+.f{flex:none;background:#fff;border:2px solid var(--preto);padding:7px 12px;font-weight:700;min-height:40px}
+.f[aria-pressed="true"]{background:var(--preto);color:#fff}
+.lista{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.card{background:#fff;border:3px solid var(--preto);padding:14px;display:flex;flex-direction:column;gap:8px}
+.card.novo{border-color:var(--laranja);box-shadow:0 0 0 3px rgba(249,106,5,.25)}
+.card h3{margin:0;font:400 24px/1.1 var(--f-titulo)}
+.linha1{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.sel{background:var(--amarelo);font-weight:800;font-size:13px;padding:2px 8px;white-space:nowrap}
+.sel.cancelado{background:#ddd}.sel.entregue{background:#BFE8C9}
+.mini{color:var(--suave);font-size:14px}
+.itens{margin:0;padding:8px 0;border-top:1px solid var(--linha);border-bottom:1px solid var(--linha);font-size:15px}
+.itens div{display:flex;justify-content:space-between;gap:10px}
+.itens em{color:var(--suave);display:block;font-size:14px}
+.acoes{display:flex;gap:8px;flex-wrap:wrap}
+.acoes .principal,.acoes .sec{flex:1;min-width:120px}
+.frete{display:flex;gap:8px;align-items:center}
+.frete input{max-width:120px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--preto);color:#fff;padding:12px 14px}
+.tile b{display:block;font:400 34px/1 var(--f-titulo);color:var(--amarelo)}
+.cli{background:#fff;border:2px solid var(--preto);margin-bottom:8px}
+.cli>button{width:100%;text-align:left;background:none;border:0;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:2px 12px}
+.cli b{font-weight:800}
+.cli .num{font:400 26px/1 var(--f-titulo);text-align:right}
+.cli .det{padding:0 14px 14px;border-top:1px solid var(--linha)}
+.vazio{text-align:center;color:var(--suave);padding:30px 0}
+.busca{margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<section id="telaLogin" class="login" hidden>
+  <h1>Painel BitPub</h1>
+  <form id="formLogin" style="display:flex;flex-direction:column;gap:14px" novalidate>
+    <label>E-mail da equipe<input type="email" id="lEmail" autocomplete="username"></label>
+    <label>Senha<input type="password" id="lSenha" autocomplete="current-password"></label>
+    <p class="erro" id="lErro" role="alert"></p>
+    <button class="principal" type="submit">Entrar</button>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header class="topo"><div class="topo-in">
+    <h1>Painel BitPub</h1>
+    <div class="abas" role="tablist">
+      <button class="aba" role="tab" id="abaPedidos" aria-selected="true">Pedidos<span class="n" id="nNovos" hidden>0</span></button>
+      <button class="aba" role="tab" id="abaClientes" aria-selected="false">Clientes</button>
+    </div>
+    <button class="sair" id="btnSair" type="button">Sair</button>
+  </div></header>
+  <main>
+    <section id="vPedidos">
+      <div class="filtros" id="filtros" role="group" aria-label="Filtrar pedidos"></div>
+      <div class="lista" id="listaPedidos"></div>
+    </section>
+    <section id="vClientes" hidden>
+      <div class="tiles" id="tiles"></div>
+      <input class="busca" type="search" id="busca" placeholder="Buscar por nome ou WhatsApp" aria-label="Buscar cliente">
+      <div id="listaClientes"></div>
+    </section>
+  </main>
+</div>
+
+<script src="../config.js"></script>
+<script>
+(function(){
+'use strict';
+var CFG=window.BITPUB_CFG||{};
+var $=function(s,el){return (el||document).querySelector(s)};
+var R=function(v){return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})};
+function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function mascara(d){d=String(d||'').replace(/\D/g,'');if(d.length===11)return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7);if(d.length===10)return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);return d}
+function quando(iso){return iso?new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'-'}
+
+var SK='bitpub_painel_sessao', mem=null;
+function lerSessao(){if(mem)return mem;try{var s=JSON.parse(localStorage.getItem(SK)||'null');if(s)mem=s;return s}catch(e){return null}}
+function gravarSessao(s){mem=s;try{if(s)localStorage.setItem(SK,JSON.stringify(s));else localStorage.removeItem(SK)}catch(e){}}
+function montarSessao(d){return {access_token:d.access_token,refresh_token:d.refresh_token,expira:Date.now()+(d.expires_in||3600)*1000}}
+async function http(path,o){
+  o=o||{};var h={apikey:CFG.key,'Content-Type':'application/json'},token=CFG.key;
+  if(o.auth!==false){var s=await sessaoValida();if(s)token=s.access_token}
+  h.Authorization='Bearer '+token;
+  if(o.prefer)h.Prefer=o.prefer;
+  var r=await fetch(CFG.url+path,{method:o.method||'GET',headers:h,body:o.body?JSON.stringify(o.body):undefined});
+  var t=await r.text(),data=null;try{data=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok){var er=new Error((data&&(data.message||data.error_description||data.msg))||('http '+r.status));er.status=r.status;throw er}
+  return data;
+}
+async function sessaoValida(){
+  var s=lerSessao();if(!s)return null;if(s.expira-Date.now()>60000)return s;
+  try{var d=await http('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:s.refresh_token}});s=montarSessao(d);gravarSessao(s);return s}
+  catch(e){gravarSessao(null);return null}
+}
+
+/* ---------- login ---------- */
+$('#formLogin').addEventListener('submit',async function(e){
+  e.preventDefault();var er=$('#lErro');er.textContent='';
+  try{
+    var d=await http('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email:$('#lEmail').value.trim(),password:$('#lSenha').value}});
+    gravarSessao(montarSessao(d));
+    if(!(await ehEquipe())){gravarSessao(null);er.textContent='Esse login não é da equipe. Use o e-mail do sistema BitPub.';return}
+    $('#lSenha').value='';iniciar();
+  }catch(x){er.textContent=/Invalid login/.test(x.message)?'E-mail ou senha incorretos.':(x.message||'Não foi possível entrar.')}
+});
+async function ehEquipe(){try{return (await http('/rest/v1/rpc/is_staff',{method:'POST',body:{}}))===true}catch(e){return false}}
+$('#btnSair').addEventListener('click',function(){gravarSessao(null);parar();$('#app').hidden=true;$('#telaLogin').hidden=false});
+
+/* ---------- pedidos ---------- */
+var pedidos=[],filtro='abertos',ultimoNumero=null,timer=null,som=null;
+var ROT={novo:'Novo',aceito:'Aceito',pronto:'Pronto',entregue:'Entregue',cancelado:'Cancelado'};
+var PROX={novo:['aceito','Aceitar pedido'],aceito:['pronto','Marcar pronto'],pronto:['entregue','Marcar entregue']};
+var FILTROS=[['abertos','Em andamento'],['novo','Novos'],['aceito','Aceitos'],['pronto','Prontos'],['entregue','Entregues'],['cancelado','Cancelados'],['todos','Todos']];
+
+function beep(){
+  try{som=som||new (window.AudioContext||window.webkitAudioContext)();var o=som.createOscillator(),g=som.createGain();o.connect(g);g.connect(som.destination);o.frequency.value=880;g.gain.value=.15;o.start();o.stop(som.currentTime+.25)}catch(e){}
+}
+async function carregarPedidos(){
+  try{
+    var ps=await http('/rest/v1/pedidos_online?select=*&order=criado_em.desc&limit=200');
+    var maior=ps.reduce(function(m,p){return Math.max(m,p.numero)},0);
+    if(ultimoNumero!==null&&maior>ultimoNumero){beep();document.title='(novo) BitPub | Painel de pedidos'}
+    ultimoNumero=Math.max(ultimoNumero||0,maior);pedidos=ps;desenharPedidos();
+  }catch(e){if(e.status===401){gravarSessao(null);location.reload()}}
+}
+function desenharFiltros(){
+  $('#filtros').innerHTML=FILTROS.map(function(f){return '<button type="button" class="f" data-f="'+f[0]+'" aria-pressed="'+(filtro===f[0])+'">'+f[1]+'</button>'}).join('');
+}
+function visiveis(){return pedidos.filter(function(p){return filtro==='todos'?true:filtro==='abertos'?['novo','aceito','pronto'].indexOf(p.status)>-1:p.status===filtro})}
+function desenharPedidos(){
+  var novos=pedidos.filter(function(p){return p.status==='novo'}).length,b=$('#nNovos');b.hidden=!novos;b.textContent=novos;
+  desenharFiltros();
+  var v=visiveis();
+  $('#listaPedidos').innerHTML=v.length?v.map(cartao).join(''):'<p class="vazio">Nenhum pedido aqui.</p>';
+}
+function msgZap(p,frete){
+  var m='Olá, '+p.nome_cliente.split(' ')[0]+'! Aqui é do BitPub. Recebemos seu pedido #'+p.numero+' (itens: '+R(p.total)+').';
+  if(p.tipo==='entrega'&&frete!=null)m+=' Frete para '+p.endereco+': '+R(frete)+'. Total com frete: '+R(Number(p.total)+frete)+'.';
+  return m+' Como você prefere pagar?';
+}
+function cartao(p){
+  var prox=PROX[p.status];
+  return '<article class="card '+(p.status==='novo'?'novo':'')+'" data-id="'+p.id+'">'+
+    '<div class="linha1"><h3>#'+p.numero+' '+esc(p.nome_cliente)+'</h3><span class="sel '+p.status+'">'+ROT[p.status]+'</span></div>'+
+    '<div class="mini">'+quando(p.criado_em)+' &middot; '+(p.tipo==='entrega'?'Entrega':'Retirada')+' &middot; '+esc(mascara(p.whatsapp_cliente))+'</div>'+
+    (p.tipo==='entrega'?'<div><b>Endereço:</b> '+esc(p.endereco)+'</div>':'')+
+    '<div class="itens">'+p.itens.map(function(i){return '<div><span>'+i.qtd+'x '+esc(i.nome)+(i.obs?'<em>'+esc(i.obs)+'</em>':'')+'</span><span>'+R(i.preco*i.qtd)+'</span></div>'}).join('')+'</div>'+
+    (p.observacao?'<div><b>Obs:</b> '+esc(p.observacao)+'</div>':'')+
+    '<div class="linha1"><b>Itens: '+R(p.total)+'</b></div>'+
+    (p.tipo==='entrega'&&p.status!=='cancelado'&&p.status!=='entregue'?'<div class="frete"><label style="flex-direction:row;align-items:center;gap:8px">Frete R$<input type="number" step="0.5" min="0" inputmode="decimal" data-frete aria-label="Valor do frete"></label></div>':'')+
+    '<div class="acoes">'+
+      (p.status!=='cancelado'?'<button class="sec" type="button" data-zap>WhatsApp do cliente</button>':'')+
+      (prox?'<button class="principal" type="button" data-prox="'+prox[0]+'">'+prox[1]+'</button>':'')+
+      (p.status==='novo'||p.status==='aceito'?'<button class="sec" type="button" data-cancel>Cancelar</button>':'')+
+    '</div></article>';
+}
+$('#filtros').addEventListener('click',function(e){var b=e.target.closest('[data-f]');if(!b)return;filtro=b.getAttribute('data-f');desenharPedidos()});
+$('#listaPedidos').addEventListener('click',async function(e){
+  var card=e.target.closest('.card');if(!card)return;
+  var p=pedidos.find(function(x){return x.id===card.getAttribute('data-id')});if(!p)return;
+  if(e.target.closest('[data-zap]')){
+    var f=card.querySelector('[data-frete]'),fr=f&&f.value!==''?Number(f.value):null;
+    window.open('https://wa.me/55'+p.whatsapp_cliente+'?text='+encodeURIComponent(msgZap(p,fr)),'_blank','noopener');return;
+  }
+  var prox=e.target.closest('[data-prox]'),canc=e.target.closest('[data-cancel]');
+  if(!prox&&!canc)return;
+  if(canc&&!confirm('Cancelar o pedido #'+p.numero+'?'))return;
+  var novo=prox?prox.getAttribute('data-prox'):'cancelado';
+  try{
+    await http('/rest/v1/pedidos_online?id=eq.'+p.id,{method:'PATCH',prefer:'return=minimal',body:{status:novo,atualizado_em:new Date().toISOString()}});
+    p.status=novo;desenharPedidos();
+  }catch(er){alert('Não foi possível atualizar: '+er.message)}
+});
+
+/* ---------- clientes ---------- */
+var clientes=[];
+async function carregarClientes(){
+  try{
+    clientes=await http('/rest/v1/clientes_resumo?select=*&order=pedidos.desc,ultimo_pedido.desc.nullslast&limit=1000');
+    desenharClientes();
+  }catch(e){$('#listaClientes').innerHTML='<p class="erro">'+esc(e.message)+'</p>'}
+}
+function desenharClientes(){
+  var q=$('#busca').value.trim().toLowerCase(),qd=q.replace(/\D/g,'');
+  var v=clientes.filter(function(c){return !q||c.nome.toLowerCase().indexOf(q)>-1||(qd&&c.whatsapp.indexOf(qd)>-1)});
+  var voltaram=clientes.filter(function(c){return c.pedidos>=2}).length;
+  var gasto=clientes.reduce(function(s,c){return s+Number(c.total_gasto)},0);
+  $('#tiles').innerHTML='<div class="tile"><b>'+clientes.length+'</b>clientes cadastrados</div><div class="tile"><b>'+voltaram+'</b>já pediram 2 vezes ou mais</div><div class="tile"><b>'+R(gasto)+'</b>em pedidos entregues</div>';
+  $('#listaClientes').innerHTML=v.length?v.map(function(c){
+    return '<div class="cli" data-id="'+c.id+'"><button type="button" aria-expanded="false"><span><b>'+esc(c.nome)+'</b><br><span class="mini">'+esc(mascara(c.whatsapp))+' &middot; último pedido: '+quando(c.ultimo_pedido)+'</span></span><span class="num">'+c.pedidos+'<br><span class="mini" style="font:500 13px var(--f-corpo)">'+(c.pedidos===1?'pedido':'pedidos')+'</span></span>'+
+      '<span class="mini">Gasto em pedidos entregues: '+R(c.total_gasto)+'</span></button><div class="det" hidden></div></div>';
+  }).join(''):'<p class="vazio">Nenhum cliente encontrado.</p>';
+}
+$('#busca').addEventListener('input',desenharClientes);
+$('#listaClientes').addEventListener('click',async function(e){
+  var b=e.target.closest('.cli>button');if(!b)return;
+  var box=b.parentNode,det=box.querySelector('.det'),abrir=det.hidden;
+  b.setAttribute('aria-expanded',String(abrir));det.hidden=!abrir;
+  if(!abrir)return;
+  det.innerHTML='<p class="mini">Carregando...</p>';
+  try{
+    var ps=await http('/rest/v1/pedidos_online?select=numero,itens,total,tipo,status,criado_em&cliente_id=eq.'+box.getAttribute('data-id')+'&order=criado_em.desc&limit=50');
+    det.innerHTML=ps.length?ps.map(function(p){return '<p style="margin:10px 0 0"><b>#'+p.numero+'</b> &middot; '+quando(p.criado_em)+' &middot; '+ROT[p.status]+' &middot; '+R(p.total)+'<br><span class="mini">'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)}).join(', ')+'</span></p>'}).join(''):'<p class="mini">Ainda sem pedidos.</p>';
+  }catch(er){det.innerHTML='<p class="erro">'+esc(er.message)+'</p>'}
+});
+
+/* ---------- abas e ciclo ---------- */
+function aba(qual){
+  var ped=qual==='pedidos';
+  $('#abaPedidos').setAttribute('aria-selected',String(ped));$('#abaClientes').setAttribute('aria-selected',String(!ped));
+  $('#vPedidos').hidden=!ped;$('#vClientes').hidden=ped;
+  if(ped){document.title='BitPub | Painel de pedidos'}else carregarClientes();
+}
+$('#abaPedidos').addEventListener('click',function(){aba('pedidos')});
+$('#abaClientes').addEventListener('click',function(){aba('clientes')});
+function parar(){if(timer){clearInterval(timer);timer=null}}
+function iniciar(){
+  $('#telaLogin').hidden=true;$('#app').hidden=false;ultimoNumero=null;
+  carregarPedidos();parar();timer=setInterval(function(){if(!document.hidden&&!$('#vPedidos').hidden)carregarPedidos()},15000);
+}
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&lerSessao()&&!$('#vPedidos').hidden){carregarPedidos();document.title='BitPub | Painel de pedidos'}});
+(async function(){ if(lerSessao()&&await ehEquipe())iniciar(); else {gravarSessao(null);$('#telaLogin').hidden=false} })();
+})();
+</script>
+</body>
+</html>
