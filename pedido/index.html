@@ -59,7 +59,9 @@ button{cursor:pointer}
 main{max-width:720px;margin:0 auto;padding:8px 16px 140px}
 .secao{padding-top:26px}
 .secao h2{font:400 clamp(30px,8vw,42px)/1 var(--f-titulo);margin:0 0 4px;letter-spacing:.3px}
-.item{padding:14px 0 16px;border-bottom:3px solid var(--preto)}
+.item{padding:14px 0 16px;border-bottom:3px solid var(--preto);display:flex;align-items:flex-start;gap:14px}
+.item-corpo{flex:1;min-width:0}
+.foto{flex:none;width:104px;height:104px;object-fit:cover;border:2px solid var(--preto);background:var(--cinza);margin-top:2px}
 .item:last-child{border-bottom:0}
 .item-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .rotulo{margin:0;background:var(--preto);color:#fff;font:700 15px/1.2 var(--f-corpo);text-transform:uppercase;letter-spacing:.2px;padding:7px 10px;max-width:calc(100% - 96px)}
@@ -301,8 +303,10 @@ function desenharMenu(){
   $('#menu').innerHTML=cats.map(function(c,n){
     return '<section class="secao" id="cat'+n+'" aria-labelledby="h'+n+'"><h2 id="h'+n+'">'+esc(c)+'</h2>'+
       M.itens.filter(function(i){return i.cat===c}).map(function(i){
-        return '<article class="item" data-id="'+esc(i.id)+'"><div class="item-topo"><h3 class="rotulo">'+esc(i.nome)+'</h3><span class="preco">'+R(i.preco)+'</span></div>'+
-          (i.desc?'<p class="desc">'+esc(i.desc)+'</p>':'')+'<div class="acao"></div></article>';
+        var foto=/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(i.foto||'')?i.foto:'';
+        return '<article class="item" data-id="'+esc(i.id)+'"><div class="item-corpo"><div class="item-topo"><h3 class="rotulo">'+esc(i.nome)+'</h3><span class="preco">'+R(i.preco)+'</span></div>'+
+          (i.desc?'<p class="desc">'+esc(i.desc)+'</p>':'')+'<div class="acao"></div></div>'+
+          (foto?'<img class="foto" src="'+esc(foto)+'" alt="Foto de '+esc(i.nome)+'" width="104" height="104" loading="lazy" decoding="async">':'')+'</article>';
       }).join('')+'</section>';
   }).join('');
   $$('.item').forEach(function(el){ acaoItem(el.getAttribute('data-id')) });
