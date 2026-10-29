@@ -1,13 +1,13 @@
 {
-  "name": "BitPub Sistema de Controle",
-  "short_name": "BitPub",
+  "name": "BitPub Comandas",
+  "short_name": "BitPub Comandas",
   "description": "Comandas, cardápio e estoque da hamburgueria",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#ECEDEB",
-  "theme_color": "#C4301F",
+  "theme_color": "#1F1B19",
   "lang": "pt-BR",
   "icons": [
     {
@@ -28,5 +28,6 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "id": "./"
 }

@@ -929,7 +929,8 @@ th{font:600 12px/1 var(--f-body);letter-spacing:0;text-transform:none;color:var(
     return Promise.all([
       fetchAll('coll=neq.orders'),
       fetchAll('coll=eq.orders&' + q('data->>day') + '=gte.' + q(cut)),
-      fetchAll('coll=eq.orders&' + q('data->>status') + '=eq.open')
+      fetchAll('coll=eq.orders&' + q('data->>status') + '=eq.open'),
+      fetchAll('coll=eq.orders&' + q('data->>status') + '=eq.fiado')
     ]).then(function (rs) {
       var s = {}, all = [];
       rs.forEach(function (rows) { all = all.concat(rows); rows.forEach(function (r) { s[pathOf(r)] = r.data; }); });
@@ -1070,7 +1071,7 @@ var ago=function(ms){var m=Math.max(0,Math.round((Date.now()-ms)/60000));return 
 var lid=function(){return Math.random().toString(36).slice(2,8)};
 
 var db=null,canWrite=true;
-var S={menu:{},stock:{},open:{},paid:{},cust:{},cfg:{},loaded:{},tab:'comandas',sel:null,cat:null,date:dayKey(),cmode:'dia',cfrom:'',cto:'',dbState:'wait',err:null,newType:'mesa',paidUnsub:null};
+var S={menu:{},stock:{},open:{},fiado:{},fopen:{},paid:{},cust:{},cfg:{},loaded:{},tab:'comandas',sel:null,cat:null,date:dayKey(),cmode:'dia',cfrom:'',cto:'',dbState:'wait',err:null,newType:'mesa',paidUnsub:null};
 var ready=function(){return S.loaded.menu&&S.loaded.stock&&S.loaded.open&&S.loaded.cfg};
 
 /* ---------- helpers ---------- */
@@ -1195,9 +1196,9 @@ var staffCanPay=function(){return !!(S.cfg&&S.cfg.staffPay)};
 function navHtml(){
   var open=Object.keys(S.open).length,low=lowList().length;
   var st=isStaff();
-  var t=[['comandas','Comandas',open,''],['clientes','Clientes',0,''],['cardapio','Cardápio',0,''],['estoque','Estoque',low,'warn'],['caixa','Caixa',0,''],['ajustes','Ajustes',0,'']];
+  var t=[['comandas','Comandas',open,''],['clientes','Clientes',0,''],['fiado','Fiado',Object.keys(S.fiado||{}).length,'warn'],['cardapio','Cardápio',0,''],['estoque','Estoque',low,'warn'],['caixa','Caixa',0,''],['ajustes','Ajustes',0,'']];
   if(st)t=[t[0]];
-  var IC={comandas:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',clientes:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3 3 0 010 5.7M18 14.4c1.8.8 3 2.7 3 5.6"/>',cardapio:'<path d="M4 11a8 6 0 0116 0z"/><path d="M3 14.5h18"/><path d="M5 17.5h14a0 0 0 010 0 3 3 0 01-3 3H8a3 3 0 01-3-3z"/>',estoque:'<path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/>',caixa:'<rect x="3" y="6" width="18" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>',ajustes:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',sair:'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>'};
+  var IC={fiado:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>',comandas:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',clientes:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3 3 0 010 5.7M18 14.4c1.8.8 3 2.7 3 5.6"/>',cardapio:'<path d="M4 11a8 6 0 0116 0z"/><path d="M3 14.5h18"/><path d="M5 17.5h14a0 0 0 010 0 3 3 0 01-3 3H8a3 3 0 01-3-3z"/>',estoque:'<path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/>',caixa:'<rect x="3" y="6" width="18" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>',ajustes:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',sair:'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>'};
   var ico=function(k){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[k]+'</svg>'};
   return t.map(function(x){return '<button type="button" data-act="tab" data-id="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+ico(x[0])+'<span>'+x[1]+'</span>'+(x[2]?'<span class="badge '+x[3]+'">'+x[2]+'</span>':'')+'</button>'}).join('')+(st&&window.__logout?'<button type="button" data-act="logout">'+ico('sair')+'<span>Sair</span></button>':'');
 }
@@ -1266,7 +1267,7 @@ function vTicket(id){
   var grid='<div id="pgrid">'+gridHtml(cat)+'</div>';
   return '<div class="tk-head"><button type="button" class="btn ghost sm back" data-act="back">← Comandas</button><div class="ttl"><h2>'+esc(o.label)+'</h2><p class="meta">#'+pad(o.num)+' · aberta às '+hhmm(o.openedAt)+' · há '+ago(o.openedAt)+'</p></div><div class="tk-tools">'+(isStaff()?'':'<button type="button" class="btn sm danger" data-act="cancel" data-id="'+id+'">Cancelar comanda</button>')+'</div></div>'+
   onlineInfo(o)+custStrip(o)+lines+'<div class="picker"><div class="srch srch-v"><input type="search" id="mi-q" placeholder="Buscar item" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" value="'+esc(S.q||'')+'" aria-label="Buscar item no cardápio">'+viewToggle()+'</div><div class="chips" role="group" aria-label="Categorias">'+cats.map(function(c){return '<button type="button" data-act="cat" data-id="'+esc(c)+'" aria-pressed="'+(c===cat&&!(S.q||'').trim())+'">'+esc(c)+'</button>'}).join('')+'</div>'+grid+'</div>'+printBar(o)+
-  '<div class="tk-foot"><div class="tot"><small>Subtotal</small>'+brl(subOf(o))+'</div>'+(isStaff()&&!staffCanPay()?'':'<button type="button" class="btn primary" data-act="pay"'+(items.length?'':' disabled')+'>Fechar conta</button>')+'</div>';
+  '<div class="tk-foot"><div class="tot"><small>Subtotal</small>'+brl(subOf(o))+'</div>'+(isStaff()&&!staffCanPay()?'':'<button type="button" class="btn" data-act="fiado"'+(items.length?'':' disabled')+'>Fiado</button><button type="button" class="btn primary" data-act="pay"'+(items.length?'':' disabled')+'>Fechar conta</button>')+'</div>';
 }
 function vCardapio(){
   var groups=getCats().map(function(c){
@@ -1539,7 +1540,7 @@ function draw(){
   $('#nav').innerHTML=navHtml();
   if(S.err){v.innerHTML='<div class="empty"><b>Não foi possível carregar os dados</b>Recarregue a página. Se continuar, verifique sua conexão.</div>';return}
   if(!ready()){v.innerHTML='<div class="empty"><b>Carregando</b>Buscando comandas, cardápio e estoque.</div>';return}
-  v.innerHTML=({comandas:vComandas,clientes:vClientes,cardapio:vCardapio,estoque:vEstoque,caixa:vCaixa,ajustes:vAjustes})[S.tab]()+(canWrite?'':'<p class="muted" style="margin-top:16px">Modo leitura: você pode ver os dados, mas não alterá-los.</p>');
+  v.innerHTML=({comandas:vComandas,clientes:vClientes,fiado:vFiado,cardapio:vCardapio,estoque:vEstoque,caixa:vCaixa,ajustes:vAjustes})[S.tab]()+(canWrite?'':'<p class="muted" style="margin-top:16px">Modo leitura: você pode ver os dados, mas não alterá-los.</p>');
   if(fk){var n=$(fk);if(n)n.focus({preventScroll:true})}
   if(sq){var qi=$('#'+sq[2]);if(qi){qi.focus({preventScroll:true});try{qi.setSelectionRange(sq[0],sq[1])}catch(e){}}}
 }
@@ -2024,8 +2025,66 @@ function vClientes(){
   '<div id="cl-list">'+clListHtml()+'</div>';
 }
 
+/* ---------- fiado ---------- */
+function fiadoTotal(o){return r2(o.total!=null?o.total:subOf(o))}
+function fiadoGroups(){
+  var g={};
+  Object.keys(S.fiado||{}).forEach(function(id){var o=S.fiado[id];if(o.status!=='fiado')return;var k=o.cid||('sem:'+(o.cname||o.label||id));
+    var x=g[k]||(g[k]={key:k,cid:o.cid||'',name:(S.cust[o.cid]&&S.cust[o.cid].name)||o.cname||'Sem nome',phone:(S.cust[o.cid]&&S.cust[o.cid].phone)||'',orders:[],total:0});
+    x.orders.push([id,o]);x.total=r2(x.total+fiadoTotal(o))});
+  return Object.keys(g).map(function(k){g[k].orders.sort(function(a,b){return (a[1].fiadoAt||0)-(b[1].fiadoAt||0)});return g[k]}).sort(function(a,b){return b.total-a.total});
+}
+function sendFiado(id,t){
+  var o=S.open[id];if(!o||!(o.items||[]).length)return;
+  if(!canWrite){toast('Você está no modo leitura.','err');return}
+  if(!o.cid||!S.cust[o.cid]){toast('Vincule o cliente que vai ficar devendo e toque em Fiado de novo.','err');openLink(id);return}
+  armed(t,'Confirmar fiado de '+brl(subOf(o)),function(){
+    var now=Date.now(),tot=subOf(o);
+    enqueue(function(){return db.doc('orders/'+id).update({status:'fiado',fiadoAt:now,fiadoDay:dayKey(new Date(now)),total:tot})}).then(function(){
+      delete S.open[id];S.fiado[id]=Object.assign({},o,{status:'fiado',fiadoAt:now,total:tot});S.sel=null;toast('Anotado no fiado de '+o.cname.split(' ')[0]+': '+brl(tot));draw()});
+  });
+}
+function reopenFiado(id){
+  var o=S.fiado[id];if(!o)return;
+  enqueue(function(){return db.doc('orders/'+id).update({status:'open',fiadoAt:null,fiadoDay:null})}).then(function(){delete S.fiado[id];S.open[id]=Object.assign({},o,{status:'open'});S.tab='comandas';S.sel=id;toast('Comanda reaberta');draw()});
+}
+function openFiadoPay(ids){
+  var list=ids.map(function(id){return [id,S.fiado[id]]}).filter(function(x){return x[1]});if(!list.length)return;
+  var tot=r2(list.reduce(function(t,x){return t+fiadoTotal(x[1])},0)),name=list[0][1].cname||'cliente',pay='pix';
+  var body='<form id="fpf"><div class="paybox"><div class="big"><span>'+(list.length===1?esc(list[0][1].label):list.length+' comandas')+' · '+esc(name)+'</span><span>'+brl(tot)+'</span></div></div>'+
+    '<div><div class="muted" style="font-size:13px;font-weight:500;margin:10px 0 6px">Forma de pagamento</div><div class="seg" id="fpf-pay" role="group" aria-label="Forma de pagamento">'+PAY.map(function(p){return '<button type="button" data-p="'+p[0]+'" aria-pressed="'+(p[0]==='pix')+'">'+p[1]+'</button>'}).join('')+'</div></div>'+
+    '<p class="err" id="fpf-e"></p><div class="actions"><button class="btn primary" type="submit">Confirmar recebimento</button></div></form>';
+  openModal('Receber fiado',body,function(sh){
+    $('#fpf-pay',sh).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;pay=b.dataset.p;this.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b)})});
+    $('#fpf',sh).addEventListener('submit',function(e){e.preventDefault();
+      if(!canWrite){toast('Você está no modo leitura.','err');return}
+      var now=Date.now(),card=pay==='debito'||pay==='credito',m=card?machById(null):null,pct=feePctOf(m,pay),btn=$('button[type=submit]',sh);btn.disabled=true;
+      list.reduce(function(p,x){return p.then(function(){var o=x[1],t=fiadoTotal(o),fee=pct>0?r2(t*pct/100):0;
+        return enqueue(function(){return db.doc('orders/'+x[0]).update({status:'paid',pay:pay,service:0,discount:0,total:t,fee:fee,feePct:pct,machine:m?m.name:'',net:r2(t-fee),feePass:0,closedAt:now,payDay:dayKey(new Date(now)),fiadoPaidAt:now})}).then(function(){delete S.fiado[x[0]];return bumpCustomer(o,t,now)})})},Promise.resolve())
+      .then(function(){closeModal();toast('Fiado recebido: '+brl(tot)+' de '+name.split(' ')[0]);draw()},function(er){btn.disabled=false;$('#fpf-e',sh).textContent=errMsg(er)});
+    });
+  });
+}
+function fiadoWa(g){
+  if(!g.phone)return '';var d=digits(g.phone);
+  var msg='Olá, '+g.name.split(' ')[0]+'! Aqui é do '+((S.cfg&&S.cfg.name)||'BitPub')+'. Passando para lembrar do seu fiado: '+brl(g.total)+' em '+g.orders.length+(g.orders.length===1?' comanda':' comandas')+'. Quando puder, é só combinar com a gente. Obrigado!';
+  return 'https://wa.me/'+(d.length<=11?'55':'')+d+'?text='+encodeURIComponent(msg);
+}
+function vFiado(){
+  var gs=fiadoGroups(),tot=r2(gs.reduce(function(t,g){return t+g.total},0)),n=gs.reduce(function(t,g){return t+g.orders.length},0);
+  var head='<div class="sec-h"><div><h2>Fiado</h2><p class="sub">'+(n?n+(n===1?' comanda':' comandas')+' em aberto · '+gs.length+(gs.length===1?' cliente':' clientes'):'Ninguém devendo agora')+'</p></div><div class="kpi-fiado" style="text-align:right"><small class="muted">Total a receber</small><div style="font:700 24px var(--f-display)">'+brl(tot)+'</div></div></div>';
+  if(!gs.length)return head+'<div class="empty"><b>Nenhum fiado em aberto</b>Na comanda aberta, toque em <b>Fiado</b> para anotar na conta do cliente. Ele precisa estar vinculado à comanda.</div>';
+  return head+gs.map(function(g){
+    var open=!!S.fopen[g.key],wa=fiadoWa(g),idl=g.orders.map(function(x){return x[0]}).join(',');
+    var rows=open?'<div style="margin-top:10px;border-top:1px solid var(--line)">'+g.orders.map(function(x){var o=x[1],d=new Date(o.fiadoAt||o.openedAt||0).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+      return '<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)"><div style="min-width:0"><b>#'+pad(o.num)+' · '+d+'</b> <span class="muted">'+brl(fiadoTotal(o))+'</span><br><small class="muted">'+esc((o.items||[]).map(function(it){return it.qty+'x '+it.name}).join(', '))+'</small></div><div style="display:flex;gap:6px"><button type="button" class="btn sm" data-act="fiadoreopen" data-id="'+x[0]+'">Reabrir</button><button type="button" class="btn sm primary" data-act="fiadopay" data-id="'+x[0]+'">Receber</button></div></div>'}).join('')+'</div>':'';
+    return '<div class="fcard" style="background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px"><div style="display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap"><div><b style="font-size:16px">'+esc(g.name)+'</b><br><small class="muted">'+g.orders.length+(g.orders.length===1?' comanda':' comandas')+(g.phone?' · '+esc(fmtPhone(g.phone)):'')+'</small></div><div style="text-align:right"><b style="font-size:20px">'+brl(g.total)+'</b></div></div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn sm" data-act="fiadoopen" data-id="'+esc(g.key)+'">'+(open?'Esconder comandas':'Ver comandas')+'</button>'+(wa?'<a class="btn sm" href="'+wa+'" target="_blank" rel="noopener">Cobrar no WhatsApp</a>':'')+'<button type="button" class="btn sm primary" data-act="fiadopay" data-id="'+idl+'">Receber tudo</button></div>'+rows+'</div>';
+  }).join('');
+}
+
 /* ---------- events ---------- */
-var READ={autop:1,efil:1,cview:1,rsort:1,rcat:1,rcsv:1,cmode:1,cnav:1,ctoday:1,cquick:1,ccsv:1,pview:1,cprof:1,cfilter:1,tab:1,sel:1,back:1,cat:1,copy:1,copyt:1,savet:1,btprint:1,kprint:1,bttest:1,pmraw:1,pmdir:1,bkexp:1,bkimp:1,logout:1};
+var READ={fiadoopen:1,autop:1,efil:1,cview:1,rsort:1,rcat:1,rcsv:1,cmode:1,cnav:1,ctoday:1,cquick:1,ccsv:1,pview:1,cprof:1,cfilter:1,tab:1,sel:1,back:1,cat:1,copy:1,copyt:1,savet:1,btprint:1,kprint:1,bttest:1,pmraw:1,pmdir:1,bkexp:1,bkimp:1,logout:1};
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-act]');if(!t||t.closest('#modal-root'))return;
   var a=t.dataset.act,d=t.dataset;
@@ -2083,6 +2142,10 @@ document.addEventListener('click',function(e){
     case 'savet':saveThermal();break;
     case 'cancel':armed(t,'Confirmar cancelamento',function(){var id=S.sel;S.sel=null;cancelOrder(id);draw()});break;
     case 'pay':openPay();break;
+    case 'fiado':sendFiado(S.sel,t);break;
+    case 'fiadoopen':S.fopen[d.id]=!S.fopen[d.id];draw();break;
+    case 'fiadopay':openFiadoPay(d.id.split(','));break;
+    case 'fiadoreopen':armed(t,'Confirmar',function(){reopenFiado(d.id)});break;
     case 'ack':enqueue(function(){return db.doc('meta/config').update({ack:true})});break;
     case 'mnew':openMenuEdit(null);break;
     case 'cats':openCats();break;
@@ -2270,6 +2333,7 @@ function start(){
   db.collection('menu').onSnapshot(function(s){S.menu=toMap(s);S.loaded.menu=true;render()},err);
   db.collection('stock').onSnapshot(function(s){S.stock=toMap(s);S.loaded.stock=true;render()},err);
   db.collection('orders').where('status','==','open').onSnapshot(function(s){S.open=toMap(s);S.loaded.open=true;render()},err);
+  db.collection('orders').where('status','==','fiado').onSnapshot(function(s){S.fiado=toMap(s);render()},function(){});
   db.collection('customers').onSnapshot(function(s){S.cust=toMap(s);render()},function(){});
   db.doc('meta/config').onSnapshot(function(s){S.cfg=s.data()||{};S.loaded.cfg=true;render()},err);
   subReport();subMonth();startOnline();
