@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BitPub | Faça seu pedido</title>
+<meta name="description" content="Peça seu lanche, porção ou bebida no BitPub Pub e Hamburgueria, em Suzano SP.">
+<meta name="theme-color" content="#F96A05">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --laranja:#F96A05;
+  --laranja-escuro:#C94F00;
+  --preto:#141414;
+  --amarelo:#F7B500;
+  --papel:#FFFFFF;
+  --cinza:#F1F1F1;
+  --cinza-linha:#DADADA;
+  --texto:#1D1D1D;
+  --suave:#5A5A5A;
+  --erro:#B3261E;
+  --ok:#1B7F3B;
+  --f-titulo:'Anton','Arial Narrow',Impact,sans-serif;
+  --f-corpo:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{margin:0;background:var(--papel);color:var(--texto);font:16px/1.45 var(--f-corpo);-webkit-text-size-adjust:100%}
+img{max-width:100%;display:block}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--preto);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* topo: faixa laranja com a borda rasgada do cardápio impresso */
+.topo{background:var(--laranja);padding:18px 16px 56px;position:relative}
+.topo-in{max-width:720px;margin:0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.topo-barra{width:100%;display:flex;justify-content:flex-end;min-height:40px}
+.logo{width:min(250px,62vw);height:auto;margin-top:-6px}
+.faixa{background:var(--preto);color:var(--amarelo);font:400 clamp(22px,6vw,34px)/1 var(--f-titulo);padding:10px 16px 8px;transform:rotate(-1.6deg);margin-left:-6px;letter-spacing:.2px}
+.rasgo{position:absolute;left:0;right:0;bottom:-1px;height:30px;background:var(--papel)}
+.btn-conta{background:var(--preto);color:#fff;border:0;border-radius:999px;padding:10px 16px;font-weight:700;min-height:44px}
+.btn-conta:hover{background:#000}
+.loja{max-width:720px;margin:0 auto;padding:6px 16px 0;color:var(--suave);font-size:15px}
+.loja strong{color:var(--texto)}
+
+/* navegação de categorias */
+.cats{position:sticky;top:0;z-index:20;background:var(--papel);border-bottom:3px solid var(--preto)}
+.cats-in{max-width:720px;margin:0 auto;display:flex;gap:8px;overflow-x:auto;padding:10px 16px;scrollbar-width:none}
+.cats-in::-webkit-scrollbar{display:none}
+.chip{flex:none;text-decoration:none;display:inline-grid;align-items:center;border:2px solid var(--preto);background:var(--papel);color:var(--preto);border-radius:0;padding:7px 12px;font-weight:700;font-size:14px;min-height:40px;white-space:nowrap}
+.chip[aria-current="true"]{background:var(--preto);color:#fff}
+
+/* cardápio */
+main{max-width:720px;margin:0 auto;padding:8px 16px 140px}
+.secao{padding-top:26px}
+.secao h2{font:400 clamp(30px,8vw,42px)/1 var(--f-titulo);margin:0 0 4px;letter-spacing:.3px}
+.item{padding:14px 0 16px;border-bottom:3px solid var(--preto)}
+.item:last-child{border-bottom:0}
+.item-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.rotulo{margin:0;background:var(--preto);color:#fff;font:700 15px/1.2 var(--f-corpo);text-transform:uppercase;letter-spacing:.2px;padding:7px 10px;max-width:calc(100% - 96px)}
+.preco{font:400 26px/1 var(--f-titulo);white-space:nowrap;padding-top:4px}
+.desc{margin:8px 0 0;color:var(--suave);font-size:15px;max-width:62ch}
+.acao{margin-top:10px;display:flex;justify-content:flex-end;min-height:44px}
+.add{background:var(--laranja);color:var(--preto);border:2px solid var(--preto);font-weight:800;padding:0 18px;min-height:44px;border-radius:0}
+.add:hover{background:#FF7D21}
+.qtd{display:inline-flex;align-items:stretch;border:2px solid var(--preto)}
+.qtd button{width:44px;min-height:40px;background:var(--papel);border:0;font-size:22px;font-weight:700}
+.qtd button:hover{background:var(--cinza)}
+.qtd output{min-width:42px;display:grid;place-items:center;font-weight:800;background:var(--laranja)}
+
+/* barra do carrinho */
+.barra{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(to top,#fff 70%,rgba(255,255,255,0))}
+.barra[hidden]{display:none}
+.barra button{display:flex;width:100%;max-width:720px;margin:0 auto;justify-content:space-between;align-items:center;background:var(--preto);color:#fff;border:0;padding:14px 18px;font-weight:800;font-size:17px;min-height:54px}
+.barra .n{background:var(--laranja);color:var(--preto);padding:2px 10px;margin-right:10px}
+
+/* diálogos */
+dialog{border:0;padding:0;width:min(560px,100%);max-height:92dvh;background:var(--papel);color:var(--texto);margin:auto auto 0}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+@media(min-width:620px){dialog{margin:auto}}
+.d-in{padding:18px 18px 22px;display:flex;flex-direction:column;gap:14px}
+.d-topo{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--preto);padding-bottom:10px}
+.d-topo h2{margin:0;font:400 30px/1 var(--f-titulo)}
+.fechar{background:none;border:2px solid var(--preto);width:44px;height:44px;font-size:22px;line-height:1}
+.linha{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:10px 0;border-bottom:1px solid var(--cinza-linha)}
+.linha b{font-weight:700}
+.linha .v{font-weight:700;white-space:nowrap}
+.linha input{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-size:15px}
+input[type=text],input[type=tel],input[type=password],textarea{width:100%;border:2px solid var(--preto);background:var(--papel);padding:11px 12px;border-radius:0;min-height:46px;font-weight:500}
+textarea{min-height:76px;resize:vertical}
+.tipos{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:0;padding:0;margin:0}
+.tipos legend{font-weight:700;font-size:15px;margin-bottom:6px;padding:0}
+.tipos label{flex-direction:row;align-items:center;justify-content:center;border:2px solid var(--preto);padding:12px;min-height:48px;cursor:pointer;text-align:center}
+.tipos input{position:absolute;opacity:0}
+.tipos label:has(input:checked){background:var(--preto);color:#fff}
+.tipos label:has(input:focus-visible){outline:3px solid var(--laranja);outline-offset:2px}
+.totais{border-top:3px solid var(--preto);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+.totais .t{display:flex;justify-content:space-between;font-size:15px;color:var(--suave)}
+.totais .total{font:400 24px/1.15 var(--f-titulo);color:var(--texto);align-items:baseline;gap:12px;flex-wrap:wrap}
+.aviso{background:var(--cinza);border-left:6px solid var(--laranja);padding:10px 12px;font-size:15px}
+.principal{background:var(--laranja);color:var(--preto);border:2px solid var(--preto);font-weight:800;font-size:17px;min-height:54px;padding:0 18px;width:100%;border-radius:0}
+.principal:hover{background:#FF7D21}
+.principal[disabled]{opacity:.55;cursor:wait}
+.secundario{background:var(--papel);border:2px solid var(--preto);font-weight:700;min-height:48px;padding:0 16px;border-radius:0;width:100%}
+.erro{color:var(--erro);font-weight:600;min-height:1.3em;margin:0}
+.abas{display:grid;grid-template-columns:1fr 1fr}
+.abas button{background:var(--papel);border:2px solid var(--preto);min-height:46px;font-weight:700;border-radius:0}
+.abas button[aria-selected="true"]{background:var(--preto);color:#fff}
+.ped{border:2px solid var(--preto);padding:12px;display:flex;flex-direction:column;gap:6px}
+.ped-t{display:flex;justify-content:space-between;gap:10px;font-weight:800}
+.ped small{color:var(--suave)}
+.sel{display:inline-block;background:var(--amarelo);color:var(--preto);font-weight:800;font-size:13px;padding:2px 8px}
+.resumo-cli{background:var(--preto);color:#fff;padding:12px 14px}
+.resumo-cli b{color:var(--amarelo);font:400 34px/1 var(--f-titulo);margin-right:6px}
+.ok-icone{width:56px;height:56px;border:3px solid var(--preto);background:var(--amarelo);display:grid;place-items:center;font:400 34px/1 var(--f-titulo)}
+.vazio{color:var(--suave);padding:24px 0;text-align:center}
+.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--preto);color:#fff;padding:10px 16px;font-weight:600;z-index:60;max-width:90vw}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-in">
+    <div class="topo-barra"><button class="btn-conta" id="btnConta" type="button">Entrar</button></div>
+    <img class="logo" src="logo.png" alt="BitPub" width="250" height="166">
+    <div class="faixa">Pub e Hamburgueria</div>
+  </div>
+  <div class="rasgo" id="rasgo" aria-hidden="true"></div>
+</header>
+<div class="loja" id="loja"></div>
+
+<nav class="cats" aria-label="Categorias do cardápio"><div class="cats-in" id="cats"></div></nav>
+<main id="menu"><p class="vazio">Carregando o cardápio...</p></main>
+
+<div class="barra" id="barra" hidden>
+  <button type="button" id="btnCarrinho"><span><span class="n" id="barraN">0</span>Ver pedido</span><span id="barraTotal"></span></button>
+</div>
+
+<!-- carrinho -->
+<dialog id="dCarrinho" aria-labelledby="tCarrinho">
+  <div class="d-in">
+    <div class="d-topo"><h2 id="tCarrinho">Seu pedido</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
+    <div id="itensCarrinho"></div>
+    <fieldset class="tipos">
+      <legend>Como você quer receber?</legend>
+      <label><input type="radio" name="tipo" value="retirada" checked>Retirar na loja</label>
+      <label><input type="radio" name="tipo" value="entrega">Entrega</label>
+    </fieldset>
+    <label id="boxEndereco" hidden>Endereço de entrega<textarea id="endereco" maxlength="200" placeholder="Rua, número, bairro e ponto de referência"></textarea></label>
+    <label>Observação do pedido (opcional)<input type="text" id="obsGeral" maxlength="300" placeholder="Ex.: troco para R$ 50"></label>
+    <div class="totais" id="totais"></div>
+    <div class="aviso" id="avisoPag"></div>
+    <p class="erro" id="erroPedido" role="alert"></p>
+    <button class="principal" type="button" id="btnEnviar">Enviar pedido</button>
+  </div>
+</dialog>
+
+<!-- entrar / cadastrar -->
+<dialog id="dAuth" aria-labelledby="tAuth">
+  <form class="d-in" id="formAuth" novalidate>
+    <div class="d-topo"><h2 id="tAuth">Seu cadastro</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
+    <div class="abas" role="tablist">
+      <button type="button" role="tab" id="abaEntrar" aria-selected="true">Já tenho cadastro</button>
+      <button type="button" role="tab" id="abaCriar" aria-selected="false">Criar cadastro</button>
+    </div>
+    <label id="boxNome" hidden>Nome<input type="text" id="aNome" autocomplete="name" maxlength="80"></label>
+    <label>WhatsApp com DDD<input type="tel" id="aWhats" inputmode="numeric" autocomplete="tel-national" placeholder="(11) 91234-5678"></label>
+    <label>Senha<input type="password" id="aSenha" autocomplete="current-password" minlength="6" placeholder="Mínimo de 6 caracteres"></label>
+    <p class="erro" id="erroAuth" role="alert"></p>
+    <button class="principal" type="submit" id="btnAuth">Entrar</button>
+    <p class="vazio" style="padding:0;font-size:14px">Esqueceu a senha? Chame a gente no WhatsApp que a gente troca para você.</p>
+  </form>
+</dialog>
+
+<!-- conta e histórico -->
+<dialog id="dConta" aria-labelledby="tConta">
+  <div class="d-in">
+    <div class="d-topo"><h2 id="tConta">Meus pedidos</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
+    <div id="resumoCli"></div>
+    <div id="listaPedidos" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button class="secundario" type="button" id="btnSair">Sair da conta</button>
+  </div>
+</dialog>
+
+<!-- pedido enviado -->
+<dialog id="dOk" aria-labelledby="tOk">
+  <div class="d-in">
+    <div class="ok-icone" aria-hidden="true">&#10003;</div>
+    <h2 id="tOk" style="font:400 32px/1.05 var(--f-titulo);margin:0">Pedido registrado</h2>
+    <p id="okTexto" style="margin:0"></p>
+    <a class="principal" id="okZap" href="#" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Enviar no WhatsApp</a>
+    <button class="secundario" type="button" data-fechar>Voltar ao cardápio</button>
+  </div>
+</dialog>
+
+<script src="../config.js"></script>
+<script>
+(function(){
+'use strict';
+var CFG = window.BITPUB_CFG || {};
+var WHATS_LOJA = '5511917846050';
+/* Pagamento online: deixe false até a conta do PagBank estar ligada.
+   Quando ligar, o pedido deve ser criado primeiro, depois cobrado, e só então enviado ao WhatsApp. */
+var PAGAMENTO_ONLINE = false;
+
+var $ = function(s,el){return (el||document).querySelector(s)};
+var $$ = function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s))};
+var R = function(v){return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})};
+function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function soDigitos(t){var d=String(t||'').replace(/\D/g,''); if(d.length>11&&d.indexOf('55')===0)d=d.slice(2); return d}
+function mascara(d){d=soDigitos(d).slice(0,11); if(d.length<=2)return d; if(d.length<=6)return '('+d.slice(0,2)+') '+d.slice(2); if(d.length<=10)return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6); return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7)}
+function toast(t){var e=document.createElement('div');e.className='toast';e.setAttribute('role','status');e.textContent=t;document.body.appendChild(e);setTimeout(function(){e.remove()},2600)}
+
+/* ---------- borda rasgada ---------- */
+(function(){
+  var p=['0% 100%'],x=0,s=7;
+  function rnd(){s=(s*9301+49297)%233280;return s/233280}
+  while(x<100){p.push(x.toFixed(2)+'% '+(4+Math.round(rnd()*24))+'px');x+=1.6+rnd()*2.4}
+  p.push('100% '+(4+Math.round(rnd()*18))+'px','100% 100%');
+  $('#rasgo').style.clipPath='polygon('+p.join(',')+')';
+})();
+
+/* ---------- sessão e chamadas ao banco ---------- */
+var SK='bitpub_site_sessao', mem=null;
+function lerSessao(){ if(mem)return mem; try{var s=JSON.parse(localStorage.getItem(SK)||'null'); if(s)mem=s; return s}catch(e){return null} }
+function gravarSessao(s){ mem=s; try{ if(s)localStorage.setItem(SK,JSON.stringify(s)); else localStorage.removeItem(SK) }catch(e){} }
+function montarSessao(d){ return {access_token:d.access_token,refresh_token:d.refresh_token,expira:Date.now()+(d.expires_in||3600)*1000,uid:d.user&&d.user.id} }
+async function http(path,o){
+  o=o||{};
+  var h={apikey:CFG.key,'Content-Type':'application/json'}, token=CFG.key;
+  if(o.auth!==false){ var s=await sessaoValida(); if(s)token=s.access_token }
+  h.Authorization='Bearer '+token;
+  var r=await fetch(CFG.url+path,{method:o.method||'GET',headers:h,body:o.body?JSON.stringify(o.body):undefined});
+  var t=await r.text(), data=null; try{data=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok){ var er=new Error((data&&(data.erro||data.message||data.error_description||data.msg))||('http '+r.status)); er.status=r.status; throw er }
+  return data;
+}
+async function sessaoValida(){
+  var s=lerSessao(); if(!s)return null;
+  if(s.expira-Date.now()>60000)return s;
+  try{ var d=await http('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:s.refresh_token}}); s=montarSessao(d); gravarSessao(s); return s }
+  catch(e){ gravarSessao(null); return null }
+}
+function emailDe(whats){ return soDigitos(whats)+'@cliente.example.com' }
+async function entrar(whats,senha){
+  var d=await http('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email:emailDe(whats),password:senha}});
+  gravarSessao(montarSessao(d));
+}
+function textoErro(e){
+  var m=String(e&&e.message||'');
+  var mapa={
+    'Invalid login credentials':'WhatsApp ou senha incorretos.',
+    'login_necessario':'Entre na sua conta para enviar o pedido.',
+    'cadastro_necessario':'Use uma conta de cliente. Se você é da equipe, entre pelo painel.',
+    'endereco_necessario':'Informe o endereço de entrega.',
+    'item_indisponivel':'Algum item saiu do cardápio. Atualize a página e monte o pedido de novo.',
+    'quantidade_invalida':'Confira as quantidades do pedido.',
+    'itens_invalidos':'Seu pedido está vazio.',
+    'muitos_pedidos':'Você já enviou vários pedidos agora há pouco. Chame a gente no WhatsApp.'
+  };
+  for(var k in mapa){ if(m.indexOf(k)>-1)return mapa[k] }
+  if(m.indexOf('Failed to fetch')>-1||m.indexOf('NetworkError')>-1)return 'Sem conexão. Confira sua internet e tente de novo.';
+  return m||'Não foi possível concluir. Tente de novo.';
+}
+
+/* ---------- estado ---------- */
+var M={nome:'BitPub',telefone:'',endereco:'',frase:'',cats:[],itens:[]};
+var carrinho=[]; var cliente=null; var CK='bitpub_site_carrinho';
+try{ var c0=JSON.parse(localStorage.getItem(CK)||'[]'); if(Array.isArray(c0))carrinho=c0.filter(function(i){return i&&i.id&&i.qtd>0}) }catch(e){}
+function salvarCarrinho(){ try{localStorage.setItem(CK,JSON.stringify(carrinho))}catch(e){} }
+function linha(id){ return carrinho.find(function(i){return i.id===id}) }
+function totalCarrinho(){ return carrinho.reduce(function(s,i){return s+i.preco*i.qtd},0) }
+function qtdTotal(){ return carrinho.reduce(function(s,i){return s+i.qtd},0) }
+
+/* ---------- cardápio ---------- */
+async function carregarMenu(){
+  try{
+    var d=await http('/rest/v1/rpc/cardapio_publico',{method:'POST',auth:false,body:{}});
+    M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',cats:d.cats||[],itens:d.itens||[]};
+    try{localStorage.setItem('bitpub_site_menu',JSON.stringify(M))}catch(e){}
+  }catch(e){
+    try{var c=JSON.parse(localStorage.getItem('bitpub_site_menu')||'null'); if(c){M=c; toast('Sem conexão: mostrando o último cardápio salvo.')}}catch(x){}
+  }
+  carrinho=carrinho.filter(function(l){var it=M.itens.find(function(i){return i.id===l.id}); if(it){l.preco=it.preco;l.nome=it.nome;return true} return false});
+  desenharMenu();
+}
+function desenharMenu(){
+  var loja=$('#loja');
+  loja.innerHTML='<p style="margin:0"><strong>'+esc(M.frase||'')+'</strong></p><p style="margin:2px 0 0">'+esc(M.endereco)+'</p>';
+  var cats=M.cats.slice(); M.itens.forEach(function(i){ if(cats.indexOf(i.cat)<0)cats.push(i.cat) });
+  cats=cats.filter(function(c){return M.itens.some(function(i){return i.cat===c})});
+  if(!cats.length){ $('#menu').innerHTML='<p class="vazio">O cardápio está indisponível agora. Chame a gente no WhatsApp.</p>'; $('#cats').innerHTML=''; return }
+  $('#cats').innerHTML=cats.map(function(c,n){return '<a class="chip" href="#cat'+n+'" data-cat="cat'+n+'">'+esc(c)+'</a>'}).join('');
+  $('#menu').innerHTML=cats.map(function(c,n){
+    return '<section class="secao" id="cat'+n+'" aria-labelledby="h'+n+'"><h2 id="h'+n+'">'+esc(c)+'</h2>'+
+      M.itens.filter(function(i){return i.cat===c}).map(function(i){
+        return '<article class="item" data-id="'+esc(i.id)+'"><div class="item-topo"><h3 class="rotulo">'+esc(i.nome)+'</h3><span class="preco">'+R(i.preco)+'</span></div>'+
+          (i.desc?'<p class="desc">'+esc(i.desc)+'</p>':'')+'<div class="acao"></div></article>';
+      }).join('')+'</section>';
+  }).join('');
+  $$('.item').forEach(function(el){ acaoItem(el.getAttribute('data-id')) });
+  atualizarBarra();
+  observarSecoes();
+}
+function acaoItem(id){
+  var el=$('.item[data-id="'+CSS.escape(id)+'"] .acao'); if(!el)return;
+  var l=linha(id), it=M.itens.find(function(i){return i.id===id}); if(!it)return;
+  el.innerHTML = l ? '<div class="qtd"><button type="button" data-mais="-1" aria-label="Tirar um '+esc(it.nome)+'">&minus;</button><output aria-live="polite">'+l.qtd+'</output><button type="button" data-mais="1" aria-label="Colocar mais um '+esc(it.nome)+'">+</button></div>'
+                   : '<button class="add" type="button" data-mais="1">Adicionar</button>';
+}
+function mudar(id,delta){
+  var it=M.itens.find(function(i){return i.id===id}); if(!it)return;
+  var l=linha(id);
+  if(!l){ if(delta<0)return; l={id:id,nome:it.nome,preco:it.preco,qtd:0,obs:''}; carrinho.push(l) }
+  l.qtd=Math.max(0,Math.min(50,l.qtd+delta));
+  if(l.qtd===0)carrinho=carrinho.filter(function(x){return x.id!==id});
+  salvarCarrinho(); acaoItem(id); atualizarBarra();
+  if($('#dCarrinho').open)desenharCarrinho();
+}
+$('#menu').addEventListener('click',function(e){
+  var b=e.target.closest('[data-mais]'); if(!b)return;
+  mudar(b.closest('.item').getAttribute('data-id'),Number(b.getAttribute('data-mais')));
+});
+function atualizarBarra(){
+  var n=qtdTotal(); $('#barra').hidden=n===0;
+  $('#barraN').textContent=n; $('#barraTotal').textContent=R(totalCarrinho());
+}
+var io=null;
+function observarSecoes(){
+  if(io)io.disconnect();
+  if(!('IntersectionObserver' in window))return;
+  io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ $$('.chip').forEach(function(c){c.setAttribute('aria-current',c.getAttribute('data-cat')===e.target.id?'true':'false')}); var a=$('.chip[aria-current="true"]'); if(a&&a.scrollIntoView)a.scrollIntoView({inline:'center',block:'nearest'}) } });
+  },{rootMargin:'-70px 0px -70% 0px'});
+  $$('.secao').forEach(function(s){io.observe(s)});
+}
+
+/* ---------- carrinho ---------- */
+function abrir(d){ if(!d.open)d.showModal() }
+$$('[data-fechar]').forEach(function(b){b.addEventListener('click',function(){b.closest('dialog').close()})});
+$$('dialog').forEach(function(d){d.addEventListener('click',function(e){ if(e.target===d)d.close() })});
+$('#btnCarrinho').addEventListener('click',function(){desenharCarrinho();abrir($('#dCarrinho'))});
+
+function tipoAtual(){ return $('input[name="tipo"]:checked').value }
+function desenharCarrinho(){
+  var box=$('#itensCarrinho');
+  if(!carrinho.length){ box.innerHTML='<p class="vazio">Seu pedido está vazio. Escolha um item no cardápio.</p>' }
+  else box.innerHTML=carrinho.map(function(l){
+    return '<div class="linha" data-id="'+esc(l.id)+'"><b>'+esc(l.nome)+'</b><span class="v">'+R(l.preco*l.qtd)+'</span>'+
+      '<div class="qtd" style="width:max-content"><button type="button" data-c="-1" aria-label="Tirar um '+esc(l.nome)+'">&minus;</button><output>'+l.qtd+'</output><button type="button" data-c="1" aria-label="Colocar mais um '+esc(l.nome)+'">+</button></div><span></span>'+
+      '<input type="text" data-obs maxlength="140" value="'+esc(l.obs)+'" placeholder="Sabor, ponto, sem cebola..." aria-label="Observação de '+esc(l.nome)+'"></div>';
+  }).join('');
+  var ent=tipoAtual()==='entrega';
+  $('#boxEndereco').hidden=!ent;
+  $('#totais').innerHTML='<div class="t"><span>Itens</span><span>'+R(totalCarrinho())+'</span></div>'+
+    (ent?'<div class="t"><span>Frete</span><span>a combinar no WhatsApp</span></div>':'')+
+    '<div class="t total"><span>Total dos itens</span><span>'+R(totalCarrinho())+'</span></div>';
+  $('#avisoPag').textContent = PAGAMENTO_ONLINE ? 'Você paga os itens aqui no site. O frete a gente combina no WhatsApp.'
+    : 'O pagamento e o valor do frete a gente combina com você no WhatsApp, depois que você enviar o pedido.';
+  $('#btnEnviar').disabled=!carrinho.length;
+}
+$('#itensCarrinho').addEventListener('click',function(e){
+  var b=e.target.closest('[data-c]'); if(!b)return;
+  mudar(b.closest('.linha').getAttribute('data-id'),Number(b.getAttribute('data-c')));
+});
+$('#itensCarrinho').addEventListener('input',function(e){
+  if(!e.target.matches('[data-obs]'))return;
+  var l=linha(e.target.closest('.linha').getAttribute('data-id')); if(l){l.obs=e.target.value;salvarCarrinho()}
+});
+$$('input[name="tipo"]').forEach(function(r){r.addEventListener('change',desenharCarrinho)});
+
+/* ---------- conta ---------- */
+async function carregarCliente(){
+  var s=await sessaoValida();
+  if(!s){cliente=null;atualizarBtnConta();return}
+  try{
+    var r=await http('/rest/v1/clientes?select=nome,whatsapp,endereco&id=eq.'+encodeURIComponent(s.uid));
+    cliente=r&&r[0]||null;
+  }catch(e){cliente=null}
+  atualizarBtnConta();
+  if(cliente&&cliente.endereco&&!$('#endereco').value)$('#endereco').value=cliente.endereco;
+}
+function atualizarBtnConta(){ $('#btnConta').textContent = cliente ? 'Olá, '+cliente.nome.split(' ')[0] : 'Entrar' }
+$('#btnConta').addEventListener('click',function(){ if(cliente){abrirConta()} else {abrirAuth()} });
+
+var modoCriar=false, apósLogin=null;
+function abrirAuth(depois){ apósLogin=depois||null; definirModo(false); $('#erroAuth').textContent=''; abrir($('#dAuth')) }
+function definirModo(criar){
+  modoCriar=criar;
+  $('#abaEntrar').setAttribute('aria-selected',String(!criar)); $('#abaCriar').setAttribute('aria-selected',String(criar));
+  $('#boxNome').hidden=!criar; $('#btnAuth').textContent=criar?'Criar cadastro e entrar':'Entrar';
+  $('#aSenha').autocomplete=criar?'new-password':'current-password'; $('#erroAuth').textContent='';
+}
+$('#abaEntrar').addEventListener('click',function(){definirModo(false)});
+$('#abaCriar').addEventListener('click',function(){definirModo(true)});
+$('#aWhats').addEventListener('input',function(e){e.target.value=mascara(e.target.value)});
+$('#formAuth').addEventListener('submit',async function(e){
+  e.preventDefault();
+  var nome=$('#aNome').value.trim(), w=soDigitos($('#aWhats').value), senha=$('#aSenha').value, erro=$('#erroAuth'), btn=$('#btnAuth');
+  erro.textContent='';
+  if(modoCriar&&nome.length<2){erro.textContent='Informe seu nome.';return}
+  if(!/^\d{10,11}$/.test(w)){erro.textContent='Informe o WhatsApp com DDD, só números.';return}
+  if(senha.length<6){erro.textContent='A senha precisa ter pelo menos 6 caracteres.';return}
+  btn.disabled=true;
+  try{
+    if(modoCriar) await http('/functions/v1/cadastrar',{method:'POST',auth:false,body:{nome:nome,whatsapp:w,senha:senha}});
+    await entrar(w,senha);
+    await carregarCliente();
+    if(!cliente){ gravarSessao(null); atualizarBtnConta(); throw new Error('cadastro_necessario') }
+    $('#dAuth').close(); $('#aSenha').value='';
+    var f=apósLogin; apósLogin=null;
+    if(f)f(); else toast('Pronto, você está na sua conta.');
+  }catch(er){ erro.textContent=textoErro(er) }
+  finally{ btn.disabled=false }
+});
+
+var STATUS={novo:'Recebido',aceito:'Aceito',pronto:'Pronto',entregue:'Entregue',cancelado:'Cancelado'};
+async function abrirConta(){
+  abrir($('#dConta'));
+  $('#resumoCli').innerHTML=''; $('#listaPedidos').innerHTML='<p class="vazio">Carregando...</p>';
+  try{
+    var ps=await http('/rest/v1/pedidos_online?select=numero,itens,total,tipo,status,criado_em&order=criado_em.desc&limit=30');
+    var validos=ps.filter(function(p){return p.status!=='cancelado'}).length;
+    $('#resumoCli').innerHTML='<div class="resumo-cli"><b>'+validos+'</b>'+(validos===1?'pedido feito no BitPub':'pedidos feitos no BitPub')+'</div>';
+    $('#listaPedidos').innerHTML=ps.length?ps.map(function(p){
+      var d=new Date(p.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      return '<div class="ped"><div class="ped-t"><span>Pedido '+p.numero+'</span><span class="sel">'+esc(STATUS[p.status]||p.status)+'</span></div>'+
+        '<small>'+d+' &middot; '+(p.tipo==='entrega'?'Entrega':'Retirada')+'</small>'+
+        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)}).join('<br>')+'</div><b>'+R(p.total)+' em itens</b></div>';
+    }).join(''):'<p class="vazio">Você ainda não fez nenhum pedido.</p>';
+  }catch(e){ $('#listaPedidos').innerHTML='<p class="erro">'+esc(textoErro(e))+'</p>' }
+}
+$('#btnSair').addEventListener('click',function(){ gravarSessao(null); cliente=null; atualizarBtnConta(); $('#dConta').close(); toast('Você saiu da conta.') });
+
+/* ---------- enviar pedido ---------- */
+function mensagemZap(p){
+  var l=['*Pedido #'+p.numero+' - BitPub*','','Cliente: '+p.nome,'WhatsApp: '+mascara(p.whatsapp),'Tipo: '+(p.tipo==='entrega'?'Entrega':'Retirada na loja')];
+  if(p.tipo==='entrega')l.push('Endereço: '+p.endereco);
+  l.push('');
+  p.itens.forEach(function(i){ l.push(i.qtd+'x '+i.nome+' - '+R(i.preco*i.qtd)+(i.obs?' ('+i.obs+')':'')) });
+  l.push('','*Total dos itens: '+R(p.total)+'*');
+  if(p.tipo==='entrega')l.push('Frete: a combinar');
+  if(p.observacao)l.push('Obs: '+p.observacao);
+  l.push('','Pagamento: a combinar');
+  return l.join('\n');
+}
+var enviando=false;
+async function enviarPedido(){
+  var erro=$('#erroPedido'); erro.textContent='';
+  if(!carrinho.length)return;
+  if(!cliente){ abrirAuth(function(){ abrir($('#dCarrinho')); desenharCarrinho(); enviarPedido() }); return }
+  var ent=tipoAtual()==='entrega', end=$('#endereco').value.trim();
+  if(ent&&end.length<8){erro.textContent='Informe o endereço de entrega completo.';$('#endereco').focus();return}
+  if(enviando)return; enviando=true; $('#btnEnviar').disabled=true; $('#btnEnviar').textContent='Enviando...';
+  try{
+    var p=await http('/rest/v1/rpc/criar_pedido',{method:'POST',body:{
+      p_itens:carrinho.map(function(l){return {id:l.id,qtd:l.qtd,obs:l.obs||''}}),
+      p_tipo:ent?'entrega':'retirada', p_endereco:ent?end:null, p_obs:$('#obsGeral').value.trim()||null
+    }});
+    carrinho=[]; salvarCarrinho(); $$('.item').forEach(function(el){acaoItem(el.getAttribute('data-id'))}); atualizarBarra();
+    $('#obsGeral').value=''; $('#dCarrinho').close();
+    $('#okTexto').textContent='Seu pedido '+p.numero+' já está com a gente. Toque no botão abaixo para enviar no WhatsApp e combinar '+(p.tipo==='entrega'?'o frete e ':'')+'o pagamento.';
+    $('#okZap').href='https://wa.me/'+WHATS_LOJA+'?text='+encodeURIComponent(mensagemZap(p));
+    abrir($('#dOk'));
+  }catch(e){
+    if(e.status===401){ gravarSessao(null); cliente=null; atualizarBtnConta() }
+    erro.textContent=textoErro(e);
+  }finally{ enviando=false; $('#btnEnviar').textContent='Enviar pedido'; $('#btnEnviar').disabled=!carrinho.length }
+}
+$('#btnEnviar').addEventListener('click',enviarPedido);
+
+carregarMenu();
+carregarCliente();
+})();
+</script>
+</body>
+</html>
