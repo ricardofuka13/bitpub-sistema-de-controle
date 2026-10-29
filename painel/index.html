@@ -103,7 +103,7 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
       <div id="listaClientes"></div>
     </section>
     <section id="vFotos" hidden>
-      <p class="mini" style="margin:0 0 10px">Toque em <b>Trocar foto</b> para escolher uma foto do celular. Ela é reduzida sozinha e aparece no site na hora.</p>
+      <p class="mini" style="margin:0 0 10px">Aqui você troca a <b>foto</b> e a <b>descrição</b> de cada item do site. A foto é escolhida do celular e reduzida sozinha. Tudo aparece no site na hora.</p>
       <div id="avisoFotos" class="aviso" hidden></div>
       <input type="file" id="arqFoto" accept="image/*" hidden>
       <div id="listaFotos"></div>
@@ -263,12 +263,12 @@ $('#listaClientes').addEventListener('click',async function(e){
 
 
 /* ---------- fotos do cardápio ---------- */
-var itensFoto=[],descFoto={},itemAlvo=null,BUCKET='cardapio-fotos';
+var itensFoto=[],descFoto={},descTxt={},itemAlvo=null,BUCKET='cardapio-fotos';
 function urlFoto(f){if(!f)return '';if(/^https:\/\//.test(f))return f;if(/^fotos\/[\w.-]+$/.test(f))return '../pedido/'+f;return ''}
 async function carregarFotos(){
   try{
-    var r=await Promise.all([http('/rest/v1/docs?coll=eq.menu&select=id,data&limit=1000'),http('/rest/v1/cardapio_desc?select=item_id,foto&limit=1000')]);
-    descFoto={};r[1].forEach(function(d){descFoto[d.item_id]=d.foto||''});
+    var r=await Promise.all([http('/rest/v1/docs?coll=eq.menu&select=id,data&limit=1000'),http('/rest/v1/cardapio_desc?select=item_id,foto,descricao&limit=1000')]);
+    descFoto={};descTxt={};r[1].forEach(function(d){descFoto[d.item_id]=d.foto||'';descTxt[d.item_id]=d.descricao||''});
     itensFoto=r[0].filter(function(d){return d.data&&d.data.active!==false}).map(function(d){return {id:d.id,nome:d.data.name||d.id,cat:d.data.cat||'Outros'}})
       .sort(function(a,b){return a.cat.localeCompare(b.cat,'pt-BR')||a.nome.localeCompare(b.nome,'pt-BR')});
     desenharFotos();
@@ -282,7 +282,7 @@ function desenharFotos(){
     if(i.cat!==cat){cat=i.cat;h+='<h2 class="cat">'+esc(cat)+'</h2>'}
     var u=urlFoto(descFoto[i.id]);
     h+='<div class="fi" data-id="'+esc(i.id)+'">'+(u?'<img class="th" src="'+esc(u)+'" alt="Foto de '+esc(i.nome)+'" loading="lazy">':'<div class="th">sem foto</div>')+
-      '<div><b>'+esc(i.nome)+'</b><br><span class="mini erroFi"></span></div><div class="bt"><button class="sec" type="button" data-trocar>'+(u?'Trocar foto':'Colocar foto')+'</button>'+(u?'<button class="sec" type="button" data-tirar>Tirar foto</button>':'')+'</div></div>';
+      '<div><b>'+esc(i.nome)+'</b><br><span class="mini">'+(descTxt[i.id]?esc(descTxt[i.id]):'<i>sem descrição</i>')+'</span><br><span class="mini erroFi"></span></div><div class="bt"><button class="sec" type="button" data-desc>Editar descrição</button><button class="sec" type="button" data-trocar>'+(u?'Trocar foto':'Colocar foto')+'</button>'+(u?'<button class="sec" type="button" data-tirar>Tirar foto</button>':'')+'</div></div>';
   });
   $('#listaFotos').innerHTML=h||'<p class="vazio">Nenhum item no cardápio.</p>';
 }
@@ -304,6 +304,21 @@ async function gravarFoto(id,valor){
 }
 $('#listaFotos').addEventListener('click',async function(e){
   var box=e.target.closest('.fi');if(!box)return;var id=box.getAttribute('data-id');
+  if(e.target.closest('[data-desc]')){
+    if(box.querySelector('.ed'))return;
+    var d=document.createElement('div');d.className='ed';d.style.cssText='grid-column:1/-1;display:flex;flex-direction:column;gap:8px';
+    d.innerHTML='<label>Descrição que aparece no site<textarea maxlength="200" rows="3" style="border:2px solid var(--preto);padding:10px 12px;font-weight:500;width:100%;font-family:inherit"></textarea></label><div class="acoes"><button class="principal" type="button" data-salvardesc>Salvar</button><button class="sec" type="button" data-cancdesc>Cancelar</button></div>';
+    d.querySelector('textarea').value=descTxt[id]||'';box.appendChild(d);d.querySelector('textarea').focus();return;
+  }
+  if(e.target.closest('[data-cancdesc]')){var ed=box.querySelector('.ed');if(ed)ed.remove();return}
+  if(e.target.closest('[data-salvardesc]')){
+    var txt=box.querySelector('.ed textarea').value.trim().slice(0,200);box.classList.add('ocup');
+    try{
+      await http('/rest/v1/cardapio_desc?on_conflict=item_id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{item_id:id,descricao:txt||null}});
+      descTxt[id]=txt;desenharFotos();
+    }catch(er){box.classList.remove('ocup');box.querySelector('.erroFi').textContent='Erro: '+er.message}
+    return;
+  }
   if(e.target.closest('[data-trocar]')){itemAlvo=id;$('#arqFoto').value='';$('#arqFoto').click();return}
   if(e.target.closest('[data-tirar]')){
     var it=itensFoto.find(function(x){return x.id===id});
