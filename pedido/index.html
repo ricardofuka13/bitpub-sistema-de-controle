@@ -341,7 +341,10 @@ function observarSecoes(){
   if(io)io.disconnect();
   if(!('IntersectionObserver' in window))return;
   io=new IntersectionObserver(function(es){
-    es.forEach(function(e){ if(e.isIntersecting){ $$('.chip').forEach(function(c){c.setAttribute('aria-current',c.getAttribute('data-cat')===e.target.id?'true':'false')}); var a=$('.chip[aria-current="true"]'); if(a&&a.scrollIntoView)a.scrollIntoView({inline:'center',block:'nearest'}) } });
+    es.forEach(function(e){ if(!e.isIntersecting)return;
+      var atual=$('.chip[aria-current="true"]'); if(atual&&atual.getAttribute('data-cat')===e.target.id)return;
+      $$('.chip').forEach(function(c){c.setAttribute('aria-current',c.getAttribute('data-cat')===e.target.id?'true':'false')});
+      var a=$('.chip[aria-current="true"]'),box=$('.cats-in'); if(a&&box)box.scrollLeft=a.offsetLeft-(box.clientWidth-a.offsetWidth)/2; });
   },{rootMargin:'-70px 0px -70% 0px'});
   $$('.secao').forEach(function(s){io.observe(s)});
 }
