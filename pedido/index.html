@@ -197,7 +197,9 @@ textarea{min-height:76px;resize:vertical}
     <div class="ok-icone" aria-hidden="true">&#10003;</div>
     <h2 id="tOk" style="font:400 32px/1.05 var(--f-titulo);margin:0">Pedido registrado</h2>
     <p id="okTexto" style="margin:0"></p>
-    <a class="principal" id="okZap" href="#" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Enviar no WhatsApp</a>
+    <button class="principal" type="button" id="okPagar">Pagar agora (Pix ou cartão)</button>
+    <p class="erro" id="erroPagar" role="alert" style="margin:0"></p>
+    <a class="secundario" id="okZap" href="#" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Enviar no WhatsApp</a>
     <button class="secundario" type="button" data-fechar>Voltar ao cardápio</button>
   </div>
 </dialog>
@@ -208,9 +210,8 @@ textarea{min-height:76px;resize:vertical}
 'use strict';
 var CFG = window.BITPUB_CFG || {};
 var WHATS_LOJA = '5511917846050';
-/* Pagamento online: deixe false até a conta do PagBank estar ligada.
-   Quando ligar, o pedido deve ser criado primeiro, depois cobrado, e só então enviado ao WhatsApp. */
-var PAGAMENTO_ONLINE = false;
+/* Pagamento online (InfinitePay): o cliente escolhe pagar agora (Pix ou cartão) ou combinar pelo WhatsApp. O frete é sempre combinado no WhatsApp. */
+var PAGAMENTO_ONLINE = true;
 
 var $ = function(s,el){return (el||document).querySelector(s)};
 var $$ = function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s))};
@@ -369,7 +370,7 @@ function desenharCarrinho(){
   $('#totais').innerHTML='<div class="t"><span>Itens</span><span>'+R(totalCarrinho())+'</span></div>'+
     (ent?'<div class="t"><span>Frete</span><span>a combinar no WhatsApp</span></div>':'')+
     '<div class="t total"><span>Total dos itens</span><span>'+R(totalCarrinho())+'</span></div>';
-  $('#avisoPag').textContent = PAGAMENTO_ONLINE ? 'Você paga os itens aqui no site. O frete a gente combina no WhatsApp.'
+  $('#avisoPag').textContent = PAGAMENTO_ONLINE ? 'Depois de enviar, você escolhe: pagar os itens agora (Pix ou cartão) ou combinar o pagamento no WhatsApp. O frete a gente combina no WhatsApp.'
     : 'O pagamento e o valor do frete a gente combina com você no WhatsApp, depois que você enviar o pedido.';
   $('#btnEnviar').disabled=!carrinho.length;
 }
@@ -433,14 +434,14 @@ async function abrirConta(){
   abrir($('#dConta'));
   $('#resumoCli').innerHTML=''; $('#listaPedidos').innerHTML='<p class="vazio">Carregando...</p>';
   try{
-    var ps=await http('/rest/v1/pedidos_online?select=numero,itens,total,tipo,status,criado_em&order=criado_em.desc&limit=30');
+    var ps=await http('/rest/v1/pedidos_online?select=id,numero,itens,total,tipo,status,pago,criado_em&order=criado_em.desc&limit=30');
     var validos=ps.filter(function(p){return p.status!=='cancelado'}).length;
     $('#resumoCli').innerHTML='<div class="resumo-cli"><b>'+validos+'</b>'+(validos===1?'pedido feito no BitPub':'pedidos feitos no BitPub')+'</div>';
     $('#listaPedidos').innerHTML=ps.length?ps.map(function(p){
       var d=new Date(p.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-      return '<div class="ped"><div class="ped-t"><span>Pedido '+p.numero+'</span><span class="sel">'+esc(STATUS[p.status]||p.status)+'</span></div>'+
+      return '<div class="ped"><div class="ped-t"><span>Pedido '+p.numero+'</span><span class="sel">'+esc(STATUS[p.status]||p.status)+(p.pago?' &middot; Pago':'')+'</span></div>'+
         '<small>'+d+' &middot; '+(p.tipo==='entrega'?'Entrega':'Retirada')+'</small>'+
-        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)}).join('<br>')+'</div><b>'+R(p.total)+' em itens</b></div>';
+        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)}).join('<br>')+'</div><b>'+R(p.total)+' em itens</b>'+(PAGAMENTO_ONLINE&&!p.pago&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button><p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+'</div>';
     }).join(''):'<p class="vazio">Você ainda não fez nenhum pedido.</p>';
   }catch(e){ $('#listaPedidos').innerHTML='<p class="erro">'+esc(textoErro(e))+'</p>' }
 }
@@ -458,6 +459,17 @@ function mensagemZap(p){
   l.push('','Pagamento: a combinar');
   return l.join('\n');
 }
+var pedidoPagarId=null;
+async function pagar(id,btn,msgEl){
+  var antes=btn.textContent; btn.disabled=true; btn.textContent='Abrindo pagamento...'; if(msgEl)msgEl.textContent='';
+  try{
+    var r=await http('/functions/v1/pagar',{method:'POST',body:{pedido_id:id,redirect:location.origin+location.pathname}});
+    if(!r||!r.url)throw new Error('Não foi possível abrir o pagamento.');
+    location.href=r.url;
+  }catch(e){ if(msgEl)msgEl.textContent=textoErro(e); btn.disabled=false; btn.textContent=antes }
+}
+$('#okPagar').addEventListener('click',function(){ if(pedidoPagarId)pagar(pedidoPagarId,this,$('#erroPagar')) });
+$('#listaPedidos').addEventListener('click',function(e){ var b=e.target.closest('[data-pagar]'); if(b)pagar(b.getAttribute('data-pagar'),b,b.parentNode.querySelector('.erroPed')) });
 var enviando=false;
 async function enviarPedido(){
   var erro=$('#erroPedido'); erro.textContent='';
@@ -473,7 +485,8 @@ async function enviarPedido(){
     }});
     carrinho=[]; salvarCarrinho(); $$('.item').forEach(function(el){acaoItem(el.getAttribute('data-id'))}); atualizarBarra();
     $('#obsGeral').value=''; $('#dCarrinho').close();
-    $('#okTexto').textContent='Seu pedido '+p.numero+' já está com a gente. Toque no botão abaixo para enviar no WhatsApp e combinar '+(p.tipo==='entrega'?'o frete e ':'')+'o pagamento.';
+    $('#okTexto').textContent='Seu pedido '+p.numero+' já está com a gente. Você pode pagar os itens agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'?'o frete e ':'')+'o pagamento.';
+    pedidoPagarId=p.id; $('#erroPagar').textContent=''; $('#okPagar').hidden=!PAGAMENTO_ONLINE;
     $('#okZap').href='https://wa.me/'+WHATS_LOJA+'?text='+encodeURIComponent(mensagemZap(p));
     abrir($('#dOk'));
   }catch(e){
@@ -484,7 +497,12 @@ async function enviarPedido(){
 $('#btnEnviar').addEventListener('click',enviarPedido);
 
 carregarMenu();
-carregarCliente();
+carregarCliente().then(function(){
+  if(/[?&]pagamento=ok/.test(location.search)){
+    try{history.replaceState(null,'',location.pathname)}catch(e){}
+    toast('Obrigado! Estamos confirmando seu pagamento.'); if(cliente)setTimeout(abrirConta,600);
+  }
+});
 })();
 </script>
 </body>

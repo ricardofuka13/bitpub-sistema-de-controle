@@ -2197,7 +2197,7 @@ function onlineText(o){
   });
   L.push(lr('Itens',plain(brl(subOf(o)))));
   if(o.type==='delivery')N('Frete: a combinar no WhatsApp');
-  N('Pagamento: a combinar no WhatsApp');
+  N(o.onlinePaid?'Pagamento: PAGO ONLINE (itens)':'Pagamento: a combinar no WhatsApp');
   if(o.obsOnline){L.push(dash);N('Obs: '+o.obsOnline)}
   L.push(eq);L.push('');
   return L.join('\n');
@@ -2230,11 +2230,19 @@ async function onlineTick(){
   try{
     var rows=await h('GET','/rest/v1/pedidos_online?select=*&status=in.(novo,aceito)&or=(comanda_id.is.null,comanda_id.like.claim:*)&order=numero.asc&limit=10');
     for(var i=0;i<(rows||[]).length;i++){await claimAndImport(rows[i])}
+    var nopaid=Object.keys(S.open).filter(function(k){return S.open[k].online&&S.open[k].pedidoId&&!S.open[k].onlinePaid});
+    if(nopaid.length){
+      var pg=await h('GET','/rest/v1/pedidos_online?select=id,pago,metodo_pagamento&pago=eq.true&id=in.('+nopaid.map(function(k){return S.open[k].pedidoId}).join(',')+')');
+      for(var q2=0;q2<(pg||[]).length;q2++){
+        var ok=nopaid.find(function(k){return S.open[k].pedidoId===pg[q2].id});
+        if(ok){await db.doc('orders/'+ok).update({onlinePaid:true,payMethod:pg[q2].metodo_pagamento||''});S.open[ok]=Object.assign({},S.open[ok],{onlinePaid:true,payMethod:pg[q2].metodo_pagamento||''});toast('Pedido online #'+S.open[ok].pedidoNum+' foi pago');beepOn();render()}
+      }
+    }
     if(autoPrintOn()&&autoCan()){
       var ids=pendingPrint().filter(function(id){return !ON.failed[id]||Date.now()-ON.failed[id]>60000});
       for(var j=0;j<ids.length;j++){if(!(await printOnline(ids[j],false)))break}
     }
-  }catch(e){}
+  }catch(e){try{console.warn('pedidos online:',e&&(e.message||e.code))}catch(x){}}
   finally{ON.busy=false}
 }
 function startOnline(){setTimeout(onlineTick,1500);setInterval(onlineTick,4000)}
@@ -2247,7 +2255,7 @@ function onlineInfo(o){
   if(!o.online)return '';
   var first=String(o.cname||'').split(' ')[0],cfgName=(S.cfg&&S.cfg.name)||'BitPub';
   var msg='Olá, '+first+'! Aqui é do '+cfgName+'. Recebemos seu pedido online #'+o.pedidoNum+' (itens: '+brl(subOf(o))+'). Vamos combinar '+(o.type==='delivery'?'o frete e ':'')+'o pagamento?';
-  return '<div class="strip info" style="margin:0 0 10px"><div><b>Pedido online #'+o.pedidoNum+'</b> · '+(o.type==='delivery'?'Entrega: '+esc(o.addr||'sem endereço'):'Retirada na loja')+' · WhatsApp '+esc(fmtPhone(o.whats))+(o.obsOnline?' · Obs: '+esc(o.obsOnline):'')+(o.type==='delivery'?'. Frete a combinar.':'')+'</div>'+
+  return '<div class="strip info" style="margin:0 0 10px"><div><b>Pedido online #'+o.pedidoNum+'</b>'+(o.onlinePaid?' · <b style="color:#1B7F3B">PAGO ONLINE'+(o.payMethod?' ('+esc(o.payMethod==='pix'?'Pix':o.payMethod==='credit_card'?'cartão':o.payMethod)+')':'')+'</b>':'')+' · '+(o.type==='delivery'?'Entrega: '+esc(o.addr||'sem endereço'):'Retirada na loja')+' · WhatsApp '+esc(fmtPhone(o.whats))+(o.obsOnline?' · Obs: '+esc(o.obsOnline):'')+(o.type==='delivery'?'. Frete a combinar.':'')+'</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/55'+digits(o.whats)+'?text='+encodeURIComponent(msg)+'">WhatsApp</a>'+(o.onlinePrinted?'':'<button class="btn sm primary" type="button" data-act="onprint">Imprimir</button>')+'</div></div>';
 }
 
