@@ -156,7 +156,7 @@ async function ehEquipe(){try{return (await http('/rest/v1/rpc/is_staff',{method
 $('#btnSair').addEventListener('click',function(){gravarSessao(null);parar();$('#app').hidden=true;$('#telaLogin').hidden=false});
 
 /* ---------- pedidos ---------- */
-var pedidos=[],filtro='abertos',ultimoNumero=null,timer=null,som=null;
+var ultimaAssinatura='',pedidos=[],filtro='abertos',ultimoNumero=null,timer=null,som=null;
 var ROT={novo:'Novo',aceito:'Aceito',pronto:'Pronto',entregue:'Entregue',cancelado:'Cancelado'};
 var PROX={novo:['aceito','Aceitar pedido'],aceito:['pronto','Marcar pronto'],pronto:['entregue','Marcar entregue']};
 var FILTROS=[['abertos','Em andamento'],['novo','Novos'],['aceito','Aceitos'],['pronto','Prontos'],['entregue','Entregues'],['cancelado','Cancelados'],['todos','Todos']];
@@ -169,7 +169,7 @@ async function carregarPedidos(){
     var ps=await http('/rest/v1/pedidos_online?select=*&order=criado_em.desc&limit=200');
     var maior=ps.reduce(function(m,p){return Math.max(m,p.numero)},0);
     if(ultimoNumero!==null&&maior>ultimoNumero){beep();document.title='(novo) BitPub | Painel de pedidos'}
-    ultimoNumero=Math.max(ultimoNumero||0,maior);pedidos=ps;desenharPedidos();
+    ultimoNumero=Math.max(ultimoNumero||0,maior);var ass=JSON.stringify(ps);if(ass===ultimaAssinatura)return;ultimaAssinatura=ass;pedidos=ps;desenharPedidos();
   }catch(e){if(e.status===401){gravarSessao(null);location.reload()}}
 }
 function desenharFiltros(){
