@@ -156,7 +156,7 @@ async function ehEquipe(){try{return (await http('/rest/v1/rpc/is_staff',{method
 $('#btnSair').addEventListener('click',function(){gravarSessao(null);parar();$('#app').hidden=true;$('#telaLogin').hidden=false});
 
 /* ---------- pedidos ---------- */
-var ultimaAssinatura='',pedidos=[],filtro='abertos',ultimoNumero=null,timer=null,som=null;
+var lojaEnd='',ultimaAssinatura='',pedidos=[],filtro='abertos',ultimoNumero=null,timer=null,som=null;
 var ROT={novo:'Novo',aceito:'Aceito',pronto:'Pronto',entregue:'Entregue',cancelado:'Cancelado'};
 var PROX={novo:['aceito','Aceitar pedido'],aceito:['pronto','Marcar pronto'],pronto:['entregue','Marcar entregue']};
 var FILTROS=[['abertos','Em andamento'],['novo','Novos'],['aceito','Aceitos'],['pronto','Prontos'],['entregue','Entregues'],['cancelado','Cancelados'],['todos','Todos']];
@@ -199,6 +199,7 @@ function cartao(p){
     (p.tipo==='entrega'&&p.status!=='cancelado'&&p.status!=='entregue'?'<div class="frete"><label style="flex-direction:row;align-items:center;gap:8px">Frete R$<input type="number" step="0.5" min="0" inputmode="decimal" data-frete aria-label="Valor do frete"></label></div>':'')+
     '<div class="acoes">'+
       (p.status!=='cancelado'?'<button class="sec" type="button" data-zap>WhatsApp do cliente</button>':'')+
+      (p.tipo==='entrega'&&p.status!=='cancelado'&&p.status!=='entregue'?'<button class="sec" type="button" data-uber>Chamar Uber</button>':'')+
       (prox?'<button class="principal" type="button" data-prox="'+prox[0]+'">'+prox[1]+'</button>':'')+
       (p.status==='novo'||p.status==='aceito'?'<button class="sec" type="button" data-cancel>Cancelar</button>':'')+
     '</div></article>';
@@ -210,6 +211,13 @@ $('#listaPedidos').addEventListener('click',async function(e){
   if(e.target.closest('[data-zap]')){
     var f=card.querySelector('[data-frete]'),fr=f&&f.value!==''?Number(f.value):null;
     window.open('https://wa.me/55'+p.whatsapp_cliente+'?text='+encodeURIComponent(msgZap(p,fr)),'_blank','noopener');return;
+  }
+  if(e.target.closest('[data-uber]')){
+    var itens=p.itens.map(function(i){return i.qtd+'x '+i.nome}).join(', ');
+    var txt='Entrega BitPub - pedido #'+p.numero+'\nCliente: '+p.nome_cliente+' '+mascara(p.whatsapp_cliente)+'\nEndereço: '+p.endereco+'\nItens: '+itens+(p.observacao?'\nObs: '+p.observacao:'');
+    try{navigator.clipboard.writeText(txt).catch(function(){})}catch(x){}
+    var u='https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]='+encodeURIComponent(p.endereco)+(lojaEnd?'&pickup[formatted_address]='+encodeURIComponent(lojaEnd):'');
+    window.open(u,'_blank','noopener');return;
   }
   var prox=e.target.closest('[data-prox]'),canc=e.target.closest('[data-cancel]');
   if(!prox&&!canc)return;
@@ -327,6 +335,7 @@ $('#abaClientes').addEventListener('click',function(){aba('clientes')});
 $('#abaFotos').addEventListener('click',function(){aba('fotos')});
 function parar(){if(timer){clearInterval(timer);timer=null}}
 function iniciar(){
+  if(!lojaEnd)http('/rest/v1/rpc/cardapio_publico',{method:'POST',body:{}}).then(function(m){lojaEnd=(m&&m.endereco)||''}).catch(function(){});
   $('#telaLogin').hidden=true;$('#app').hidden=false;ultimoNumero=null;
   carregarPedidos();parar();timer=setInterval(function(){if(!document.hidden&&!$('#vPedidos').hidden)carregarPedidos()},15000);
 }
