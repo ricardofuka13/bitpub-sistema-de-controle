@@ -309,8 +309,8 @@ $('#arqFoto').addEventListener('change',async function(){
   var box=$('#listaFotos .fi[data-id="'+(window.CSS&&CSS.escape?CSS.escape(id):id)+'"]');if(box){box.classList.add('ocup');box.querySelector('.erroFi').textContent='Enviando...'}
   try{
     var blob=await reduzir(f),nome=id.replace(/[^\w-]/g,'')+'-'+Date.now()+'.jpg',s=await sessaoValida();
-    var r=await fetch(CFG.url+'/storage/v1/object/'+BUCKET+'/'+nome,{method:'POST',headers:{apikey:CFG.key,Authorization:'Bearer '+(s?s.access_token:CFG.key),'Content-Type':'image/jpeg','x-upsert':'true'},body:blob});
-    if(!r.ok){var t=await r.text();throw new Error(/not found|Bucket/i.test(t)?'A pasta de fotos ainda não foi criada no Supabase.':(/row-level|policy|403|401/i.test(t)?'Sem permissão para enviar (login da equipe).':'Falha ao enviar a foto.'))}
+    var r=await fetch(CFG.url+'/storage/v1/object/'+BUCKET+'/'+nome,{method:'POST',headers:{apikey:CFG.key,Authorization:'Bearer '+(s?s.access_token:CFG.key),'Content-Type':'image/jpeg'},body:blob});
+    if(!r.ok){var t=await r.text();throw new Error(/not found|Bucket/i.test(t)?'A pasta de fotos ainda não foi criada no Supabase.':(r.status===401?'Sua sessão expirou. Saia e entre de novo no painel.':(/row-level|policy|403/i.test(t)?'Sem permissão para enviar (login da equipe).':'Falha ao enviar a foto ('+r.status+').')))}
     await gravarFoto(id,CFG.url+'/storage/v1/object/public/'+BUCKET+'/'+nome);desenharFotos();
   }catch(er){if(box){box.classList.remove('ocup');box.querySelector('.erroFi').textContent=er.message}else alert(er.message)}
 });
