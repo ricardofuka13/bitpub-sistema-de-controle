@@ -60,6 +60,14 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
 .cli .det{padding:0 14px 14px;border-top:1px solid var(--linha)}
 .vazio{text-align:center;color:var(--suave);padding:30px 0}
 .busca{margin-bottom:12px}
+.cat{font:400 26px/1 var(--f-titulo);margin:18px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--preto)}
+.fi{background:#fff;border:2px solid var(--preto);margin-bottom:8px;padding:10px;display:grid;grid-template-columns:84px 1fr;gap:6px 12px;align-items:center}
+.fi .th{width:84px;height:84px;object-fit:cover;border:2px solid var(--preto);background:var(--cinza);display:grid;place-items:center;color:var(--suave);font-size:12px;text-align:center}
+.fi b{font-weight:800}
+.fi .bt{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.fi .bt .sec{flex:1;min-width:130px}
+.fi.ocup{opacity:.55;pointer-events:none}
+.aviso{background:#FFF3CD;border:2px solid var(--preto);padding:10px 12px;margin-bottom:12px;font-weight:600}
 </style>
 </head>
 <body>
@@ -80,6 +88,7 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
     <div class="abas" role="tablist">
       <button class="aba" role="tab" id="abaPedidos" aria-selected="true">Pedidos<span class="n" id="nNovos" hidden>0</span></button>
       <button class="aba" role="tab" id="abaClientes" aria-selected="false">Clientes</button>
+      <button class="aba" role="tab" id="abaFotos" aria-selected="false">Fotos</button>
     </div>
     <button class="sair" id="btnSair" type="button">Sair</button>
   </div></header>
@@ -92,6 +101,12 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
       <div class="tiles" id="tiles"></div>
       <input class="busca" type="search" id="busca" placeholder="Buscar por nome ou WhatsApp" aria-label="Buscar cliente">
       <div id="listaClientes"></div>
+    </section>
+    <section id="vFotos" hidden>
+      <p class="mini" style="margin:0 0 10px">Toque em <b>Trocar foto</b> para escolher uma foto do celular. Ela é reduzida sozinha e aparece no site na hora.</p>
+      <div id="avisoFotos" class="aviso" hidden></div>
+      <input type="file" id="arqFoto" accept="image/*" hidden>
+      <div id="listaFotos"></div>
     </section>
   </main>
 </div>
@@ -238,15 +253,78 @@ $('#listaClientes').addEventListener('click',async function(e){
   }catch(er){det.innerHTML='<p class="erro">'+esc(er.message)+'</p>'}
 });
 
+
+/* ---------- fotos do cardápio ---------- */
+var itensFoto=[],descFoto={},itemAlvo=null,BUCKET='cardapio-fotos';
+function urlFoto(f){if(!f)return '';if(/^https:\/\//.test(f))return f;if(/^fotos\/[\w.-]+$/.test(f))return '../pedido/'+f;return ''}
+async function carregarFotos(){
+  try{
+    var r=await Promise.all([http('/rest/v1/docs?coll=eq.menu&select=id,data&limit=1000'),http('/rest/v1/cardapio_desc?select=item_id,foto&limit=1000')]);
+    descFoto={};r[1].forEach(function(d){descFoto[d.item_id]=d.foto||''});
+    itensFoto=r[0].filter(function(d){return d.data&&d.data.active!==false}).map(function(d){return {id:d.id,nome:d.data.name||d.id,cat:d.data.cat||'Outros'}})
+      .sort(function(a,b){return a.cat.localeCompare(b.cat,'pt-BR')||a.nome.localeCompare(b.nome,'pt-BR')});
+    desenharFotos();
+  }catch(e){$('#listaFotos').innerHTML='<p class="erro">'+esc(e.message)+'</p>'}
+}
+function desenharFotos(){
+  var sem=itensFoto.filter(function(i){return !descFoto[i.id]}).length,av=$('#avisoFotos');
+  av.hidden=!sem;av.textContent=sem+(sem===1?' item ainda está':' itens ainda estão')+' sem foto.';
+  var cat=null,h='';
+  itensFoto.forEach(function(i){
+    if(i.cat!==cat){cat=i.cat;h+='<h2 class="cat">'+esc(cat)+'</h2>'}
+    var u=urlFoto(descFoto[i.id]);
+    h+='<div class="fi" data-id="'+esc(i.id)+'">'+(u?'<img class="th" src="'+esc(u)+'" alt="Foto de '+esc(i.nome)+'" loading="lazy">':'<div class="th">sem foto</div>')+
+      '<div><b>'+esc(i.nome)+'</b><br><span class="mini erroFi"></span></div><div class="bt"><button class="sec" type="button" data-trocar>'+(u?'Trocar foto':'Colocar foto')+'</button>'+(u?'<button class="sec" type="button" data-tirar>Tirar foto</button>':'')+'</div></div>';
+  });
+  $('#listaFotos').innerHTML=h||'<p class="vazio">Nenhum item no cardápio.</p>';
+}
+function reduzir(file){
+  return new Promise(function(ok,no){
+    var img=new Image(),u=URL.createObjectURL(file);
+    img.onload=function(){
+      var M=900,k=Math.min(1,M/Math.max(img.width,img.height)),w=Math.round(img.width*k),hh=Math.round(img.height*k);
+      var c=document.createElement('canvas');c.width=w;c.height=hh;var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,hh);x.drawImage(img,0,0,w,hh);
+      URL.revokeObjectURL(u);c.toBlob(function(b){b?ok(b):no(new Error('Não deu para ler essa foto.'))},'image/jpeg',.82);
+    };
+    img.onerror=function(){URL.revokeObjectURL(u);no(new Error('Não deu para ler essa foto. Tente outra.'))};
+    img.src=u;
+  });
+}
+async function gravarFoto(id,valor){
+  await http('/rest/v1/cardapio_desc?on_conflict=item_id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{item_id:id,foto:valor}});
+  descFoto[id]=valor||'';
+}
+$('#listaFotos').addEventListener('click',async function(e){
+  var box=e.target.closest('.fi');if(!box)return;var id=box.getAttribute('data-id');
+  if(e.target.closest('[data-trocar]')){itemAlvo=id;$('#arqFoto').value='';$('#arqFoto').click();return}
+  if(e.target.closest('[data-tirar]')){
+    var it=itensFoto.find(function(x){return x.id===id});
+    if(!confirm('Tirar a foto de '+(it?it.nome:'este item')+'?'))return;
+    box.classList.add('ocup');
+    try{await gravarFoto(id,null);desenharFotos()}catch(er){box.classList.remove('ocup');box.querySelector('.erroFi').textContent='Erro: '+er.message}
+  }
+});
+$('#arqFoto').addEventListener('change',async function(){
+  var f=this.files&&this.files[0],id=itemAlvo;if(!f||!id)return;
+  var box=$('#listaFotos .fi[data-id="'+(window.CSS&&CSS.escape?CSS.escape(id):id)+'"]');if(box){box.classList.add('ocup');box.querySelector('.erroFi').textContent='Enviando...'}
+  try{
+    var blob=await reduzir(f),nome=id.replace(/[^\w-]/g,'')+'-'+Date.now()+'.jpg',s=await sessaoValida();
+    var r=await fetch(CFG.url+'/storage/v1/object/'+BUCKET+'/'+nome,{method:'POST',headers:{apikey:CFG.key,Authorization:'Bearer '+(s?s.access_token:CFG.key),'Content-Type':'image/jpeg','x-upsert':'true'},body:blob});
+    if(!r.ok){var t=await r.text();throw new Error(/not found|Bucket/i.test(t)?'A pasta de fotos ainda não foi criada no Supabase.':(/row-level|policy|403|401/i.test(t)?'Sem permissão para enviar (login da equipe).':'Falha ao enviar a foto.'))}
+    await gravarFoto(id,CFG.url+'/storage/v1/object/public/'+BUCKET+'/'+nome);desenharFotos();
+  }catch(er){if(box){box.classList.remove('ocup');box.querySelector('.erroFi').textContent=er.message}else alert(er.message)}
+});
+
 /* ---------- abas e ciclo ---------- */
 function aba(qual){
-  var ped=qual==='pedidos';
-  $('#abaPedidos').setAttribute('aria-selected',String(ped));$('#abaClientes').setAttribute('aria-selected',String(!ped));
-  $('#vPedidos').hidden=!ped;$('#vClientes').hidden=ped;
-  if(ped){document.title='BitPub | Painel de pedidos'}else carregarClientes();
+  ['pedidos','clientes','fotos'].forEach(function(n){
+    var N=n.charAt(0).toUpperCase()+n.slice(1);$('#aba'+N).setAttribute('aria-selected',String(n===qual));$('#v'+N).hidden=n!==qual;
+  });
+  if(qual==='pedidos'){document.title='BitPub | Painel de pedidos'}else if(qual==='clientes')carregarClientes();else carregarFotos();
 }
 $('#abaPedidos').addEventListener('click',function(){aba('pedidos')});
 $('#abaClientes').addEventListener('click',function(){aba('clientes')});
+$('#abaFotos').addEventListener('click',function(){aba('fotos')});
 function parar(){if(timer){clearInterval(timer);timer=null}}
 function iniciar(){
   $('#telaLogin').hidden=true;$('#app').hidden=false;ultimoNumero=null;
