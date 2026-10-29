@@ -2215,8 +2215,10 @@ async function importOnline(p,claimed){
       var d=recDelta(rec,it.qtd,-1);Object.keys(d).forEach(function(k){total[k]=r3((total[k]||0)+d[k])});
       return {lid:lid(),k:it.id,name:m?m.name:it.nome,price:r2(it.preco),cost:m?r2(costOf(m)):0,qty:it.qtd,note:it.obs||'',rec:rec,sig:''};
     });
+    var fv=r2(Number(p.frete)||0);
+    if(fv>0)items.push({lid:lid(),k:'__frete',name:'Frete',price:fv,cost:0,qty:1,note:'',rec:[],sig:'',isFrete:true});
     var ref=db.collection('orders').doc();
-    var doc={num:max+1,type:type,name:'',label:mkLabel(base,cname),base:base,status:'open',items:items,openedAt:Date.now(),day:day,cid:cid,cname:cname,
+    var doc={freteVal:fv,num:max+1,type:type,name:'',label:mkLabel(base,cname),base:base,status:'open',items:items,openedAt:Date.now(),day:day,cid:cid,cname:cname,
       online:true,pedidoId:p.id,pedidoNum:p.numero,whats:whats,addr:p.endereco||'',obsOnline:p.observacao||'',onlinePrinted:false};
     await ref.set(doc);
     S.open[ref.id]=doc;
@@ -2254,13 +2256,14 @@ function onlineText(o){
   if(o.type==='delivery'&&o.addr){L.push(dash);N('Endereco:');N(o.addr)}
   L.push(dash);
   (o.items||[]).forEach(function(x){
+    if(x.isFrete)return;
     B(x.qty+'x '+x.name);
     if(x.note)wrapTxt('>> '+plain(x.note),hw).forEach(function(t){L.push('\x02'+t)});
     L.push(dash);
   });
-  L.push(lr('Itens',plain(brl(subOf(o)))));
-  if(o.type==='delivery')N('Frete: a combinar no WhatsApp');
-  N(o.onlinePaid?'Pagamento: PAGO ONLINE (itens)':'Pagamento: a combinar no WhatsApp');
+  L.push(lr('Itens',plain(brl(subOf(o)-(o.freteVal||0)))));
+  if(o.type==='delivery'){if(o.freteVal>0){L.push(lr('Frete',plain(brl(o.freteVal))));L.push(lr('TOTAL',plain(brl(subOf(o)))))}else N('Frete: a combinar no WhatsApp')}
+  N(o.onlinePaid?'Pagamento: PAGO ONLINE':'Pagamento: a combinar no WhatsApp');
   if(o.obsOnline){L.push(dash);N('Obs: '+o.obsOnline)}
   L.push(eq);L.push('');
   return L.join('\n');
@@ -2317,8 +2320,8 @@ function onlineBanner(){
 function onlineInfo(o){
   if(!o.online)return '';
   var first=String(o.cname||'').split(' ')[0],cfgName=(S.cfg&&S.cfg.name)||'BitPub';
-  var msg='Olá, '+first+'! Aqui é do '+cfgName+'. Recebemos seu pedido online #'+o.pedidoNum+' (itens: '+brl(subOf(o))+'). Vamos combinar '+(o.type==='delivery'?'o frete e ':'')+'o pagamento?';
-  return '<div class="strip info" style="margin:0 0 10px"><div><b>Pedido online #'+o.pedidoNum+'</b>'+(o.onlinePaid?' · <b style="color:#1B7F3B">PAGO ONLINE'+(o.payMethod?' ('+esc(o.payMethod==='pix'?'Pix':o.payMethod==='credit_card'?'cartão':o.payMethod)+')':'')+'</b>':'')+' · '+(o.type==='delivery'?'Entrega: '+esc(o.addr||'sem endereço'):'Retirada na loja')+' · WhatsApp '+esc(fmtPhone(o.whats))+(o.obsOnline?' · Obs: '+esc(o.obsOnline):'')+(o.type==='delivery'?'. Frete a combinar.':'')+'</div>'+
+  var msg='Olá, '+first+'! Aqui é do '+cfgName+'. Recebemos seu pedido online #'+o.pedidoNum+' (itens: '+brl(subOf(o)-(o.freteVal||0))+(o.freteVal>0?' + frete '+brl(o.freteVal)+' = '+brl(subOf(o)):'')+'). Vamos combinar '+(o.type==='delivery'&&!(o.freteVal>0)?'o frete e ':'')+'o pagamento?';
+  return '<div class="strip info" style="margin:0 0 10px"><div><b>Pedido online #'+o.pedidoNum+'</b>'+(o.onlinePaid?' · <b style="color:#1B7F3B">PAGO ONLINE'+(o.payMethod?' ('+esc(o.payMethod==='pix'?'Pix':o.payMethod==='credit_card'?'cartão':o.payMethod)+')':'')+'</b>':'')+' · '+(o.type==='delivery'?'Entrega: '+esc(o.addr||'sem endereço'):'Retirada na loja')+' · WhatsApp '+esc(fmtPhone(o.whats))+(o.obsOnline?' · Obs: '+esc(o.obsOnline):'')+(o.type==='delivery'?(o.freteVal>0?'. Frete '+brl(o.freteVal)+' já incluído.':'. Frete a combinar.'):'')+'</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/55'+digits(o.whats)+'?text='+encodeURIComponent(msg)+'">WhatsApp</a>'+(o.onlinePrinted?'':'<button class="btn sm primary" type="button" data-act="onprint">Imprimir</button>')+'</div></div>';
 }
 

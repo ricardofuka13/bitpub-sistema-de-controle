@@ -123,6 +123,20 @@ textarea{min-height:76px;resize:vertical}
 .resumo-cli b{color:var(--amarelo);font:400 34px/1 var(--f-titulo);margin-right:6px}
 .ok-icone{width:56px;height:56px;border:3px solid var(--preto);background:var(--amarelo);display:grid;place-items:center;font:400 34px/1 var(--f-titulo)}
 .vazio{color:var(--suave);padding:24px 0;text-align:center}
+.hero-box{max-width:720px;margin:0 auto;padding:4px 16px 0}
+.hero{width:100%;height:auto;max-height:240px;object-fit:cover;border:3px solid var(--preto);background:var(--cinza)}
+.loja .hor,.loja .info{white-space:pre-line;margin:6px 0 0}
+.promos{max-width:720px;margin:0 auto;padding:18px 16px 0}
+.promos h2{font:400 clamp(30px,8vw,42px)/1 var(--f-titulo);margin:0 0 10px;letter-spacing:.3px}
+.promos-lista{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity}
+.promo{flex:none;width:236px;scroll-snap-align:start;text-align:left;border:3px solid var(--preto);background:#fff;padding:0;display:flex;flex-direction:column}
+.promo img{width:100%;height:132px;object-fit:cover;background:var(--cinza)}
+.promo .p-t{margin:0;background:var(--preto);color:#fff;font:700 15px/1.2 var(--f-corpo);text-transform:uppercase;padding:8px 10px}
+.promo .p-d{margin:0;padding:8px 10px 10px;color:var(--suave);font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.promo-foto{width:100%;max-height:260px;object-fit:cover;border:2px solid var(--preto)}
+#boxEndereco{display:flex;flex-direction:column;gap:8px}#boxEndereco[hidden]{display:none}
+.btn-frete{background:var(--preto);color:#fff;border:0;min-height:44px;font-weight:700;padding:0 16px;border-radius:0}
+.freteMsg{margin:0;font-size:14px;color:var(--suave);min-height:1.2em}
 .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--preto);color:#fff;padding:10px 16px;font-weight:600;z-index:60;max-width:90vw}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
@@ -137,7 +151,9 @@ textarea{min-height:76px;resize:vertical}
   </div>
   <div class="rasgo" id="rasgo" aria-hidden="true"></div>
 </header>
+<div class="hero-box" id="heroBox" hidden><img class="hero" id="hero" alt="Destaques da BitPub" width="688" height="240" decoding="async"></div>
 <div class="loja" id="loja"></div>
+<section class="promos" id="promos" aria-labelledby="hPromos" hidden><h2 id="hPromos">Promoções</h2><div class="promos-lista" id="promosLista"></div></section>
 
 <nav class="cats" aria-label="Categorias do cardápio"><div class="cats-in" id="cats"></div></nav>
 <main id="menu"><p class="vazio">Carregando o cardápio...</p></main>
@@ -145,6 +161,16 @@ textarea{min-height:76px;resize:vertical}
 <div class="barra" id="barra" hidden>
   <button type="button" id="btnCarrinho"><span><span class="n" id="barraN">0</span>Ver pedido</span><span id="barraTotal"></span></button>
 </div>
+
+<!-- promoção -->
+<dialog id="dPromo" aria-labelledby="tPromo">
+  <div class="d-in">
+    <div class="d-topo"><h2 id="tPromo">Promoção</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
+    <img class="promo-foto" id="promoFoto" alt="" hidden>
+    <p id="promoTexto" style="margin:0;white-space:pre-line"></p>
+    <button class="principal" type="button" data-fechar>Ver o cardápio</button>
+  </div>
+</dialog>
 
 <!-- carrinho -->
 <dialog id="dCarrinho" aria-labelledby="tCarrinho">
@@ -156,7 +182,11 @@ textarea{min-height:76px;resize:vertical}
       <label><input type="radio" name="tipo" value="retirada" checked>Retirar na loja</label>
       <label><input type="radio" name="tipo" value="entrega">Entrega</label>
     </fieldset>
-    <label id="boxEndereco" hidden>Endereço de entrega<textarea id="endereco" maxlength="200" placeholder="Rua, número, bairro e ponto de referência"></textarea></label>
+    <div id="boxEndereco" hidden>
+      <label>Endereço de entrega<textarea id="endereco" maxlength="200" placeholder="Rua, número, bairro, cidade"></textarea></label>
+      <button class="btn-frete" type="button" id="btnFrete">Calcular frete</button>
+      <p class="freteMsg" id="freteMsg" role="status"></p>
+    </div>
     <label>Observação do pedido (opcional)<input type="text" id="obsGeral" maxlength="300" placeholder="Ex.: troco para R$ 50"></label>
     <div class="totais" id="totais"></div>
     <div class="aviso" id="avisoPag"></div>
@@ -275,7 +305,7 @@ function textoErro(e){
 }
 
 /* ---------- estado ---------- */
-var M={nome:'BitPub',telefone:'',endereco:'',frase:'',cats:[],itens:[]};
+var M={nome:'BitPub',telefone:'',endereco:'',frase:'',horario:'',info:'',cabecalho:'',frete:null,promocoes:[],cats:[],itens:[]};
 var carrinho=[]; var cliente=null; var CK='bitpub_site_carrinho';
 try{ var c0=JSON.parse(localStorage.getItem(CK)||'[]'); if(Array.isArray(c0))carrinho=c0.filter(function(i){return i&&i.id&&i.qtd>0}) }catch(e){}
 function salvarCarrinho(){ try{localStorage.setItem(CK,JSON.stringify(carrinho))}catch(e){} }
@@ -287,7 +317,7 @@ function qtdTotal(){ return carrinho.reduce(function(s,i){return s+i.qtd},0) }
 async function carregarMenu(){
   try{
     var d=await http('/rest/v1/rpc/cardapio_publico',{method:'POST',auth:false,body:{}});
-    M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',cats:d.cats||[],itens:d.itens||[]};
+    M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
     try{localStorage.setItem('bitpub_site_menu',JSON.stringify(M))}catch(e){}
   }catch(e){
     try{var c=JSON.parse(localStorage.getItem('bitpub_site_menu')||'null'); if(c){M=c; toast('Sem conexão: mostrando o último cardápio salvo.')}}catch(x){}
@@ -297,11 +327,20 @@ async function carregarMenu(){
 }
 function desenharMenu(){
   var loja=$('#loja');
-  loja.innerHTML='<p style="margin:0"><strong>'+esc(M.frase||'')+'</strong></p><p style="margin:2px 0 0">'+esc(M.endereco)+'</p>';
+  loja.innerHTML='<p style="margin:0"><strong>'+esc(M.frase||'')+'</strong></p><p style="margin:2px 0 0">'+esc(M.endereco)+'</p>'+
+    (M.horario?'<p class="hor"><strong>Horário:</strong> '+esc(M.horario)+'</p>':'')+(M.info?'<p class="info">'+esc(M.info)+'</p>':'');
+  var okImg=function(u){return /^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(u||'')};
+  var hb=$('#heroBox');
+  if(okImg(M.cabecalho)){ if($('#hero').getAttribute('src')!==M.cabecalho)$('#hero').src=M.cabecalho; hb.hidden=false }else{ hb.hidden=true }
+  var pr=(M.promocoes||[]).filter(function(p){return p&&p.titulo});
+  $('#promos').hidden=!pr.length;
+  $('#promosLista').innerHTML=pr.map(function(p,n){
+    return '<button type="button" class="promo" data-promo="'+n+'">'+(okImg(p.foto)?'<img src="'+esc(p.foto)+'" alt="" loading="lazy" decoding="async">':'')+'<h3 class="p-t">'+esc(p.titulo)+'</h3>'+(p.descricao?'<p class="p-d">'+esc(p.descricao)+'</p>':'')+'</button>';
+  }).join('');
   var cats=M.cats.slice(); M.itens.forEach(function(i){ if(cats.indexOf(i.cat)<0)cats.push(i.cat) });
   cats=cats.filter(function(c){return M.itens.some(function(i){return i.cat===c})});
   if(!cats.length){ $('#menu').innerHTML='<p class="vazio">O cardápio está indisponível agora. Chame a gente no WhatsApp.</p>'; $('#cats').innerHTML=''; return }
-  $('#cats').innerHTML=cats.map(function(c,n){return '<a class="chip" href="#cat'+n+'" data-cat="cat'+n+'">'+esc(c)+'</a>'}).join('');
+  $('#cats').innerHTML=(pr.length?'<a class="chip" href="#promos">Promoções</a>':'')+cats.map(function(c,n){return '<a class="chip" href="#cat'+n+'" data-cat="cat'+n+'">'+esc(c)+'</a>'}).join('');
   $('#menu').innerHTML=cats.map(function(c,n){
     return '<section class="secao" id="cat'+n+'" aria-labelledby="h'+n+'"><h2 id="h'+n+'">'+esc(c)+'</h2>'+
       M.itens.filter(function(i){return i.cat===c}).map(function(i){
@@ -358,6 +397,42 @@ $$('dialog').forEach(function(d){d.addEventListener('click',function(e){ if(e.ta
 $('#btnCarrinho').addEventListener('click',function(){desenharCarrinho();abrir($('#dCarrinho'))});
 
 function tipoAtual(){ return $('input[name="tipo"]:checked').value }
+var freteAtual=null;
+function freteOn(){ return !!(M.frete&&M.frete.ativo!==false) }
+function freteValor(){ return (tipoAtual()==='entrega'&&freteAtual&&freteAtual.valor!=null)?Number(freteAtual.valor):null }
+function desenharTotais(){
+  var ent=tipoAtual()==='entrega', fv=freteValor(), it=totalCarrinho();
+  $('#boxEndereco').hidden=!ent; $('#btnFrete').hidden=!freteOn();
+  var linhaFrete='';
+  if(ent){
+    var txt=fv!=null?R(fv)+(freteAtual.km?' ('+String(freteAtual.km).replace('.',',')+' km)':''):(freteOn()&&!freteAtual?'toque em Calcular frete':'a combinar no WhatsApp');
+    linhaFrete='<div class="t"><span>Frete</span><span>'+txt+'</span></div>';
+  }
+  $('#totais').innerHTML='<div class="t"><span>Itens</span><span>'+R(it)+'</span></div>'+linhaFrete+
+    '<div class="t total"><span>'+(fv!=null?'Total com frete':'Total dos itens')+'</span><span>'+R(it+(fv||0))+'</span></div>';
+  $('#avisoPag').textContent = PAGAMENTO_ONLINE
+    ? 'Depois de enviar, você escolhe: pagar agora (Pix ou cartão) ou combinar o pagamento no WhatsApp.'+(ent?(fv!=null?' O frete já está no total.':' Se o frete não for calculado aqui, a gente combina no WhatsApp.'):'')
+    : 'O pagamento'+(ent&&fv==null?' e o valor do frete':'')+' a gente combina com você no WhatsApp, depois que você enviar o pedido.';
+}
+async function calcularFrete(){
+  var end=$('#endereco').value.trim(), msg=$('#freteMsg'), btn=$('#btnFrete');
+  if(end.length<8){ msg.textContent='Escreva o endereço completo: rua, número, bairro e cidade.'; return null }
+  btn.disabled=true; btn.textContent='Calculando...'; msg.textContent=''; $('#erroPedido').textContent='';
+  try{
+    var r=await http('/functions/v1/frete',{method:'POST',auth:false,body:{endereco:end}});
+    if(r&&r.ok){ freteAtual={id:r.id,valor:r.valor,km:r.km,endereco:end}; msg.textContent='Frete de '+R(r.valor)+' para '+String(r.km).replace('.',',')+' km. Já incluído no total.' }
+    else { freteAtual={combinar:true,codigo:(r&&r.codigo)||'erro',endereco:end,mensagem:(r&&r.mensagem)||'O frete será combinado no WhatsApp.'}; msg.textContent=freteAtual.mensagem }
+  }catch(e){ freteAtual={combinar:true,codigo:'erro',endereco:end,mensagem:'Não foi possível calcular agora. O frete será combinado no WhatsApp.'}; msg.textContent=freteAtual.mensagem }
+  btn.disabled=false; btn.textContent='Calcular frete'; desenharTotais(); return freteAtual;
+}
+$('#btnFrete').addEventListener('click',calcularFrete);
+$('#endereco').addEventListener('input',function(){ if(freteAtual){freteAtual=null; $('#freteMsg').textContent=''; desenharTotais()} });
+$('#promosLista').addEventListener('click',function(e){
+  var b=e.target.closest('[data-promo]'); if(!b)return; var p=(M.promocoes||[])[Number(b.getAttribute('data-promo'))]; if(!p)return;
+  $('#tPromo').textContent=p.titulo; $('#promoTexto').textContent=p.descricao||'';
+  var f=$('#promoFoto'); if(/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(p.foto||'')){f.src=p.foto;f.alt=p.titulo;f.hidden=false}else{f.hidden=true}
+  abrir($('#dPromo'));
+});
 function desenharCarrinho(){
   var box=$('#itensCarrinho');
   if(!carrinho.length){ box.innerHTML='<p class="vazio">Seu pedido está vazio. Escolha um item no cardápio.</p>' }
@@ -366,13 +441,7 @@ function desenharCarrinho(){
       '<div class="qtd" style="width:max-content"><button type="button" data-c="-1" aria-label="Tirar um '+esc(l.nome)+'">&minus;</button><output>'+l.qtd+'</output><button type="button" data-c="1" aria-label="Colocar mais um '+esc(l.nome)+'">+</button></div><span></span>'+
       '<input type="text" data-obs maxlength="140" value="'+esc(l.obs)+'" placeholder="Sabor, ponto, sem cebola..." aria-label="Observação de '+esc(l.nome)+'"></div>';
   }).join('');
-  var ent=tipoAtual()==='entrega';
-  $('#boxEndereco').hidden=!ent;
-  $('#totais').innerHTML='<div class="t"><span>Itens</span><span>'+R(totalCarrinho())+'</span></div>'+
-    (ent?'<div class="t"><span>Frete</span><span>a combinar no WhatsApp</span></div>':'')+
-    '<div class="t total"><span>Total dos itens</span><span>'+R(totalCarrinho())+'</span></div>';
-  $('#avisoPag').textContent = PAGAMENTO_ONLINE ? 'Depois de enviar, você escolhe: pagar os itens agora (Pix ou cartão) ou combinar o pagamento no WhatsApp. O frete a gente combina no WhatsApp.'
-    : 'O pagamento e o valor do frete a gente combina com você no WhatsApp, depois que você enviar o pedido.';
+  desenharTotais();
   $('#btnEnviar').disabled=!carrinho.length;
 }
 $('#itensCarrinho').addEventListener('click',function(e){
@@ -435,14 +504,14 @@ async function abrirConta(){
   abrir($('#dConta'));
   $('#resumoCli').innerHTML=''; $('#listaPedidos').innerHTML='<p class="vazio">Carregando...</p>';
   try{
-    var ps=await http('/rest/v1/pedidos_online?select=id,numero,itens,total,tipo,status,pago,criado_em&order=criado_em.desc&limit=30');
+    var ps=await http('/rest/v1/pedidos_online?select=id,numero,itens,total,frete,tipo,status,pago,criado_em&order=criado_em.desc&limit=30');
     var validos=ps.filter(function(p){return p.status!=='cancelado'}).length;
     $('#resumoCli').innerHTML='<div class="resumo-cli"><b>'+validos+'</b>'+(validos===1?'pedido feito no BitPub':'pedidos feitos no BitPub')+'</div>';
     $('#listaPedidos').innerHTML=ps.length?ps.map(function(p){
       var d=new Date(p.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       return '<div class="ped"><div class="ped-t"><span>Pedido '+p.numero+'</span><span class="sel">'+esc(STATUS[p.status]||p.status)+(p.pago?' &middot; Pago':'')+'</span></div>'+
         '<small>'+d+' &middot; '+(p.tipo==='entrega'?'Entrega':'Retirada')+'</small>'+
-        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)}).join('<br>')+'</div><b>'+R(p.total)+' em itens</b>'+(PAGAMENTO_ONLINE&&!p.pago&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button><p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+'</div>';
+        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)}).join('<br>')+'</div><b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+R(p.frete)+' de frete = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+(PAGAMENTO_ONLINE&&!p.pago&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button><p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+'</div>';
     }).join(''):'<p class="vazio">Você ainda não fez nenhum pedido.</p>';
   }catch(e){ $('#listaPedidos').innerHTML='<p class="erro">'+esc(textoErro(e))+'</p>' }
 }
@@ -455,7 +524,7 @@ function mensagemZap(p){
   l.push('');
   p.itens.forEach(function(i){ l.push(i.qtd+'x '+i.nome+' - '+R(i.preco*i.qtd)+(i.obs?' ('+i.obs+')':'')) });
   l.push('','*Total dos itens: '+R(p.total)+'*');
-  if(p.tipo==='entrega')l.push('Frete: a combinar');
+  if(p.tipo==='entrega'){ if(p.frete!=null){ l.push('Frete: '+R(p.frete)); l.push('*Total com frete: '+R(Number(p.total)+Number(p.frete))+'*') } else l.push('Frete: a combinar') }
   if(p.observacao)l.push('Obs: '+p.observacao);
   l.push('','Pagamento: a combinar');
   return l.join('\n');
@@ -478,15 +547,21 @@ async function enviarPedido(){
   if(!cliente){ abrirAuth(function(){ abrir($('#dCarrinho')); desenharCarrinho(); enviarPedido() }); return }
   var ent=tipoAtual()==='entrega', end=$('#endereco').value.trim();
   if(ent&&end.length<8){erro.textContent='Informe o endereço de entrega completo.';$('#endereco').focus();return}
+  if(ent&&freteOn()){
+    if(!freteAtual||freteAtual.endereco!==end){ var f0=await calcularFrete(); if(f0){ erro.textContent=f0.valor!=null?'Frete calculado: '+R(f0.valor)+'. Confira o total e toque em Enviar pedido.':f0.mensagem+(f0.codigo==='fora_da_area'?'':' Toque em Enviar pedido de novo para enviar assim mesmo.'); } return }
+    if(freteAtual.codigo==='fora_da_area'){ erro.textContent=freteAtual.mensagem; return }
+  }
   if(enviando)return; enviando=true; $('#btnEnviar').disabled=true; $('#btnEnviar').textContent='Enviando...';
   try{
     var p=await http('/rest/v1/rpc/criar_pedido',{method:'POST',body:{
       p_itens:carrinho.map(function(l){return {id:l.id,qtd:l.qtd,obs:l.obs||''}}),
-      p_tipo:ent?'entrega':'retirada', p_endereco:ent?end:null, p_obs:$('#obsGeral').value.trim()||null
+      p_tipo:ent?'entrega':'retirada', p_endereco:ent?end:null, p_obs:$('#obsGeral').value.trim()||null,
+      p_frete_id:(ent&&freteAtual&&freteAtual.id)||null
     }});
+    freteAtual=null; $('#freteMsg').textContent='';
     carrinho=[]; salvarCarrinho(); $$('.item').forEach(function(el){acaoItem(el.getAttribute('data-id'))}); atualizarBarra();
     $('#obsGeral').value=''; $('#dCarrinho').close();
-    $('#okTexto').textContent='Seu pedido '+p.numero+' já está com a gente. Você pode pagar os itens agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'?'o frete e ':'')+'o pagamento.';
+    $('#okTexto').textContent='Seu pedido '+p.numero+' já está com a gente.'+(p.frete!=null?' Total com frete: '+R(Number(p.total)+Number(p.frete))+'.':'')+' Você pode pagar agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'&&p.frete==null?'o frete e ':'')+'o pagamento.';
     pedidoPagarId=p.id; $('#erroPagar').textContent=''; $('#okPagar').hidden=!PAGAMENTO_ONLINE;
     $('#okZap').href='https://wa.me/'+WHATS_LOJA+'?text='+encodeURIComponent(mensagemZap(p));
     abrir($('#dOk'));

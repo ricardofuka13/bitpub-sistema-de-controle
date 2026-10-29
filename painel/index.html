@@ -21,8 +21,8 @@ button,input{font:inherit;color:inherit}button{cursor:pointer}
 .topo{background:var(--preto);color:#fff;position:sticky;top:0;z-index:10}
 .topo-in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .topo h1{margin:0;font:400 26px/1 var(--f-titulo);color:var(--amarelo);margin-right:auto}
-.abas{display:flex;gap:6px}
-.aba{background:transparent;color:#fff;border:2px solid #fff;padding:8px 14px;font-weight:700;min-height:42px}
+.abas{display:flex;gap:6px;flex-wrap:wrap}
+.aba{background:transparent;color:#fff;border:2px solid #fff;padding:8px 12px;font-weight:700;min-height:42px}
 .aba[aria-selected="true"]{background:var(--laranja);border-color:var(--laranja);color:var(--preto)}
 .aba .n{background:var(--amarelo);color:var(--preto);padding:0 7px;margin-left:6px;font-weight:800}
 .sair{background:none;border:0;color:#cfcfcf;text-decoration:underline;min-height:42px}
@@ -91,6 +91,8 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
       <button class="aba" role="tab" id="abaPedidos" aria-selected="true">Pedidos<span class="n" id="nNovos" hidden>0</span></button>
       <button class="aba" role="tab" id="abaClientes" aria-selected="false">Clientes</button>
       <button class="aba" role="tab" id="abaFotos" aria-selected="false">Fotos</button>
+      <button class="aba" role="tab" id="abaPromos" aria-selected="false">Promoções</button>
+      <button class="aba" role="tab" id="abaLoja" aria-selected="false">Loja</button>
     </div>
     <button class="sair" id="btnSair" type="button">Sair</button>
   </div></header>
@@ -103,6 +105,36 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
       <div class="tiles" id="tiles"></div>
       <input class="busca" type="search" id="busca" placeholder="Buscar por nome ou WhatsApp" aria-label="Buscar cliente">
       <div id="listaClientes"></div>
+    </section>
+    <section id="vPromos" hidden>
+      <p class="mini" style="margin:0 0 10px">As promoções ativas aparecem no site, logo abaixo da foto de destaque. O cliente toca na promoção para ver os detalhes.</p>
+      <div class="acoes" style="margin-bottom:12px"><button class="principal" type="button" id="novaPromo">Nova promoção</button></div>
+      <div id="formPromoBox"></div>
+      <input type="file" id="arqPromo" accept="image/*" hidden>
+      <div id="listaPromos"></div>
+    </section>
+    <section id="vLoja" hidden>
+      <form id="formLoja" style="display:flex;flex-direction:column;gap:14px;max-width:640px" novalidate>
+        <h2 class="cat" style="margin-top:0">Informações do site</h2>
+        <label>Endereço da loja<input type="text" id="lEnd" maxlength="160" placeholder="Rua, número, bairro, cidade"></label>
+        <label>Horário de funcionamento<textarea id="lHor" rows="3" maxlength="400" placeholder="Ex.: Seg a Sex, 18h às 23h&#10;Sáb e Dom, 17h às 00h"></textarea></label>
+        <label>Outras informações<textarea id="lInfo" rows="4" maxlength="600" placeholder="Ex.: Aceitamos Pix e cartão. Entregamos em Suzano e região."></textarea></label>
+        <div><div style="font-weight:700;font-size:15px;margin-bottom:6px">Foto de destaque (cabeçalho)</div>
+          <img id="lCab" alt="Foto de destaque" style="width:100%;max-height:200px;object-fit:cover;border:2px solid var(--preto);background:var(--cinza)" hidden>
+          <div class="acoes" style="margin-top:8px"><button class="sec" type="button" id="btnCab">Trocar foto</button><button class="sec" type="button" id="btnCabTirar" hidden>Tirar foto</button></div>
+          <input type="file" id="arqCab" accept="image/*" hidden>
+          <p class="mini" style="margin:6px 0 0">Use uma foto de lanche ou combo que chame atenção. Ela aparece logo abaixo do logo no site.</p></div>
+        <h2 class="cat">Frete por distância</h2>
+        <label style="flex-direction:row;align-items:center;gap:10px"><input type="checkbox" id="lFreteOn" style="width:22px;height:22px"> Calcular o frete pelo endereço do cliente</label>
+        <label>Endereço de saída das entregas<input type="text" id="lLoja" maxlength="160" placeholder="Rua Baruel 859, Suzano, SP"></label>
+        <label>Distância máxima de entrega (km)<input type="number" id="lMax" min="1" max="50" step="0.5" inputmode="decimal"></label>
+        <div><div style="font-weight:700;font-size:15px;margin-bottom:6px">Faixas de preço</div>
+          <div id="lFaixas" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button class="sec" type="button" id="addFaixa" style="margin-top:8px">+ Faixa</button>
+          <p class="mini" style="margin:6px 0 0">O valor vale até a distância informada. A distância é aproximada (linha reta mais 30% pelas ruas). Acima do máximo, o site avisa que está fora da área.</p></div>
+        <p class="erro" id="lErro" role="alert"></p>
+        <button class="principal" type="submit">Salvar</button>
+      </form>
     </section>
     <section id="vFotos" hidden>
       <p class="mini" style="margin:0 0 10px">Aqui você troca a <b>foto</b> e a <b>descrição</b> de cada item do site. A foto é escolhida do celular e reduzida sozinha. Tudo aparece no site na hora.</p>
@@ -186,7 +218,8 @@ function desenharPedidos(){
 }
 function msgZap(p,frete){
   var m='Olá, '+p.nome_cliente.split(' ')[0]+'! Aqui é do BitPub. Recebemos seu pedido #'+p.numero+' (itens: '+R(p.total)+').';
-  if(p.tipo==='entrega'&&frete!=null)m+=' Frete para '+p.endereco+': '+R(frete)+'. Total com frete: '+R(Number(p.total)+frete)+'.';
+  if(p.tipo==='entrega'&&p.frete!=null)m+=' Frete: '+R(p.frete)+'. Total com frete: '+R(Number(p.total)+Number(p.frete))+'.';
+  else if(p.tipo==='entrega'&&frete!=null)m+=' Frete para '+p.endereco+': '+R(frete)+'. Total com frete: '+R(Number(p.total)+frete)+'.';
   return m+' Como você prefere pagar?';
 }
 function cartao(p){
@@ -197,8 +230,8 @@ function cartao(p){
     (p.tipo==='entrega'?'<div><b>Endereço:</b> '+esc(p.endereco)+'</div>':'')+
     '<div class="itens">'+p.itens.map(function(i){return '<div><span>'+i.qtd+'x '+esc(i.nome)+(i.obs?'<em>'+esc(i.obs)+'</em>':'')+'</span><span>'+R(i.preco*i.qtd)+'</span></div>'}).join('')+'</div>'+
     (p.observacao?'<div><b>Obs:</b> '+esc(p.observacao)+'</div>':'')+
-    '<div class="linha1"><b>Itens: '+R(p.total)+'</b>'+(p.pago?'<span class="sel entregue">PAGO'+(p.metodo_pagamento?' &middot; '+(p.metodo_pagamento==='pix'?'Pix':p.metodo_pagamento==='credit_card'?'Cartão':esc(p.metodo_pagamento)):'')+'</span>':'<span class="sel">Pagamento pendente</span>')+'</div>'+
-    (p.tipo==='entrega'&&p.status!=='cancelado'&&p.status!=='entregue'?'<div class="frete"><label style="flex-direction:row;align-items:center;gap:8px">Frete R$<input type="number" step="0.5" min="0" inputmode="decimal" data-frete aria-label="Valor do frete"></label></div>':'')+
+    '<div class="linha1"><b>Itens: '+R(p.total)+(p.frete!=null?' + frete '+R(p.frete)+(p.frete_km?' ('+String(p.frete_km).replace('.',',')+' km)':'')+' = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+(p.pago?'<span class="sel entregue">PAGO'+(p.metodo_pagamento?' &middot; '+(p.metodo_pagamento==='pix'?'Pix':p.metodo_pagamento==='credit_card'?'Cartão':esc(p.metodo_pagamento)):'')+'</span>':'<span class="sel">Pagamento pendente</span>')+'</div>'+
+    (p.tipo==='entrega'&&p.frete==null&&p.status!=='cancelado'&&p.status!=='entregue'?'<div class="frete"><label style="flex-direction:row;align-items:center;gap:8px">Frete R$<input type="number" step="0.5" min="0" inputmode="decimal" data-frete aria-label="Valor do frete"></label></div>':'')+
     '<div class="acoes">'+
       (p.status!=='cancelado'?'<button class="sec" type="button" data-zap>WhatsApp do cliente</button>':'')+
       (p.tipo==='entrega'&&p.status!=='cancelado'&&p.status!=='entregue'?'<button class="sec" type="button" data-uber>Chamar Uber</button>':'')+
@@ -288,11 +321,11 @@ function desenharFotos(){
   });
   $('#listaFotos').innerHTML=h||'<p class="vazio">Nenhum item no cardápio.</p>';
 }
-function reduzir(file){
+function reduzir(file,max){
   return new Promise(function(ok,no){
     var img=new Image(),u=URL.createObjectURL(file);
     img.onload=function(){
-      var M=900,k=Math.min(1,M/Math.max(img.width,img.height)),w=Math.round(img.width*k),hh=Math.round(img.height*k);
+      var M=max||900,k=Math.min(1,M/Math.max(img.width,img.height)),w=Math.round(img.width*k),hh=Math.round(img.height*k);
       var c=document.createElement('canvas');c.width=w;c.height=hh;var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,hh);x.drawImage(img,0,0,w,hh);
       URL.revokeObjectURL(u);c.toBlob(function(b){b?ok(b):no(new Error('Não deu para ler essa foto.'))},'image/jpeg',.82);
     };
@@ -340,16 +373,122 @@ $('#arqFoto').addEventListener('change',async function(){
   }catch(er){if(box){box.classList.remove('ocup');box.querySelector('.erroFi').textContent=er.message}else alert(er.message)}
 });
 
+/* ---------- helpers de imagem ---------- */
+async function subirImagem(file,pref,max){
+  var blob=await reduzir(file,max),nome=pref.replace(/[^\w-]/g,'')+'-'+Date.now()+'.jpg',s=await sessaoValida();
+  var r=await fetch(CFG.url+'/storage/v1/object/'+BUCKET+'/'+nome,{method:'POST',headers:{apikey:CFG.key,Authorization:'Bearer '+(s?s.access_token:CFG.key),'Content-Type':'image/jpeg'},body:blob});
+  if(!r.ok){var t=await r.text();throw new Error(/not found|Bucket/i.test(t)?'A pasta de fotos ainda não foi criada no Supabase.':(r.status===401?'Sua sessão expirou. Saia e entre de novo no painel.':'Falha ao enviar a foto ('+r.status+').'))}
+  return CFG.url+'/storage/v1/object/public/'+BUCKET+'/'+nome;
+}
+function escolherArquivo(input){return new Promise(function(ok){input.value='';input.onchange=function(){ok(input.files&&input.files[0]||null)};input.click()})}
+
+/* ---------- loja (informações, cabeçalho, frete) ---------- */
+var cabUrl='',lojaOrig='';
+function linhaFaixa(a,v){return '<div class="fx" style="display:flex;gap:8px;align-items:center"><span>até</span><input type="number" class="fx-a" min="0.5" step="0.5" inputmode="decimal" style="max-width:100px" value="'+esc(a)+'" aria-label="Até quantos km"><span>km: R$</span><input type="number" class="fx-v" min="0" step="0.5" inputmode="decimal" style="max-width:110px" value="'+esc(v)+'" aria-label="Valor do frete"><button class="sec" type="button" data-rmfx aria-label="Remover faixa">&times;</button></div>'}
+function pintarCab(){var i=$('#lCab');if(cabUrl){i.src=cabUrl;i.hidden=false}else{i.hidden=true}$('#btnCabTirar').hidden=!cabUrl;$('#btnCab').textContent=cabUrl?'Trocar foto':'Colocar foto'}
+async function carregarLoja(){
+  try{
+    var c=(await http('/rest/v1/site_config?id=eq.1&select=*'))[0]||{};
+    $('#lEnd').value=c.endereco||'';$('#lHor').value=c.horario||'';$('#lInfo').value=c.info||'';cabUrl=c.cabecalho_foto||'';pintarCab();
+    $('#lFreteOn').checked=c.frete_ativo!==false;$('#lLoja').value=c.loja_endereco||'';lojaOrig=c.loja_endereco||'';$('#lMax').value=c.frete_max_km!=null?c.frete_max_km:8;
+    $('#lFaixas').innerHTML=(c.frete_faixas||[]).map(function(f){return linhaFaixa(f.ate_km,f.valor)}).join('');
+    $('#lErro').textContent='';
+  }catch(e){$('#lErro').textContent=e.message}
+}
+$('#addFaixa').addEventListener('click',function(){$('#lFaixas').insertAdjacentHTML('beforeend',linhaFaixa('',''))});
+$('#lFaixas').addEventListener('click',function(e){var b=e.target.closest('[data-rmfx]');if(b)b.closest('.fx').remove()});
+$('#btnCab').addEventListener('click',async function(){
+  var f=await escolherArquivo($('#arqCab'));if(!f)return;var er=$('#lErro');er.textContent='Enviando foto...';
+  try{cabUrl=await subirImagem(f,'cabecalho',1200);pintarCab();er.textContent='Foto enviada. Toque em Salvar para publicar.'}catch(x){er.textContent=x.message}
+});
+$('#btnCabTirar').addEventListener('click',function(){cabUrl='';pintarCab();$('#lErro').textContent='Toque em Salvar para publicar.'});
+$('#formLoja').addEventListener('submit',async function(e){
+  e.preventDefault();var er=$('#lErro');er.textContent='';
+  var faixas=$$('#lFaixas .fx').map(function(r){return {ate_km:Number(r.querySelector('.fx-a').value),valor:Number(r.querySelector('.fx-v').value)}});
+  var on=$('#lFreteOn').checked,max=Number($('#lMax').value);
+  if(on){
+    if(!faixas.length||faixas.some(function(f){return !(f.ate_km>0)||!(f.valor>=0)||isNaN(f.valor)})){er.textContent='Preencha todas as faixas de frete (km e valor).';return}
+    faixas.sort(function(a,b){return a.ate_km-b.ate_km});
+    for(var i=1;i<faixas.length;i++)if(faixas[i].ate_km===faixas[i-1].ate_km){er.textContent='Duas faixas com o mesmo número de km.';return}
+    if(!(max>0)){er.textContent='Informe a distância máxima de entrega.';return}
+    if(!$('#lLoja').value.trim()){er.textContent='Informe o endereço de saída das entregas.';return}
+  }
+  var body={endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
+    frete_ativo:on,frete_max_km:max>0?max:8,frete_faixas:faixas,loja_endereco:$('#lLoja').value.trim()||null,atualizado_em:new Date().toISOString()};
+  if(body.loja_endereco!==lojaOrig){body.loja_lat=null;body.loja_lng=null}
+  var btn=$('#formLoja button[type=submit]');btn.disabled=true;
+  try{await http('/rest/v1/site_config?id=eq.1',{method:'PATCH',prefer:'return=minimal',body:body});lojaOrig=body.loja_endereco||'';er.style.color='var(--ok)';er.textContent='Salvo. O site já mostra as mudanças.';setTimeout(function(){er.style.color='';},4000)}
+  catch(x){er.textContent='Erro ao salvar: '+x.message}
+  finally{btn.disabled=false}
+});
+
+/* ---------- promoções ---------- */
+var promos=[],promoFoto='';
+async function carregarPromos(){
+  try{promos=await http('/rest/v1/promocoes?select=*&order=ordem.asc,criado_em.desc&limit=200');desenharPromos()}
+  catch(e){$('#listaPromos').innerHTML='<p class="erro">'+esc(e.message)+'</p>'}
+}
+function desenharPromos(){
+  $('#listaPromos').innerHTML=promos.length?promos.map(function(p){
+    var venc=p.validade&&p.validade<new Date().toLocaleDateString('en-CA');
+    return '<div class="fi" data-id="'+p.id+'">'+(p.foto?'<img class="th" src="'+esc(p.foto)+'" alt="" loading="lazy">':'<div class="th">sem foto</div>')+
+      '<div><b>'+esc(p.titulo)+'</b> <span class="sel '+(p.ativa&&!venc?'entregue':'cancelado')+'">'+(venc?'Vencida':p.ativa?'No ar':'Pausada')+'</span><br><span class="mini">'+esc(p.descricao||'')+'</span>'+(p.validade?'<br><span class="mini">Vale até '+p.validade.split('-').reverse().join('/')+'</span>':'')+'</div>'+
+      '<div class="bt"><button class="sec" type="button" data-edit>Editar</button><button class="sec" type="button" data-tog>'+(p.ativa?'Pausar':'Pôr no ar')+'</button><button class="sec" type="button" data-del>Excluir</button></div></div>';
+  }).join(''):'<p class="vazio">Nenhuma promoção cadastrada.</p>';
+}
+function formPromo(p){
+  p=p||{};promoFoto=p.foto||'';
+  $('#formPromoBox').innerHTML='<form id="fPromo" class="card" style="margin-bottom:14px" novalidate data-id="'+esc(p.id||'')+'"><h3 style="margin:0">'+(p.id?'Editar promoção':'Nova promoção')+'</h3>'+
+    '<label>Título<input type="text" id="pTit" maxlength="80" value="'+esc(p.titulo||'')+'" placeholder="Ex.: Combo Casal"></label>'+
+    '<label>Descrição<textarea id="pDesc" rows="4" maxlength="600" style="border:2px solid var(--preto);padding:10px 12px;font:inherit" placeholder="O que está incluso, valor, regras...">'+esc(p.descricao||'')+'</textarea></label>'+
+    '<div><img id="pImg" alt="" style="width:100%;max-height:180px;object-fit:cover;border:2px solid var(--preto)"'+(promoFoto?' src="'+esc(promoFoto)+'"':' hidden')+'><div class="acoes" style="margin-top:8px"><button class="sec" type="button" id="pFotoBtn">'+(promoFoto?'Trocar foto':'Colocar foto')+'</button><button class="sec" type="button" id="pFotoRm"'+(promoFoto?'':' hidden')+'>Tirar foto</button></div></div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap"><label style="flex:1;min-width:140px">Vale até (opcional)<input type="date" id="pVal" value="'+esc(p.validade||'')+'" style="border:2px solid var(--preto);padding:10px 12px;min-height:44px"></label><label style="flex:1;min-width:120px">Ordem (menor aparece primeiro)<input type="number" id="pOrd" step="1" value="'+(p.ordem||0)+'"></label></div>'+
+    '<label style="flex-direction:row;align-items:center;gap:10px"><input type="checkbox" id="pAtiva" style="width:22px;height:22px"'+(p.ativa===false?'':' checked')+'> Mostrar no site</label>'+
+    '<p class="erro" id="pErro" role="alert"></p><div class="acoes"><button class="principal" type="submit">Salvar promoção</button><button class="sec" type="button" id="pCancel">Cancelar</button></div></form>';
+  $('#pTit').focus();
+}
+$('#novaPromo').addEventListener('click',function(){formPromo()});
+$('#formPromoBox').addEventListener('click',async function(e){
+  if(e.target.closest('#pCancel')){$('#formPromoBox').innerHTML='';return}
+  if(e.target.closest('#pFotoRm')){promoFoto='';$('#pImg').hidden=true;$('#pFotoRm').hidden=true;$('#pFotoBtn').textContent='Colocar foto';return}
+  if(e.target.closest('#pFotoBtn')){
+    var f=await escolherArquivo($('#arqPromo'));if(!f)return;var er=$('#pErro');er.textContent='Enviando foto...';
+    try{promoFoto=await subirImagem(f,'promo',1000);$('#pImg').src=promoFoto;$('#pImg').hidden=false;$('#pFotoRm').hidden=false;$('#pFotoBtn').textContent='Trocar foto';er.textContent=''}catch(x){er.textContent=x.message}
+  }
+});
+$('#formPromoBox').addEventListener('submit',async function(e){
+  e.preventDefault();var f=e.target,id=f.getAttribute('data-id'),er=$('#pErro');er.textContent='';
+  var tit=$('#pTit').value.trim();if(!tit){er.textContent='Escreva o título da promoção.';return}
+  var body={titulo:tit,descricao:$('#pDesc').value.trim()||null,foto:promoFoto||null,validade:$('#pVal').value||null,ordem:parseInt($('#pOrd').value,10)||0,ativa:$('#pAtiva').checked};
+  var btn=f.querySelector('button[type=submit]');btn.disabled=true;
+  try{
+    if(id)await http('/rest/v1/promocoes?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:body});
+    else await http('/rest/v1/promocoes',{method:'POST',prefer:'return=minimal',body:body});
+    $('#formPromoBox').innerHTML='';await carregarPromos();
+  }catch(x){er.textContent='Erro ao salvar: '+x.message;btn.disabled=false}
+});
+$('#listaPromos').addEventListener('click',async function(e){
+  var box=e.target.closest('.fi');if(!box)return;var id=box.getAttribute('data-id'),p=promos.find(function(x){return x.id===id});if(!p)return;
+  try{
+    if(e.target.closest('[data-edit]')){formPromo(p);window.scrollTo({top:0,behavior:'smooth'});return}
+    if(e.target.closest('[data-tog]')){await http('/rest/v1/promocoes?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:{ativa:!p.ativa}});await carregarPromos();return}
+    if(e.target.closest('[data-del]')){if(!confirm('Excluir a promoção "'+p.titulo+'"?'))return;await http('/rest/v1/promocoes?id=eq.'+id,{method:'DELETE',prefer:'return=minimal'});await carregarPromos()}
+  }catch(x){alert('Não foi possível: '+x.message)}
+});
+var $$=function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s))};
+
 /* ---------- abas e ciclo ---------- */
 function aba(qual){
-  ['pedidos','clientes','fotos'].forEach(function(n){
+  ['pedidos','clientes','fotos','promos','loja'].forEach(function(n){
     var N=n.charAt(0).toUpperCase()+n.slice(1);$('#aba'+N).setAttribute('aria-selected',String(n===qual));$('#v'+N).hidden=n!==qual;
   });
-  if(qual==='pedidos'){document.title='BitPub | Painel de pedidos'}else if(qual==='clientes')carregarClientes();else carregarFotos();
+  if(qual==='pedidos'){document.title='BitPub | Painel de pedidos'}else if(qual==='clientes')carregarClientes();else if(qual==='promos')carregarPromos();else if(qual==='loja')carregarLoja();else carregarFotos();
 }
 $('#abaPedidos').addEventListener('click',function(){aba('pedidos')});
 $('#abaClientes').addEventListener('click',function(){aba('clientes')});
 $('#abaFotos').addEventListener('click',function(){aba('fotos')});
+$('#abaPromos').addEventListener('click',function(){aba('promos')});
+$('#abaLoja').addEventListener('click',function(){aba('loja')});
 function parar(){if(timer){clearInterval(timer);timer=null}}
 function iniciar(){
   if(!lojaEnd)http('/rest/v1/rpc/cardapio_publico',{method:'POST',body:{}}).then(function(m){lojaEnd=(m&&m.endereco)||''}).catch(function(){});
