@@ -108,6 +108,7 @@ textarea{min-height:76px;resize:vertical}
 .totais .total{font:400 24px/1.15 var(--f-titulo);color:var(--texto);align-items:baseline;gap:12px;flex-wrap:wrap}
 .aviso{background:var(--cinza);border-left:6px solid var(--laranja);padding:10px 12px;font-size:15px}
 .opc-turbo{margin:0;padding:10px 12px;background:var(--amarelo,#F8B400);border:2px solid var(--preto);font-weight:700;font-size:15px}
+.btc-promo{margin:0;text-align:center;font-weight:800;font-size:15px;color:var(--preto)}
 .btc-btn{background:none;border:0;padding:0;width:100%;display:grid;place-items:center;min-height:0;cursor:pointer}
 .btc-btn img{max-width:280px;width:100%;height:auto;display:block}
 .btc-btn:disabled{opacity:.6}
@@ -288,6 +289,7 @@ textarea{min-height:76px;resize:vertical}
     <p id="okTexto" style="margin:0"></p>
     <button class="principal" type="button" id="okPagar">Pagar agora (Pix ou cartão)</button>
     <button class="btc-btn" type="button" id="okBtc" aria-label="Pagar com Bitcoin" hidden><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>
+    <p class="btc-promo" id="btcPromo" hidden></p>
     <p class="erro" id="erroPagar" role="alert" style="margin:0"></p>
     <a class="secundario" id="okZap" href="#" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Enviar no WhatsApp</a>
     <button class="secundario" type="button" data-fechar>Voltar ao cardápio</button>
@@ -302,7 +304,7 @@ var CFG = window.BITPUB_CFG || {};
 var WHATS_LOJA = '5511917846050';
 /* Pagamento online (InfinitePay): o cliente escolhe pagar agora (Pix ou cartão) ou combinar pelo WhatsApp. O frete é sempre combinado no WhatsApp. */
 var PAGAMENTO_ONLINE = true;
-var BTC_ON = false;
+var BTC_ON = false, BTC_DESC = 0;
 
 var $ = function(s,el){return (el||document).querySelector(s)};
 var $$ = function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s))};
@@ -396,7 +398,7 @@ async function carregarMenu(){
   try{
     var d=await http('/rest/v1/rpc/cardapio_publico',{method:'POST',auth:false,body:{}});
     M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
-    BTC_ON=d.bitcoin===true;
+    BTC_ON=d.bitcoin===true; BTC_DESC=Number(d.bitcoin_desconto)||0; btcRotulo();
     try{localStorage.setItem('bitpub_site_menu',JSON.stringify(M))}catch(e){}
   }catch(e){
     try{var c=JSON.parse(localStorage.getItem('bitpub_site_menu')||'null'); if(c){M=c; toast('Sem conexão: mostrando o último cardápio salvo.')}}catch(x){}
@@ -712,6 +714,10 @@ function desenharQr(txt){
   var n=q.getModuleCount(),cv=$('#btcQr'),c=cv.getContext('2d'),m=Math.floor(240/(n+4));
   var off=Math.floor((240-m*n)/2);c.fillStyle='#fff';c.fillRect(0,0,240,240);c.fillStyle='#000';
   for(var r=0;r<n;r++)for(var k=0;k<n;k++)if(q.isDark(r,k))c.fillRect(off+k*m,off+r*m,m,m)}
+function btcRotulo(){
+  var t=BTC_DESC>0?'\u20bf Pague com Bitcoin e ganhe '+String(BTC_DESC).replace('.',',')+'% de desconto nos itens!':'';
+  var e=$('#btcPromo'); if(e){e.textContent=t;e.hidden=!t||!BTC_ON}
+}
 function btcParar(){if(btcTimer){clearInterval(btcTimer);btcTimer=null}}
 async function btcVerificar(){
   if(!btcPid)return;
@@ -728,7 +734,7 @@ async function pagarBtc(id,btn,msgEl){
     if(!r||!r.invoice)throw new Error('Não foi possível gerar a cobrança.');
     var temQr=true;try{await carregarQr()}catch(x){temQr=false}
     btcPid=id;btcInv=r.invoice;
-    $('#btcValor').textContent=R(r.brl)+' = '+Number(r.sats).toLocaleString('pt-BR')+' sats';
+    $('#btcValor').textContent=R(r.brl)+' = '+Number(r.sats).toLocaleString('pt-BR')+' sats'+(r.desconto>0?' (com '+String(r.desconto).replace('.',',')+'% de desconto)':'');
     $('#btcQr').hidden=!temQr;if(temQr)desenharQr('lightning:'+r.invoice);
     $('#btcAbrir').href='lightning:'+r.invoice;
     $('#btcStatus').textContent=r.manual?'Depois de pagar, avise a gente no WhatsApp para confirmar.':'Aguardando pagamento...';$('#btcStatus').style.color='';
