@@ -1663,6 +1663,7 @@ function openMenuEdit(id,op){
   '<label class="chk" style="display:flex;gap:10px;align-items:center;margin:4px 0 12px"><input type="checkbox" id="mf-onl"'+(m.onlineOff?'':' checked')+' style="width:22px;height:22px"> <span>Mostrar no site de pedidos online (desmarque se vende só na loja)</span></label>'+
   '<fieldset><legend>Variações (sabores, tamanhos…)</legend><p class="muted" style="font-size:13px;margin:0 0 8px">Cadastre o item uma vez só (ex.: a marca da cerveja) e liste as variações. Ao lançar na comanda, o garçom escolhe a variação. Preço, custo e margem continuam os do item. Se a variação tiver estoque próprio, escolha o insumo dela: ele baixa além da receita do item (então tire da receita o que for específico da variação).</p><div id="mf-vr"></div></fieldset>'+
   '<fieldset><legend>Escolha de bebida (para combos)</legend><p class="muted" style="font-size:13px;margin:0 0 8px">O garçom escolhe a bebida do cliente ao lançar este item, e só a escolhida baixa do estoque. Use só nos combos.</p><div id="mf-ch"></div><button type="button" class="btn sm" id="mf-addg">+ Escolha de bebida</button></fieldset>'+
+  '<fieldset><legend>Opções no site: bebida e adicionais</legend><p class="muted" style="font-size:13px;margin:0 0 8px">Quando o cliente escolher este item no site de pedidos, abre uma janela com estas opções (ex.: bebida, bacon extra). O preço de cada opção é somado ao do item. As escolhas de bebida de combos, acima, também aparecem lá, como obrigatórias.</p><div id="mf-so"></div><div class="acts" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn sm" id="so-addg">+ Grupo de opções</button><button type="button" class="btn sm" id="so-drinks">+ Bebidas do cardápio</button></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center"><select id="so-from" aria-label="Copiar opções de outro item" style="flex:1;min-width:150px"></select><button type="button" class="btn sm" id="so-copy">Copiar deste item</button></div><div style="margin-top:8px"><button type="button" class="btn sm" id="so-cat">Aplicar a toda a categoria</button></div></fieldset>'+
   '<fieldset><legend>Receita: o que sai do estoque a cada venda</legend><div id="mf-rows"></div><button type="button" class="btn sm" id="mf-add">+ Insumo</button></fieldset>'+
   '<p class="calc" id="mf-calc"></p><p class="err" id="mf-e"></p><div class="actions">'+(id?'<button type="button" class="btn danger" id="mf-del">Excluir item</button>':'')+'<button class="btn primary" type="submit">Salvar</button></div></form>';
   openModal(id?'Editar item':'Novo item',body,function(sh){
@@ -1688,6 +1689,32 @@ function openMenuEdit(id,op){
       else if(c.contains('g-multi')){var have={};g.opts.forEach(function(o){have[o.ing]=1});gEl.querySelectorAll('.multi-l input:checked').forEach(function(i){if(!have[i.value])g.opts.push({ing:i.value,qty:1,extra:0})});paintCh()}});
     $('#mf-addg',sh).addEventListener('click',function(){if(!stockIds.length){$('#mf-e',sh).textContent='Cadastre os insumos na aba Estoque primeiro.';return}chs.push({label:chs.length?'':'Bebida',opts:[]});paintCh()});
     paintCh();
+    var so=(m.siteOpts||[]).map(function(g){return {label:g.label||'',req:!!g.req,max:Math.max(1,+g.max||1),opts:(g.opts||[]).map(function(o){return {name:o.name||'',price:+o.price||0,ing:o.ing||'',qty:+o.qty||1}})}}),sob=$('#mf-so',sh);
+    function paintSo(){
+      sob.innerHTML=so.map(function(g,gi){
+        return '<div class="chgrp" data-g="'+gi+'"><div class="row2"><label>Nome do grupo<input class="s-lab" maxlength="30" autocomplete="off" placeholder="Ex.: Adicionais, Bebida" value="'+esc(g.label)+'"></label><div style="align-self:end"><button type="button" class="btn sm ghost s-gdel">Remover grupo</button></div></div>'+
+        '<div class="row2"><label class="chk" style="display:flex;gap:8px;align-items:center;flex-direction:row"><input type="checkbox" class="s-req"'+(g.req?' checked':'')+' style="width:22px;height:22px"> Cliente precisa escolher</label><label>Até quantas<input class="s-max" inputmode="numeric" value="'+g.max+'" style="width:70px"></label></div>'+
+        g.opts.map(function(o,oi){return '<div class="rrow" data-o="'+oi+'"><input class="s-n" maxlength="40" autocomplete="off" aria-label="Nome da opção" placeholder="Ex.: Bacon" value="'+esc(o.name)+'" style="flex:1;min-width:90px"><input class="s-p" inputmode="decimal" aria-label="Preço somado" placeholder="+ R$" value="'+inpN(o.price||'')+'" style="width:72px"><select class="s-i" aria-label="Insumo do estoque"><option value="">Sem estoque</option>'+stockIds.map(function(k){return opt(k,S.stock[k].name,k===o.ing)}).join('')+'</select><button type="button" class="btn sm ghost s-odel">Remover</button></div>'}).join('')+
+        '<div class="acts" style="margin-top:6px"><button type="button" class="btn sm s-oadd">+ Opção</button></div></div>'}).join('')||'<p class="muted" style="font-size:13px;margin:0">Nenhuma opção. O cliente adiciona o item direto, sem janela.</p>';
+      var from=$('#so-from',sh);if(from){var cands=Object.keys(S.menu).filter(function(k){return k!==id&&(S.menu[k].siteOpts||[]).length});from.innerHTML='<option value="">Copiar opções de outro item...</option>'+cands.map(function(k){return opt(k,S.menu[k].name,false)}).join('')}
+    }
+    sob.addEventListener('input',function(e){var gEl=e.target.closest('[data-g]');if(!gEl)return;var g=so[+gEl.dataset.g],oEl=e.target.closest('[data-o]'),c=e.target.classList;
+      if(c.contains('s-lab'))g.label=e.target.value;else if(c.contains('s-max'))g.max=Math.max(1,Math.min(20,parseInt(e.target.value,10)||1));else if(oEl){var o=g.opts[+oEl.dataset.o];if(c.contains('s-n'))o.name=e.target.value;if(c.contains('s-p'))o.price=parseN(e.target.value)}});
+    sob.addEventListener('change',function(e){var gEl=e.target.closest('[data-g]');if(!gEl)return;var g=so[+gEl.dataset.g],oEl=e.target.closest('[data-o]');
+      if(e.target.classList.contains('s-req'))g.req=e.target.checked;if(oEl&&e.target.classList.contains('s-i'))g.opts[+oEl.dataset.o].ing=e.target.value});
+    sob.addEventListener('click',function(e){var gEl=e.target.closest('[data-g]');if(!gEl)return;var gi=+gEl.dataset.g,g=so[gi],c=e.target.classList;
+      if(c.contains('s-gdel')){so.splice(gi,1);paintSo()}else if(c.contains('s-odel')){g.opts.splice(+e.target.closest('[data-o]').dataset.o,1);paintSo()}else if(c.contains('s-oadd')){g.opts.push({name:'',price:0,ing:'',qty:1});paintSo()}});
+    $('#so-addg',sh).addEventListener('click',function(){so.push({label:so.length?'':'Adicionais',req:false,max:so.length?1:3,opts:[{name:'',price:0,ing:'',qty:1}]});paintSo()});
+    $('#so-drinks',sh).addEventListener('click',function(){
+      var ds=Object.keys(S.menu).filter(function(k){var x=S.menu[k];return k!==id&&x.active!==false&&(/beb|refri|suco|cerv/i.test(x.cat||'')||isDrink(x.name))&&!/combo/i.test(x.name+' '+(x.cat||''))}).sort(function(a,b){return S.menu[a].name.localeCompare(S.menu[b].name,'pt-BR')});
+      if(!ds.length){$('#mf-e',sh).textContent='Nenhuma bebida encontrada no cardápio.';return}
+      so.push({label:'Bebida',req:false,max:1,opts:ds.map(function(k){var x=S.menu[k],r=x.recipe||[];return {name:x.name,price:r2(x.price),ing:r.length===1?r[0].ing:'',qty:r.length===1?(+r[0].qty||1):1}})});paintSo()});
+    $('#so-copy',sh).addEventListener('click',function(){var k=$('#so-from',sh).value;if(!k||!S.menu[k])return;so=JSON.parse(JSON.stringify(S.menu[k].siteOpts||[]));paintSo();toast('Opções copiadas. Toque em Salvar para guardar.')});
+    function cleanSo(){return so.map(function(g){return {label:(g.label||'').trim()||'Adicionais',req:!!g.req,max:Math.max(1,Math.min(20,+g.max||1)),opts:g.opts.filter(function(o){return (o.name||'').trim()}).map(function(o){return {name:o.name.trim(),price:Math.max(0,r2(o.price||0)),ing:S.stock[o.ing]?o.ing:'',qty:S.stock[o.ing]?r3(o.qty>0?o.qty:1):1}})}}).filter(function(g){return g.opts.length})}
+    $('#so-cat',sh).addEventListener('click',function(){var t=this,cat=$('#mf-cat',sh).value,ks=Object.keys(S.menu).filter(function(k){return k!==id&&S.menu[k].cat===cat});
+      if(!ks.length){toast('Não há outros itens nesta categoria.');return}
+      armed(t,'Confirmar: trocar em '+ks.length+(ks.length===1?' item':' itens'),function(){var v=cleanSo();ks.reduce(function(p,k){return p.then(function(){return enqueue(function(){return db.doc('menu/'+k).update({siteOpts:v})})})},Promise.resolve()).then(function(){toast('Opções aplicadas em '+ks.length+(ks.length===1?' item':' itens')+' de '+cat)})})});
+    paintSo();
     var vb=$('#mf-vr',sh);
     function paintVr(){
       vb.innerHTML='<label>Nome da variação<input id="vr-lab" maxlength="30" autocomplete="off" placeholder="Ex.: Sabor, Tamanho" value="'+esc(vr.label)+'"></label><div style="margin-top:10px">'+vr.opts.map(function(o,oi){return '<div class="vrow" data-o="'+oi+'"><input class="v-n" maxlength="40" autocomplete="off" aria-label="Nome da variação" placeholder="Ex.: Limão" value="'+esc(o.name)+'"><select class="v-ing" aria-label="Estoque da variação"><option value="">Sem estoque próprio</option>'+stockIds.map(function(k){return opt(k,S.stock[k].name,k===o.ing)}).join('')+'</select>'+(o.ing?'<input class="v-q" inputmode="decimal" aria-label="Quantidade que baixa" value="'+inpN(o.qty||'')+'">':'')+'<button type="button" class="btn sm ghost v-del">Remover</button></div>'}).join('')+'</div>'+
@@ -1717,7 +1744,7 @@ function openMenuEdit(id,op){
       var name=$('#mf-name',sh).value.trim(),price=r2(parseN($('#mf-price',sh).value));
       if(!name||price<=0){$('#mf-e',sh).textContent='Informe o nome e um preço maior que zero.';return}
       var rec=rows.filter(function(r){return r.ing&&r.qty>0}).map(function(r){return {ing:r.ing,qty:r3(r.qty)}});
-      var doc=Object.assign({},m,{name:name,cat:$('#mf-cat',sh).value,price:price,recipe:rec,photo:photo,kitchen:!!$('#mf-kit',sh).checked,onlineOff:!$('#mf-onl',sh).checked,choices:varChoice().concat(chs.map(function(g){return {label:(g.label||'').trim()||'Escolha',opts:g.opts.filter(function(o){return o.ing&&o.qty>0}).map(function(o){return {ing:o.ing,qty:r3(o.qty),extra:r2(o.extra||0)}})}}).filter(function(g){return g.opts.length})),active:m.active!==false});
+      var doc=Object.assign({},m,{name:name,cat:$('#mf-cat',sh).value,price:price,recipe:rec,photo:photo,kitchen:!!$('#mf-kit',sh).checked,onlineOff:!$('#mf-onl',sh).checked,siteOpts:cleanSo(),choices:varChoice().concat(chs.map(function(g){return {label:(g.label||'').trim()||'Escolha',opts:g.opts.filter(function(o){return o.ing&&o.qty>0}).map(function(o){return {ing:o.ing,qty:r3(o.qty),extra:r2(o.extra||0)}})}}).filter(function(g){return g.opts.length})),active:m.active!==false});
       enqueue(function(){return id?db.doc('menu/'+id).set(doc):db.collection('menu').add(doc)}).then(function(){closeModal();toast('Item salvo')});
     });
     paintRows();
@@ -2202,7 +2229,9 @@ function syncOnline(pid,status){
 async function importOnline(p,claimed){
   var h=window.__bpHttp,whats=digits(p.whatsapp_cliente);
   var cid=Object.keys(S.cust).find(function(k){var d=digits(S.cust[k].phone);return d&&whats&&d.slice(-11)===whats.slice(-11)});
-  if(!cid)cid=await saveCustomer(null,{name:p.nome_cliente,phone:fmtPhone(whats)});
+  var bd=/^\d\d-\d\d$/.test(p.aniversario_cliente||'')?p.aniversario_cliente:'';
+  if(!cid)cid=await saveCustomer(null,Object.assign({name:p.nome_cliente,phone:fmtPhone(whats)},bd?{bday:bd}:{}));
+  else if(bd&&!S.cust[cid].bday)await saveCustomer(cid,{bday:bd});
   var cname=(S.cust[cid]&&S.cust[cid].name)||p.nome_cliente;
   var done=false;
   await enqueue(async function(){
@@ -2211,9 +2240,10 @@ async function importOnline(p,claimed){
     var type=p.tipo==='entrega'?'delivery':'balcao',base=type==='delivery'?'Delivery':'Viagem';
     var total={};
     var items=(p.itens||[]).map(function(it){
-      var m=S.menu[it.id],rec=m?(m.recipe||[]).map(function(r){return [r.ing,r.qty]}):[];
+      var m=S.menu[it.id],rec=m?(m.recipe||[]).map(function(r){return [r.ing,r.qty]}):[],ops=it.opcoes||[],xc=0;
+      ops.forEach(function(o){var st=o.ing&&S.stock[o.ing],q=o.qty>0?+o.qty:1;if(st){rec.push([o.ing,q]);xc+=st.cost*q}});
       var d=recDelta(rec,it.qtd,-1);Object.keys(d).forEach(function(k){total[k]=r3((total[k]||0)+d[k])});
-      return {lid:lid(),k:it.id,name:m?m.name:it.nome,price:r2(it.preco),cost:m?r2(costOf(m)):0,qty:it.qtd,note:it.obs||'',rec:rec,sig:''};
+      return {lid:lid(),k:it.id,name:(m?m.name:it.nome)+(ops.length?' + '+ops.map(function(o){return o.nome}).join(' + '):''),price:r2(it.preco),cost:m?r2(costOf(m)+xc):0,qty:it.qtd,note:it.obs||'',rec:rec,sig:ops.map(function(o){return o.ing||('v:'+o.nome)}).join('|')};
     });
     var fv=r2(Number(p.frete)||0);
     if(fv>0)items.push({lid:lid(),k:'__frete',name:'Frete',price:fv,cost:0,qty:1,note:'',rec:[],sig:'',isFrete:true});

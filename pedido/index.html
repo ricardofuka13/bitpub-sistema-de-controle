@@ -121,6 +121,25 @@ textarea{min-height:76px;resize:vertical}
 .sel{display:inline-block;background:var(--amarelo);color:var(--preto);font-weight:800;font-size:13px;padding:2px 8px}
 .resumo-cli{background:var(--preto);color:#fff;padding:12px 14px}
 .resumo-cli b{color:var(--amarelo);font:400 34px/1 var(--f-titulo);margin-right:6px}
+[hidden]{display:none!important}
+.opc-sub{margin:0;color:var(--suave);font-size:15px}
+.opc-foto{width:100%;max-height:200px;object-fit:cover;border:2px solid var(--preto)}
+.opc-g{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.opc-g legend{font:400 22px/1.1 var(--f-titulo);padding:0;margin-bottom:6px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;width:100%}
+.opc-g legend small{font:600 13px var(--f-corpo);background:var(--amarelo);padding:2px 8px}
+.opc-g legend small.obr{background:var(--preto);color:#fff}
+.opc-o{display:flex;flex-direction:row;align-items:center;gap:12px;border:2px solid var(--preto);padding:10px 12px;min-height:48px;cursor:pointer;font-weight:600}
+.opc-o input{width:22px;height:22px;flex:none;accent-color:var(--laranja)}
+.opc-o span.n{flex:1}
+.opc-o span.p{white-space:nowrap;font-weight:800}
+.opc-o:has(input:checked){background:#FFF1E3;border-color:var(--laranja);box-shadow:inset 0 0 0 2px var(--laranja)}
+.opc-rod{display:flex;gap:12px;align-items:center;position:sticky;bottom:0;background:var(--papel);padding-top:10px;border-top:3px solid var(--preto)}
+.opc-rod .principal{flex:1}
+.linha .ops{grid-column:1/-1;font-size:14px;color:var(--suave);margin-top:-2px}
+.aniv{border:0;margin:0;padding:0;display:grid;grid-template-columns:1fr 1.6fr;gap:8px}
+.aniv legend{font-weight:700;font-size:15px;padding:0;margin-bottom:6px}
+.aniv legend small{font-weight:500;color:var(--suave)}
+.aniv select{border:2px solid var(--preto);background:#fff;padding:10px 12px;min-height:44px;border-radius:0;font:inherit;width:100%}
 .ok-icone{width:56px;height:56px;border:3px solid var(--preto);background:var(--amarelo);display:grid;place-items:center;font:400 34px/1 var(--f-titulo)}
 .vazio{color:var(--suave);padding:24px 0;text-align:center}
 .hero-box{max-width:720px;margin:0 auto;padding:4px 16px 0}
@@ -195,6 +214,21 @@ textarea{min-height:76px;resize:vertical}
   </div>
 </dialog>
 
+<!-- opções do item (bebida e adicionais) -->
+<dialog id="dOpc" aria-labelledby="tOpc">
+  <div class="d-in">
+    <div class="d-topo"><h2 id="tOpc">Item</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
+    <img class="opc-foto" id="opcFoto" alt="" hidden>
+    <p class="opc-sub" id="opcDesc"></p>
+    <div id="opcGrupos" style="display:flex;flex-direction:column;gap:16px"></div>
+    <p class="erro" id="opcErro" role="alert"></p>
+    <div class="opc-rod">
+      <div class="qtd"><button type="button" id="opcMenos" aria-label="Menos um">&minus;</button><output id="opcQtd" aria-live="polite">1</output><button type="button" id="opcMais" aria-label="Mais um">+</button></div>
+      <button class="principal" type="button" id="opcAdd">Adicionar</button>
+    </div>
+  </div>
+</dialog>
+
 <!-- entrar / cadastrar -->
 <dialog id="dAuth" aria-labelledby="tAuth">
   <form class="d-in" id="formAuth" novalidate>
@@ -205,6 +239,11 @@ textarea{min-height:76px;resize:vertical}
     </div>
     <label id="boxNome" hidden>Nome<input type="text" id="aNome" autocomplete="name" maxlength="80"></label>
     <label>WhatsApp com DDD<input type="tel" id="aWhats" inputmode="numeric" autocomplete="tel-national" placeholder="(11) 91234-5678"></label>
+    <fieldset class="aniv" id="boxAniv" hidden>
+      <legend>Aniversário <small>(opcional)</small></legend>
+      <select id="aDia" aria-label="Dia do aniversário"><option value="">Dia</option></select>
+      <select id="aMes" aria-label="Mês do aniversário"><option value="">Mês</option></select>
+    </fieldset>
     <label>Senha<input type="password" id="aSenha" autocomplete="current-password" minlength="6" placeholder="Mínimo de 6 caracteres"></label>
     <p class="erro" id="erroAuth" role="alert"></p>
     <button class="principal" type="submit" id="btnAuth">Entrar</button>
@@ -295,6 +334,8 @@ function textoErro(e){
     'cadastro_necessario':'Use uma conta de cliente. Se você é da equipe, entre pelo painel.',
     'endereco_necessario':'Informe o endereço de entrega.',
     'item_indisponivel':'Algum item saiu do cardápio. Atualize a página e monte o pedido de novo.',
+    'opcao_obrigatoria':'Escolha as opções obrigatórias do lanche (bebida, sabor...).',
+    'opcao_invalida':'Uma opção escolhida mudou. Atualize a página e monte o pedido de novo.',
     'quantidade_invalida':'Confira as quantidades do pedido.',
     'itens_invalidos':'Seu pedido está vazio.',
     'muitos_pedidos':'Você já enviou vários pedidos agora há pouco. Chame a gente no WhatsApp.'
@@ -309,7 +350,23 @@ var M={nome:'BitPub',telefone:'',endereco:'',frase:'',horario:'',info:'',cabecal
 var carrinho=[]; var cliente=null; var CK='bitpub_site_carrinho';
 try{ var c0=JSON.parse(localStorage.getItem(CK)||'[]'); if(Array.isArray(c0))carrinho=c0.filter(function(i){return i&&i.id&&i.qtd>0}) }catch(e){}
 function salvarCarrinho(){ try{localStorage.setItem(CK,JSON.stringify(carrinho))}catch(e){} }
-function linha(id){ return carrinho.find(function(i){return i.id===id}) }
+carrinho.forEach(function(l){ if(!l.key)l.key=l.id });
+function linha(key){ return carrinho.find(function(i){return i.key===key}) }
+function itemDe(id){ return M.itens.find(function(i){return i.id===id}) }
+function temOpc(it){ return !!(it&&it.opcoes&&it.opcoes.length) }
+function qtdDoItem(id){ return carrinho.reduce(function(s,l){return l.id===id?s+l.qtd:s},0) }
+/* sel = lista de [grupo, opção]; devolve o preço unitário ou null se não bate com o cardápio atual */
+function precoComOpcoes(it,sel){
+  var p=Number(it.preco), cont={};
+  for(var k=0;k<(sel||[]).length;k++){
+    var g=it.opcoes&&it.opcoes[sel[k][0]], o=g&&g.opts[sel[k][1]]; if(!o)return null;
+    p+=Number(o.price)||0; cont[sel[k][0]]=(cont[sel[k][0]]||0)+1;
+    if(cont[sel[k][0]]>(g.max||1))return null;
+  }
+  (it.opcoes||[]).forEach(function(g,gi){ if(g.req&&!cont[gi])p=null });
+  return p==null?null:Math.round(p*100)/100;
+}
+function nomesOpc(it,sel){ return (sel||[]).map(function(x){return it.opcoes[x[0]].opts[x[1]].name}) }
 function totalCarrinho(){ return carrinho.reduce(function(s,i){return s+i.preco*i.qtd},0) }
 function qtdTotal(){ return carrinho.reduce(function(s,i){return s+i.qtd},0) }
 
@@ -322,7 +379,13 @@ async function carregarMenu(){
   }catch(e){
     try{var c=JSON.parse(localStorage.getItem('bitpub_site_menu')||'null'); if(c){M=c; toast('Sem conexão: mostrando o último cardápio salvo.')}}catch(x){}
   }
-  carrinho=carrinho.filter(function(l){var it=M.itens.find(function(i){return i.id===l.id}); if(it){l.preco=it.preco;l.nome=it.nome;return true} return false});
+  carrinho=carrinho.filter(function(l){
+    var it=itemDe(l.id); if(!it)return false;
+    l.nome=it.nome;
+    if(l.sel&&l.sel.length||temOpc(it)){ var p=precoComOpcoes(it,l.sel||[]); if(p==null)return false; l.preco=p; l.ops=nomesOpc(it,l.sel||[]) }
+    else l.preco=it.preco;
+    return true;
+  });
   desenharMenu();
 }
 function desenharMenu(){
@@ -356,22 +419,92 @@ function desenharMenu(){
 }
 function acaoItem(id){
   var el=$('.item[data-id="'+CSS.escape(id)+'"] .acao'); if(!el)return;
-  var l=linha(id), it=M.itens.find(function(i){return i.id===id}); if(!it)return;
+  var it=itemDe(id); if(!it)return;
+  var n=qtdDoItem(id);
+  if(temOpc(it)){
+    el.innerHTML=(n?'<span class="mini-n" style="align-self:center;margin-right:10px;font-weight:700">'+n+' no pedido</span>':'')+'<button class="add" type="button" data-opc="'+esc(id)+'">'+(n?'Adicionar outro':'Escolher')+'</button>';
+    return;
+  }
+  var l=linha(id);
   el.innerHTML = l ? '<div class="qtd"><button type="button" data-mais="-1" aria-label="Tirar um '+esc(it.nome)+'">&minus;</button><output aria-live="polite">'+l.qtd+'</output><button type="button" data-mais="1" aria-label="Colocar mais um '+esc(it.nome)+'">+</button></div>'
                    : '<button class="add" type="button" data-mais="1">Adicionar</button>';
 }
-function mudar(id,delta){
-  var it=M.itens.find(function(i){return i.id===id}); if(!it)return;
-  var l=linha(id);
-  if(!l){ if(delta<0)return; l={id:id,nome:it.nome,preco:it.preco,qtd:0,obs:''}; carrinho.push(l) }
+/* muda a quantidade de uma linha do pedido (key). Itens sem opções usam key = id */
+function mudar(key,delta){
+  var l=linha(key);
+  if(!l){
+    var it=itemDe(key); if(!it||delta<0||temOpc(it))return;
+    l={key:key,id:key,nome:it.nome,preco:it.preco,qtd:0,obs:'',sel:[],ops:[]}; carrinho.push(l);
+  }
   l.qtd=Math.max(0,Math.min(50,l.qtd+delta));
-  if(l.qtd===0)carrinho=carrinho.filter(function(x){return x.id!==id});
-  salvarCarrinho(); acaoItem(id); atualizarBarra();
+  if(l.qtd===0)carrinho=carrinho.filter(function(x){return x.key!==key});
+  salvarCarrinho(); acaoItem(l.id); atualizarBarra();
   if($('#dCarrinho').open)desenharCarrinho();
 }
 $('#menu').addEventListener('click',function(e){
-  var b=e.target.closest('[data-mais]'); if(!b)return;
-  mudar(b.closest('.item').getAttribute('data-id'),Number(b.getAttribute('data-mais')));
+  var b=e.target.closest('[data-mais]');
+  if(b){ mudar(b.closest('.item').getAttribute('data-id'),Number(b.getAttribute('data-mais'))); return }
+  var o=e.target.closest('[data-opc]');
+  if(o){ abrirOpcoes(o.getAttribute('data-opc')); return }
+  var card=e.target.closest('.item');
+  if(card&&temOpc(itemDe(card.getAttribute('data-id')))&&!e.target.closest('button,a,input'))abrirOpcoes(card.getAttribute('data-id'));
+});
+
+/* ---------- janela de opções (bebida, adicionais...) ---------- */
+var opcItem=null, opcQtd=1;
+function opcSel(){
+  var sel=[];
+  $$('#opcGrupos .opc-g').forEach(function(f){
+    var gi=Number(f.getAttribute('data-g'));
+    $$('input:checked',f).forEach(function(i){ if(i.value!=='')sel.push([gi,Number(i.value)]) });
+  });
+  return sel;
+}
+function opcAtualizar(){
+  var it=opcItem; if(!it)return;
+  var sel=opcSel(), p=precoComOpcoes(it,sel), btn=$('#opcAdd');
+  var base=Number(it.preco), extra=0;
+  sel.forEach(function(x){ var o=it.opcoes[x[0]]&&it.opcoes[x[0]].opts[x[1]]; if(o)extra+=Number(o.price)||0 });
+  $$('#opcGrupos .opc-g').forEach(function(f){
+    var gi=Number(f.getAttribute('data-g')), g=it.opcoes[gi], n=$$('input:checked',f).filter(function(i){return i.value!==''}).length;
+    if((g.max||1)>1){ $$('input[type=checkbox]',f).forEach(function(i){ i.disabled=!i.checked&&n>=g.max }) }
+  });
+  $('#opcQtd').textContent=opcQtd;
+  if(p==null){ btn.disabled=true; btn.textContent='Escolha as opções obrigatórias' }
+  else { btn.disabled=false; btn.textContent='Adicionar · '+R((base+extra)*opcQtd) }
+}
+function abrirOpcoes(id){
+  var it=itemDe(id); if(!it)return;
+  opcItem=it; opcQtd=1; $('#opcErro').textContent='';
+  $('#tOpc').textContent=it.nome;
+  $('#opcDesc').textContent=it.desc||''; $('#opcDesc').hidden=!it.desc;
+  var foto=/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(it.foto||'')?it.foto:'';
+  var im=$('#opcFoto'); if(foto){im.src=foto;im.alt='Foto de '+it.nome;im.hidden=false}else{im.removeAttribute('src');im.hidden=true}
+  $('#opcGrupos').innerHTML=it.opcoes.map(function(g,gi){
+    var multi=(g.max||1)>1, nome='og'+gi;
+    var tag=g.req?'<small class="obr">Obrigatório</small>':'<small>'+(multi?'Opcional · até '+g.max:'Opcional')+'</small>';
+    var linhas=(!g.req&&!multi?'<label class="opc-o"><input type="radio" name="'+nome+'" value="" checked><span class="n">Nenhum</span></label>':'')+
+      g.opts.map(function(o,oi){
+        return '<label class="opc-o"><input type="'+(multi?'checkbox':'radio')+'" name="'+nome+'" value="'+oi+'"><span class="n">'+esc(o.name)+'</span>'+(Number(o.price)>0?'<span class="p">+ '+R(o.price)+'</span>':'')+'</label>';
+      }).join('');
+    return '<fieldset class="opc-g" data-g="'+gi+'"><legend>'+esc(g.label||'Escolha')+' '+tag+'</legend>'+linhas+'</fieldset>';
+  }).join('');
+  opcAtualizar(); abrir($('#dOpc'));
+  $('#dOpc').scrollTop=0;
+}
+$('#opcGrupos').addEventListener('change',opcAtualizar);
+$('#opcMenos').addEventListener('click',function(){ opcQtd=Math.max(1,opcQtd-1); opcAtualizar() });
+$('#opcMais').addEventListener('click',function(){ opcQtd=Math.min(50,opcQtd+1); opcAtualizar() });
+$('#opcAdd').addEventListener('click',function(){
+  var it=opcItem; if(!it)return;
+  var sel=opcSel().sort(function(a,b){return a[0]-b[0]||a[1]-b[1]}), p=precoComOpcoes(it,sel);
+  if(p==null){ $('#opcErro').textContent='Escolha as opções obrigatórias.'; return }
+  var key=it.id+'|'+sel.map(function(x){return x[0]+'.'+x[1]}).join(',');
+  var l=linha(key);
+  if(l)l.qtd=Math.min(50,l.qtd+opcQtd);
+  else carrinho.push({key:key,id:it.id,nome:it.nome,preco:p,qtd:opcQtd,obs:'',sel:sel,ops:nomesOpc(it,sel)});
+  salvarCarrinho(); acaoItem(it.id); atualizarBarra(); if($('#dCarrinho').open)desenharCarrinho();
+  $('#dOpc').close(); toast(opcQtd+'x '+it.nome+' no pedido');
 });
 function atualizarBarra(){
   var n=qtdTotal(); $('#barra').hidden=n===0;
@@ -437,7 +570,7 @@ function desenharCarrinho(){
   var box=$('#itensCarrinho');
   if(!carrinho.length){ box.innerHTML='<p class="vazio">Seu pedido está vazio. Escolha um item no cardápio.</p>' }
   else box.innerHTML=carrinho.map(function(l){
-    return '<div class="linha" data-id="'+esc(l.id)+'"><b>'+esc(l.nome)+'</b><span class="v">'+R(l.preco*l.qtd)+'</span>'+
+    return '<div class="linha" data-id="'+esc(l.key)+'"><b>'+esc(l.nome)+'</b><span class="v">'+R(l.preco*l.qtd)+'</span>'+(l.ops&&l.ops.length?'<span class="ops">+ '+esc(l.ops.join(', '))+'</span>':'')+
       '<div class="qtd" style="width:max-content"><button type="button" data-c="-1" aria-label="Tirar um '+esc(l.nome)+'">&minus;</button><output>'+l.qtd+'</output><button type="button" data-c="1" aria-label="Colocar mais um '+esc(l.nome)+'">+</button></div><span></span>'+
       '<input type="text" data-obs maxlength="140" value="'+esc(l.obs)+'" placeholder="Sabor, ponto, sem cebola..." aria-label="Observação de '+esc(l.nome)+'"></div>';
   }).join('');
@@ -468,12 +601,17 @@ async function carregarCliente(){
 function atualizarBtnConta(){ $('#btnConta').textContent = cliente ? 'Olá, '+cliente.nome.split(' ')[0] : 'Entrar' }
 $('#btnConta').addEventListener('click',function(){ if(cliente){abrirConta()} else {abrirAuth()} });
 
+(function(){
+  var d=$('#aDia'),m=$('#aMes'),meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  for(var i=1;i<=31;i++)d.add(new Option(i,i));
+  meses.forEach(function(n,i){m.add(new Option(n,i+1))});
+})();
 var modoCriar=false, apósLogin=null;
 function abrirAuth(depois){ apósLogin=depois||null; definirModo(false); $('#erroAuth').textContent=''; abrir($('#dAuth')) }
 function definirModo(criar){
   modoCriar=criar;
   $('#abaEntrar').setAttribute('aria-selected',String(!criar)); $('#abaCriar').setAttribute('aria-selected',String(criar));
-  $('#boxNome').hidden=!criar; $('#btnAuth').textContent=criar?'Criar cadastro e entrar':'Entrar';
+  $('#boxNome').hidden=!criar; $('#boxAniv').hidden=!criar; $('#btnAuth').textContent=criar?'Criar cadastro e entrar':'Entrar';
   $('#aSenha').autocomplete=criar?'new-password':'current-password'; $('#erroAuth').textContent='';
 }
 $('#abaEntrar').addEventListener('click',function(){definirModo(false)});
@@ -486,9 +624,10 @@ $('#formAuth').addEventListener('submit',async function(e){
   if(modoCriar&&nome.length<2){erro.textContent='Informe seu nome.';return}
   if(!/^\d{10,11}$/.test(w)){erro.textContent='Informe o WhatsApp com DDD, só números.';return}
   if(senha.length<6){erro.textContent='A senha precisa ter pelo menos 6 caracteres.';return}
+  if(modoCriar&&(($('#aDia').value===''))!==($('#aMes').value==='')){erro.textContent='Escolha o dia e o mês do aniversário, ou deixe os dois em branco.';return}
   btn.disabled=true;
   try{
-    if(modoCriar) await http('/functions/v1/cadastrar',{method:'POST',auth:false,body:{nome:nome,whatsapp:w,senha:senha}});
+    if(modoCriar) await http('/functions/v1/cadastrar',{method:'POST',auth:false,body:{nome:nome,whatsapp:w,senha:senha,dia:$('#aDia').value,mes:$('#aMes').value}});
     await entrar(w,senha);
     await carregarCliente();
     if(!cliente){ gravarSessao(null); atualizarBtnConta(); throw new Error('cadastro_necessario') }
@@ -511,7 +650,7 @@ async function abrirConta(){
       var d=new Date(p.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       return '<div class="ped"><div class="ped-t"><span>Pedido '+p.numero+'</span><span class="sel">'+esc(STATUS[p.status]||p.status)+(p.pago?' &middot; Pago':'')+'</span></div>'+
         '<small>'+d+' &middot; '+(p.tipo==='entrega'?'Entrega':'Retirada')+'</small>'+
-        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)}).join('<br>')+'</div><b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+R(p.frete)+' de frete = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+(PAGAMENTO_ONLINE&&!p.pago&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button><p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+'</div>';
+        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?' <small>+ '+esc(i.opcoes.map(function(o){return o.nome}).join(', '))+'</small>':'')}).join('<br>')+'</div><b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+R(p.frete)+' de frete = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+(PAGAMENTO_ONLINE&&!p.pago&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button><p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+'</div>';
     }).join(''):'<p class="vazio">Você ainda não fez nenhum pedido.</p>';
   }catch(e){ $('#listaPedidos').innerHTML='<p class="erro">'+esc(textoErro(e))+'</p>' }
 }
@@ -522,7 +661,7 @@ function mensagemZap(p){
   var l=['*Pedido #'+p.numero+' - BitPub*','','Cliente: '+p.nome,'WhatsApp: '+mascara(p.whatsapp),'Tipo: '+(p.tipo==='entrega'?'Entrega':'Retirada na loja')];
   if(p.tipo==='entrega')l.push('Endereço: '+p.endereco);
   l.push('');
-  p.itens.forEach(function(i){ l.push(i.qtd+'x '+i.nome+' - '+R(i.preco*i.qtd)+(i.obs?' ('+i.obs+')':'')) });
+  p.itens.forEach(function(i){ l.push(i.qtd+'x '+i.nome+(i.opcoes&&i.opcoes.length?' + '+i.opcoes.map(function(o){return o.nome}).join(', '):'')+' - '+R(i.preco*i.qtd)+(i.obs?' ('+i.obs+')':'')) });
   l.push('','*Total dos itens: '+R(p.total)+'*');
   if(p.tipo==='entrega'){ if(p.frete!=null){ l.push('Frete: '+R(p.frete)); l.push('*Total com frete: '+R(Number(p.total)+Number(p.frete))+'*') } else l.push('Frete: a combinar') }
   if(p.observacao)l.push('Obs: '+p.observacao);
@@ -554,7 +693,7 @@ async function enviarPedido(){
   if(enviando)return; enviando=true; $('#btnEnviar').disabled=true; $('#btnEnviar').textContent='Enviando...';
   try{
     var p=await http('/rest/v1/rpc/criar_pedido',{method:'POST',body:{
-      p_itens:carrinho.map(function(l){return {id:l.id,qtd:l.qtd,obs:l.obs||''}}),
+      p_itens:carrinho.map(function(l){return {id:l.id,qtd:l.qtd,obs:l.obs||'',sel:l.sel||[]}}),
       p_tipo:ent?'entrega':'retirada', p_endereco:ent?end:null, p_obs:$('#obsGeral').value.trim()||null,
       p_frete_id:(ent&&freteAtual&&freteAtual.id)||null
     }});
