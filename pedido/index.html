@@ -108,7 +108,8 @@ textarea{min-height:76px;resize:vertical}
 .totais .total{font:400 24px/1.15 var(--f-titulo);color:var(--texto);align-items:baseline;gap:12px;flex-wrap:wrap}
 .aviso{background:var(--cinza);border-left:6px solid var(--laranja);padding:10px 12px;font-size:15px}
 .opc-turbo{margin:0;padding:10px 12px;background:var(--amarelo,#F8B400);border:2px solid var(--preto);font-weight:700;font-size:15px}
-.btc-promo{margin:0;text-align:center;font-weight:800;font-size:15px;color:var(--preto)}
+.btc-promo{margin:0;text-align:center;font-weight:600;font-size:16px;color:var(--preto);background:#F7B500;border:2px solid var(--preto);padding:8px 10px;line-height:1.3}
+.btc-promo[hidden]{display:none}
 .btc-btn{background:none;border:0;padding:0;width:100%;display:grid;place-items:center;min-height:0;cursor:pointer}
 .btc-btn img{max-width:280px;width:100%;height:auto;display:block}
 .btc-btn:disabled{opacity:.6}
@@ -288,8 +289,8 @@ textarea{min-height:76px;resize:vertical}
     <h2 id="tOk" style="font:400 32px/1.05 var(--f-titulo);margin:0">Pedido registrado</h2>
     <p id="okTexto" style="margin:0"></p>
     <button class="principal" type="button" id="okPagar">Pagar agora (Pix ou cartão)</button>
-    <button class="btc-btn" type="button" id="okBtc" aria-label="Pagar com Bitcoin" hidden><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>
     <p class="btc-promo" id="btcPromo" hidden></p>
+    <button class="btc-btn" type="button" id="okBtc" aria-label="Pagar com Bitcoin" hidden><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>
     <p class="erro" id="erroPagar" role="alert" style="margin:0"></p>
     <a class="secundario" id="okZap" href="#" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Enviar no WhatsApp</a>
     <button class="secundario" type="button" data-fechar>Voltar ao cardápio</button>
@@ -398,7 +399,7 @@ async function carregarMenu(){
   try{
     var d=await http('/rest/v1/rpc/cardapio_publico',{method:'POST',auth:false,body:{}});
     M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
-    BTC_ON=d.bitcoin===true; BTC_DESC=Number(d.bitcoin_desconto)||0; btcRotulo();
+    BTC_ON=d.bitcoin===true; BTC_DESC=Number(d.bitcoin_desconto)||0;
     try{localStorage.setItem('bitpub_site_menu',JSON.stringify(M))}catch(e){}
   }catch(e){
     try{var c=JSON.parse(localStorage.getItem('bitpub_site_menu')||'null'); if(c){M=c; toast('Sem conexão: mostrando o último cardápio salvo.')}}catch(x){}
@@ -675,7 +676,7 @@ async function abrirConta(){
       var d=new Date(p.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       return '<div class="ped"><div class="ped-t"><span>Pedido '+p.numero+'</span><span class="sel">'+esc(STATUS[p.status]||p.status)+(p.pago?' &middot; Pago':'')+'</span></div>'+
         '<small>'+d+' &middot; '+(p.tipo==='entrega'?'Entrega':'Retirada')+'</small>'+
-        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?' <small>+ '+esc(i.opcoes.map(function(o){return o.nome}).join(', '))+'</small>':'')}).join('<br>')+'</div><b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+R(p.frete)+' de frete = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+(PAGAMENTO_ONLINE&&!p.pago&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button>'+(BTC_ON?'<button class="btc-btn" type="button" data-btc="'+esc(p.id)+'" style="margin-top:8px" aria-label="Pagar com Bitcoin"><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>':'')+'<p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+'</div>';
+        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?' <small>+ '+esc(i.opcoes.map(function(o){return o.nome}).join(', '))+'</small>':'')}).join('<br>')+'</div><b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+R(p.frete)+' de frete = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+(PAGAMENTO_ONLINE&&!p.pago&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button>'+(BTC_ON?(BTC_DESC>0?'<p class="btc-promo" style="margin-top:8px">\u20bf <b>'+String(BTC_DESC).replace('.',',')+'% de desconto</b> com Bitcoin: <b>'+R(btcPreco(p))+'</b></p>':'')+'<button class="btc-btn" type="button" data-btc="'+esc(p.id)+'" style="margin-top:8px" aria-label="Pagar com Bitcoin"><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>':'')+'<p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+'</div>';
     }).join(''):'<p class="vazio">Você ainda não fez nenhum pedido.</p>';
   }catch(e){ $('#listaPedidos').innerHTML='<p class="erro">'+esc(textoErro(e))+'</p>' }
 }
@@ -714,9 +715,16 @@ function desenharQr(txt){
   var n=q.getModuleCount(),cv=$('#btcQr'),c=cv.getContext('2d'),m=Math.floor(240/(n+4));
   var off=Math.floor((240-m*n)/2);c.fillStyle='#fff';c.fillRect(0,0,240,240);c.fillStyle='#000';
   for(var r=0;r<n;r++)for(var k=0;k<n;k++)if(q.isDark(r,k))c.fillRect(off+k*m,off+r*m,m,m)}
-function btcRotulo(){
-  var t=BTC_DESC>0?'\u20bf Pague com Bitcoin e ganhe '+String(BTC_DESC).replace('.',',')+'% de desconto nos itens!':'';
-  var e=$('#btcPromo'); if(e){e.textContent=t;e.hidden=!t||!BTC_ON}
+function btcPreco(p){ /* desconto só nos itens; frete cheio */
+  var it=Number(p.total)||0, fr=Number(p.frete)||0;
+  return Math.round(it*(1-BTC_DESC/100)*100)/100+fr;
+}
+function btcRotulo(p){
+  var e=$('#btcPromo'); if(!e)return;
+  if(!(BTC_ON&&BTC_DESC>0)){e.hidden=true;return}
+  var d=String(BTC_DESC).replace('.',',');
+  e.innerHTML='\u20bf <b>'+d+'% de desconto</b> pagando com Bitcoin'+(p?'<br><small>De '+R(Number(p.total)+(Number(p.frete)||0))+' por <b>'+R(btcPreco(p))+'</b></small>':'');
+  e.hidden=false;
 }
 function btcParar(){if(btcTimer){clearInterval(btcTimer);btcTimer=null}}
 async function btcVerificar(){
@@ -771,7 +779,7 @@ async function enviarPedido(){
     carrinho=[]; salvarCarrinho(); $$('.item').forEach(function(el){acaoItem(el.getAttribute('data-id'))}); atualizarBarra();
     $('#obsGeral').value=''; $('#dCarrinho').close();
     $('#okTexto').textContent='Seu pedido '+p.numero+' já está com a gente.'+(p.frete!=null?' Total com frete: '+R(Number(p.total)+Number(p.frete))+'.':'')+' Você pode pagar agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'&&p.frete==null?'o frete e ':'')+'o pagamento.';
-    pedidoPagarId=p.id; $('#erroPagar').textContent=''; $('#okPagar').hidden=!PAGAMENTO_ONLINE; $('#okBtc').hidden=!(BTC_ON&&PAGAMENTO_ONLINE);
+    pedidoPagarId=p.id; btcRotulo(p); $('#erroPagar').textContent=''; $('#okPagar').hidden=!PAGAMENTO_ONLINE; $('#okBtc').hidden=!(BTC_ON&&PAGAMENTO_ONLINE);
     $('#okZap').href='https://wa.me/'+WHATS_LOJA+'?text='+encodeURIComponent(mensagemZap(p));
     abrir($('#dOk'));
   }catch(e){
