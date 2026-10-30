@@ -107,6 +107,7 @@ textarea{min-height:76px;resize:vertical}
 .totais .t{display:flex;justify-content:space-between;font-size:15px;color:var(--suave)}
 .totais .total{font:400 24px/1.15 var(--f-titulo);color:var(--texto);align-items:baseline;gap:12px;flex-wrap:wrap}
 .aviso{background:var(--cinza);border-left:6px solid var(--laranja);padding:10px 12px;font-size:15px}
+.opc-turbo{margin:0;padding:10px 12px;background:var(--amarelo,#F8B400);border:2px solid var(--preto);font-weight:700;font-size:15px}
 .btc-btn{background:none;border:0;padding:0;width:100%;display:grid;place-items:center;min-height:0;cursor:pointer}
 .btc-btn img{max-width:280px;width:100%;height:auto;display:block}
 .btc-btn:disabled{opacity:.6}
@@ -223,6 +224,7 @@ textarea{min-height:76px;resize:vertical}
     <div class="d-topo"><h2 id="tOpc">Item</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
     <img class="opc-foto" id="opcFoto" alt="" hidden>
     <p class="opc-sub" id="opcDesc"></p>
+    <p class="opc-turbo" id="opcTurbo" hidden>&#9889; Turbine seu pedido: bebida, batata e adicionais com pre&ccedil;o especial para pedir junto.</p>
     <div id="opcGrupos" style="display:flex;flex-direction:column;gap:16px"></div>
     <p class="erro" id="opcErro" role="alert"></p>
     <div class="opc-rod">
@@ -509,6 +511,7 @@ function abrirOpcoes(id){
       }).join('');
     return '<fieldset class="opc-g" data-g="'+gi+'"><legend>'+esc(g.label||'Escolha')+' '+tag+'</legend>'+linhas+'</fieldset>';
   }).join('');
+  $('#opcTurbo').hidden=!it.opcoes.some(function(g){return !g.req});
   opcAtualizar(); abrir($('#dOpc'));
   $('#dOpc').scrollTop=0;
 }
