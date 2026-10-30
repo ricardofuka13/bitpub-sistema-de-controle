@@ -107,6 +107,9 @@ textarea{min-height:76px;resize:vertical}
 .totais .t{display:flex;justify-content:space-between;font-size:15px;color:var(--suave)}
 .totais .total{font:400 24px/1.15 var(--f-titulo);color:var(--texto);align-items:baseline;gap:12px;flex-wrap:wrap}
 .aviso{background:var(--cinza);border-left:6px solid var(--laranja);padding:10px 12px;font-size:15px}
+.btc-btn{background:none;border:0;padding:0;width:100%;display:grid;place-items:center;min-height:0;cursor:pointer}
+.btc-btn img{max-width:280px;width:100%;height:auto;display:block}
+.btc-btn:disabled{opacity:.6}
 .principal{background:var(--laranja);color:var(--preto);border:2px solid var(--preto);font-weight:800;font-size:17px;min-height:54px;padding:0 18px;width:100%;border-radius:0}
 .principal:hover{background:#FF7D21}
 .principal[disabled]{opacity:.55;cursor:wait}
@@ -261,6 +264,20 @@ textarea{min-height:76px;resize:vertical}
   </div>
 </dialog>
 
+<!-- pagamento bitcoin -->
+<dialog id="dBtc" aria-labelledby="tBtc">
+  <div class="d-in" style="align-items:center;text-align:center">
+    <div class="d-topo" style="width:100%"><h2 id="tBtc">Pagar com Bitcoin</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
+    <p id="btcValor" style="margin:0;font-weight:800"></p>
+    <canvas id="btcQr" width="240" height="240" style="max-width:100%;border:2px solid var(--preto);background:#fff" aria-label="QR Code do pagamento"></canvas>
+    <p class="mini" style="margin:0" id="btcDica">Escaneie com sua carteira Lightning ou toque em abrir.</p>
+    <a class="principal" id="btcAbrir" href="#" style="display:grid;place-items:center;text-decoration:none">Abrir na carteira</a>
+    <button class="secundario" type="button" id="btcCopiar">Copiar c&oacute;digo</button>
+    <p id="btcStatus" role="status" style="margin:0;font-weight:700">Aguardando pagamento...</p>
+    <p class="erro" id="btcErro" role="alert" style="margin:0"></p>
+  </div>
+</dialog>
+
 <!-- pedido enviado -->
 <dialog id="dOk" aria-labelledby="tOk">
   <div class="d-in">
@@ -268,6 +285,7 @@ textarea{min-height:76px;resize:vertical}
     <h2 id="tOk" style="font:400 32px/1.05 var(--f-titulo);margin:0">Pedido registrado</h2>
     <p id="okTexto" style="margin:0"></p>
     <button class="principal" type="button" id="okPagar">Pagar agora (Pix ou cartão)</button>
+    <button class="btc-btn" type="button" id="okBtc" aria-label="Pagar com Bitcoin" hidden><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>
     <p class="erro" id="erroPagar" role="alert" style="margin:0"></p>
     <a class="secundario" id="okZap" href="#" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Enviar no WhatsApp</a>
     <button class="secundario" type="button" data-fechar>Voltar ao cardápio</button>
@@ -282,6 +300,7 @@ var CFG = window.BITPUB_CFG || {};
 var WHATS_LOJA = '5511917846050';
 /* Pagamento online (InfinitePay): o cliente escolhe pagar agora (Pix ou cartão) ou combinar pelo WhatsApp. O frete é sempre combinado no WhatsApp. */
 var PAGAMENTO_ONLINE = true;
+var BTC_ON = false;
 
 var $ = function(s,el){return (el||document).querySelector(s)};
 var $$ = function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s))};
@@ -375,6 +394,7 @@ async function carregarMenu(){
   try{
     var d=await http('/rest/v1/rpc/cardapio_publico',{method:'POST',auth:false,body:{}});
     M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
+    BTC_ON=d.bitcoin===true;
     try{localStorage.setItem('bitpub_site_menu',JSON.stringify(M))}catch(e){}
   }catch(e){
     try{var c=JSON.parse(localStorage.getItem('bitpub_site_menu')||'null'); if(c){M=c; toast('Sem conexão: mostrando o último cardápio salvo.')}}catch(x){}
@@ -650,7 +670,7 @@ async function abrirConta(){
       var d=new Date(p.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       return '<div class="ped"><div class="ped-t"><span>Pedido '+p.numero+'</span><span class="sel">'+esc(STATUS[p.status]||p.status)+(p.pago?' &middot; Pago':'')+'</span></div>'+
         '<small>'+d+' &middot; '+(p.tipo==='entrega'?'Entrega':'Retirada')+'</small>'+
-        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?' <small>+ '+esc(i.opcoes.map(function(o){return o.nome}).join(', '))+'</small>':'')}).join('<br>')+'</div><b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+R(p.frete)+' de frete = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+(PAGAMENTO_ONLINE&&!p.pago&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button><p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+'</div>';
+        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?' <small>+ '+esc(i.opcoes.map(function(o){return o.nome}).join(', '))+'</small>':'')}).join('<br>')+'</div><b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+R(p.frete)+' de frete = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+(PAGAMENTO_ONLINE&&!p.pago&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button>'+(BTC_ON?'<button class="btc-btn" type="button" data-btc="'+esc(p.id)+'" style="margin-top:8px" aria-label="Pagar com Bitcoin"><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>':'')+'<p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+'</div>';
     }).join(''):'<p class="vazio">Você ainda não fez nenhum pedido.</p>';
   }catch(e){ $('#listaPedidos').innerHTML='<p class="erro">'+esc(textoErro(e))+'</p>' }
 }
@@ -679,6 +699,47 @@ async function pagar(id,btn,msgEl){
 }
 $('#okPagar').addEventListener('click',function(){ if(pedidoPagarId)pagar(pedidoPagarId,this,$('#erroPagar')) });
 $('#listaPedidos').addEventListener('click',function(e){ var b=e.target.closest('[data-pagar]'); if(b)pagar(b.getAttribute('data-pagar'),b,b.parentNode.querySelector('.erroPed')) });
+/* ---------- Bitcoin (Lightning) ---------- */
+var btcTimer=null,btcPid=null,btcInv='',qrLib=null;
+function carregarQr(){return new Promise(function(ok,no){
+  if(window.qrcode)return ok();
+  var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)})}
+function desenharQr(txt){
+  var q=window.qrcode(0,'L');q.addData(txt.toUpperCase());q.make();
+  var n=q.getModuleCount(),cv=$('#btcQr'),c=cv.getContext('2d'),m=Math.floor(240/(n+4));
+  var off=Math.floor((240-m*n)/2);c.fillStyle='#fff';c.fillRect(0,0,240,240);c.fillStyle='#000';
+  for(var r=0;r<n;r++)for(var k=0;k<n;k++)if(q.isDark(r,k))c.fillRect(off+k*m,off+r*m,m,m)}
+function btcParar(){if(btcTimer){clearInterval(btcTimer);btcTimer=null}}
+async function btcVerificar(){
+  if(!btcPid)return;
+  try{
+    var r=await http('/functions/v1/btc',{method:'POST',body:{pedido_id:btcPid,acao:'verificar'}});
+    if(r&&r.pago){btcParar();$('#btcStatus').textContent='Pagamento confirmado! Obrigado.';$('#btcStatus').style.color='var(--ok,#1B7F3B)';toast('Pagamento em Bitcoin confirmado');}
+  }catch(e){}
+}
+async function pagarBtc(id,btn,msgEl){
+  btn.disabled=true;if(msgEl)msgEl.textContent='';
+  try{
+    var r=await http('/functions/v1/btc',{method:'POST',body:{pedido_id:id}});
+    if(r&&r.pago){toast('Esse pedido já está pago.');return}
+    if(!r||!r.invoice)throw new Error('Não foi possível gerar a cobrança.');
+    var temQr=true;try{await carregarQr()}catch(x){temQr=false}
+    btcPid=id;btcInv=r.invoice;
+    $('#btcValor').textContent=R(r.brl)+' = '+Number(r.sats).toLocaleString('pt-BR')+' sats';
+    $('#btcQr').hidden=!temQr;if(temQr)desenharQr('lightning:'+r.invoice);
+    $('#btcAbrir').href='lightning:'+r.invoice;
+    $('#btcStatus').textContent=r.manual?'Depois de pagar, avise a gente no WhatsApp para confirmar.':'Aguardando pagamento...';$('#btcStatus').style.color='';
+    $('#btcErro').textContent='';
+    var dc=$('#dConta'),dk=$('#dOk');if(dk.open)dk.close();if(dc.open)dc.close();
+    $('#dBtc').showModal();
+    btcParar();if(!r.manual)btcTimer=setInterval(btcVerificar,3000);
+  }catch(e){if(msgEl)msgEl.textContent=textoErro(e);else toast(textoErro(e))}
+  finally{btn.disabled=false}
+}
+$('#dBtc').addEventListener('close',btcParar);
+$('#btcCopiar').addEventListener('click',function(){var b=this;(navigator.clipboard?navigator.clipboard.writeText(btcInv):Promise.reject()).then(function(){b.textContent='Copiado!';setTimeout(function(){b.textContent='Copiar código'},1800)}).catch(function(){toast('Não consegui copiar. Use o QR Code.')})});
+$('#okBtc').addEventListener('click',function(){if(pedidoPagarId)pagarBtc(pedidoPagarId,this,$('#erroPagar'))});
+$('#listaPedidos').addEventListener('click',function(e){var b=e.target.closest('[data-btc]');if(b)pagarBtc(b.getAttribute('data-btc'),b,b.parentNode.querySelector('.erroPed'))});
 var enviando=false;
 async function enviarPedido(){
   var erro=$('#erroPedido'); erro.textContent='';
@@ -701,7 +762,7 @@ async function enviarPedido(){
     carrinho=[]; salvarCarrinho(); $$('.item').forEach(function(el){acaoItem(el.getAttribute('data-id'))}); atualizarBarra();
     $('#obsGeral').value=''; $('#dCarrinho').close();
     $('#okTexto').textContent='Seu pedido '+p.numero+' já está com a gente.'+(p.frete!=null?' Total com frete: '+R(Number(p.total)+Number(p.frete))+'.':'')+' Você pode pagar agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'&&p.frete==null?'o frete e ':'')+'o pagamento.';
-    pedidoPagarId=p.id; $('#erroPagar').textContent=''; $('#okPagar').hidden=!PAGAMENTO_ONLINE;
+    pedidoPagarId=p.id; $('#erroPagar').textContent=''; $('#okPagar').hidden=!PAGAMENTO_ONLINE; $('#okBtc').hidden=!(BTC_ON&&PAGAMENTO_ONLINE);
     $('#okZap').href='https://wa.me/'+WHATS_LOJA+'?text='+encodeURIComponent(mensagemZap(p));
     abrir($('#dOk'));
   }catch(e){

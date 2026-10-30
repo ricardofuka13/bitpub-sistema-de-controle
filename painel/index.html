@@ -124,6 +124,9 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
           <div class="acoes" style="margin-top:8px"><button class="sec" type="button" id="btnCab">Trocar foto</button><button class="sec" type="button" id="btnCabTirar" hidden>Tirar foto</button></div>
           <input type="file" id="arqCab" accept="image/*" hidden>
           <p class="mini" style="margin:6px 0 0">Use uma foto de lanche ou combo que chame atenção. Ela aparece logo abaixo do logo no site.</p></div>
+        <h2 class="cat">Pagamento em Bitcoin</h2>
+        <label>Endereço Lightning (para receber)<input type="text" id="lLn" maxlength="120" placeholder="bitpub@coinos.io" autocapitalize="none" autocomplete="off" spellcheck="false"></label>
+        <p class="mini" style="margin:-4px 0 0">É público, parecido com um e-mail (não é senha). Deixe em branco para esconder o botão Bitcoin no site.</p>
         <h2 class="cat">Frete por distância</h2>
         <label style="flex-direction:row;align-items:center;gap:10px"><input type="checkbox" id="lFreteOn" style="width:22px;height:22px"> Calcular o frete pelo endereço do cliente</label>
         <label>Endereço de saída das entregas<input type="text" id="lLoja" maxlength="160" placeholder="Rua Baruel 859, Suzano, SP"></label>
@@ -390,7 +393,7 @@ async function carregarLoja(){
   try{
     var c=(await http('/rest/v1/site_config?id=eq.1&select=*'))[0]||{};
     $('#lEnd').value=c.endereco||'';$('#lHor').value=c.horario||'';$('#lInfo').value=c.info||'';cabUrl=c.cabecalho_foto||'';pintarCab();
-    $('#lFreteOn').checked=c.frete_ativo!==false;$('#lLoja').value=c.loja_endereco||'';lojaOrig=c.loja_endereco||'';$('#lMax').value=c.frete_max_km!=null?c.frete_max_km:8;
+    $('#lFreteOn').checked=c.frete_ativo!==false;$('#lLn').value=c.lightning_address||'';$('#lLoja').value=c.loja_endereco||'';lojaOrig=c.loja_endereco||'';$('#lMax').value=c.frete_max_km!=null?c.frete_max_km:8;
     $('#lFaixas').innerHTML=(c.frete_faixas||[]).map(function(f){return linhaFaixa(f.ate_km,f.valor)}).join('');
     $('#lErro').textContent='';
   }catch(e){$('#lErro').textContent=e.message}
@@ -413,7 +416,9 @@ $('#formLoja').addEventListener('submit',async function(e){
     if(!(max>0)){er.textContent='Informe a distância máxima de entrega.';return}
     if(!$('#lLoja').value.trim()){er.textContent='Informe o endereço de saída das entregas.';return}
   }
-  var body={endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
+  var ln=$('#lLn').value.trim().toLowerCase();
+  if(ln&&!/^[a-z0-9._+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(ln)){er.textContent='Endereço Lightning inválido. Deve ser parecido com nome@carteira.com';return}
+  var body={lightning_address:ln||null,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
     frete_ativo:on,frete_max_km:max>0?max:8,frete_faixas:faixas,loja_endereco:$('#lLoja').value.trim()||null,atualizado_em:new Date().toISOString()};
   if(body.loja_endereco!==lojaOrig){body.loja_lat=null;body.loja_lng=null}
   var btn=$('#formLoja button[type=submit]');btn.disabled=true;
