@@ -199,9 +199,24 @@ var ROT={novo:'Novo',aceito:'Aceito',pronto:'Pronto',entregue:'Entregue',cancela
 var PROX={novo:['aceito','Aceitar pedido'],aceito:['pronto','Marcar pronto'],pronto:['entregue','Marcar entregue']};
 var FILTROS=[['abertos','Em andamento'],['novo','Novos'],['aceito','Aceitos'],['pronto','Prontos'],['entregue','Entregues'],['cancelado','Cancelados'],['todos','Todos']];
 
-function beep(){
-  try{som=som||new (window.AudioContext||window.webkitAudioContext)();var o=som.createOscillator(),g=som.createGain();o.connect(g);g.connect(som.destination);o.frequency.value=880;g.gain.value=.15;o.start();o.stop(som.currentTime+.25)}catch(e){}
+function tocarSom(get){
+  try{
+    var c=get(); if(c.state==='suspended')c.resume();
+    var t0=c.currentTime+.02, m=c.createGain(); m.gain.value=.9; m.connect(c.destination);
+    var notas=[[880,0],[1175,.18],[1480,.36],[880,.9],[1175,1.08],[1480,1.26],[880,1.8],[1175,1.98],[1480,2.16],[1976,2.34]];
+    notas.forEach(function(n){
+      [['square',.22],['triangle',.35]].forEach(function(w){
+        var o=c.createOscillator(),g=c.createGain(); o.type=w[0]; o.frequency.value=n[0];
+        g.gain.setValueAtTime(0,t0+n[1]); g.gain.linearRampToValueAtTime(w[1],t0+n[1]+.02); g.gain.exponentialRampToValueAtTime(.001,t0+n[1]+.5);
+        o.connect(g); g.connect(m); o.start(t0+n[1]); o.stop(t0+n[1]+.55);
+      });
+    });
+    if(navigator.vibrate)navigator.vibrate([300,150,300,150,600]);
+  }catch(e){}
 }
+function ctxSom(){var C=window.AudioContext||window.webkitAudioContext;return som||(som=new C())}
+function beep(){tocarSom(ctxSom)}
+['pointerdown','keydown'].forEach(function(ev){document.addEventListener(ev,function(){try{var c=ctxSom();if(c.state==='suspended')c.resume()}catch(e){}},{passive:true})});
 async function carregarPedidos(){
   try{
     var ps=await http('/rest/v1/pedidos_online?select=*&order=criado_em.desc&limit=200');

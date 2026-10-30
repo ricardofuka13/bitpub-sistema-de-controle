@@ -2220,7 +2220,24 @@ function autoPrintOn(){try{return localStorage.getItem(AP_KEY)==='1'}catch(e){re
 function setAutoPrint(v){try{localStorage.setItem(AP_KEY,v?'1':'0')}catch(e){}}
 function btMode(){return (window.BTP&&window.BTP.mode)?window.BTP.mode():'direct'}
 function autoCan(){return !!(window.BTP&&window.BTP.supported&&btMode()!=='rawbt')}
-function beepOn(){try{var C=window.AudioContext||window.webkitAudioContext,c=ON.ac||(ON.ac=new C()),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.15;o.start();o.stop(c.currentTime+.3)}catch(e){}}
+function tocarSom(get){
+  try{
+    var c=get(); if(c.state==='suspended')c.resume();
+    var t0=c.currentTime+.02, m=c.createGain(); m.gain.value=.9; m.connect(c.destination);
+    var notas=[[880,0],[1175,.18],[1480,.36],[880,.9],[1175,1.08],[1480,1.26],[880,1.8],[1175,1.98],[1480,2.16],[1976,2.34]];
+    notas.forEach(function(n){
+      [['square',.22],['triangle',.35]].forEach(function(w){
+        var o=c.createOscillator(),g=c.createGain(); o.type=w[0]; o.frequency.value=n[0];
+        g.gain.setValueAtTime(0,t0+n[1]); g.gain.linearRampToValueAtTime(w[1],t0+n[1]+.02); g.gain.exponentialRampToValueAtTime(.001,t0+n[1]+.5);
+        o.connect(g); g.connect(m); o.start(t0+n[1]); o.stop(t0+n[1]+.55);
+      });
+    });
+    if(navigator.vibrate)navigator.vibrate([300,150,300,150,600]);
+  }catch(e){}
+}
+function ctxOn(){var C=window.AudioContext||window.webkitAudioContext;return ON.ac||(ON.ac=new C())}
+function beepOn(){tocarSom(ctxOn)}
+['pointerdown','keydown'].forEach(function(ev){document.addEventListener(ev,function(){try{var c=ctxOn();if(c.state==='suspended')c.resume()}catch(e){}},{passive:true})});
 function pendingPrint(){return Object.keys(S.open).filter(function(id){var o=S.open[id];return o.online&&!o.onlinePrinted})}
 function syncOnline(pid,status){
   var h=window.__bpHttp;if(!h||!pid)return;
