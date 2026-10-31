@@ -572,7 +572,49 @@ th{font:600 12px/1 var(--f-body);letter-spacing:0;text-transform:none;color:var(
       return new Uint8Array(head.concat(img, textBytes(text), [0x0A, 0x0A]));
     });
   }
+  /* ---------- USB (PC com Chrome/Chromium): envia os bytes ESC/POS direto pela porta USB ---------- */
+  var udev = null, uep = null, uif = null;
+  function usbOk() { return !!(navigator.usb && navigator.usb.requestDevice); }
+  function usbConnect() {
+    if (udev && udev.opened && uep != null) return Promise.resolve();
+    var pick = udev ? Promise.resolve(udev) : navigator.usb.getDevices().then(function (l) {
+      return l.length ? l[0] : navigator.usb.requestDevice({ filters: [] });
+    });
+    return pick.then(function (d) {
+      udev = d;
+      return d.opened ? null : d.open();
+    }).then(function () {
+      return udev.configuration ? null : udev.selectConfiguration(1);
+    }).then(function () {
+      var cfg = udev.configuration, found = null;
+      (cfg ? cfg.interfaces : []).forEach(function (itf) {
+        itf.alternates.forEach(function (alt) {
+          alt.endpoints.forEach(function (e) {
+            if (!found && e.direction === 'out' && e.type === 'bulk') found = { itf: itf.interfaceNumber, ep: e.endpointNumber };
+          });
+        });
+      });
+      if (!found) { var er = new Error('no_endpoint'); er.name = 'NotFoundError'; throw er; }
+      uif = found.itf; uep = found.ep;
+      return udev.claimInterface(uif);
+    }).catch(function (e) {
+      uep = null;
+      try { if (udev && udev.opened) udev.close(); } catch (x) {}
+      if (e && e.name !== 'NotFoundError') udev = null;
+      throw e;
+    });
+  }
+  function usbWrite(bytes) {
+    var pos = 0, size = 8192;
+    function step() {
+      if (pos >= bytes.length) return Promise.resolve();
+      var part = bytes.slice(pos, pos + size);
+      return udev.transferOut(uep, part).then(function () { pos += part.length; return step(); });
+    }
+    return step();
+  }
   window.BTP = {
+    usbSupported: usbOk(),
     supported: !!(navigator.bluetooth && navigator.bluetooth.requestDevice),
     _build: build,
     mode: function () { try { return localStorage.getItem('bitpub.pmode') || 'rawbt'; } catch (e) { return 'rawbt'; } },
@@ -585,10 +627,21 @@ th{font:600 12px/1 var(--f-body);letter-spacing:0;text-transform:none;color:var(
       });
     },
     print: function (text, opt) {
+      if (window.BTP.mode() === 'usb') {
+        if (!usbOk()) return Promise.reject(new Error('unsupported'));
+        return Promise.all([usbConnect(), build(text, opt)]).then(function (r) { return usbWrite(r[1]); }).catch(function (e) {
+          if (e && e.name === 'NetworkError') { udev = null; uep = null; }
+          throw e;
+        });
+      }
       if (!window.BTP.supported) return Promise.reject(new Error('unsupported'));
       return Promise.all([connect(), build(text, opt)]).then(function (r) { return writeAll(r[0], r[1]); });
     }
   };
+  (function () {
+    var btOk = !!(navigator.bluetooth && navigator.bluetooth.requestDevice);
+    Object.defineProperty(window.BTP, 'supported', { get: function () { return window.BTP.mode() === 'usb' ? usbOk() : btOk; } });
+  })();
 
   
 })();
@@ -1451,7 +1504,8 @@ function btPrint(id,test){
   toast('Conectando à impressora...');
   window.BTP.print(text,opt).then(function(){toast('Enviado para a impressora')},function(e){
     var m=(e&&e.message)||'';
-    if(e&&e.name==='NotFoundError'&&/cancel/i.test(m)){$('#toast').hidden=true;return}
+    if(e&&e.name==='NotFoundError'&&/cancel|no device selected/i.test(m)){$('#toast').hidden=true;return}
+    if(window.BTP.mode&&window.BTP.mode()==='usb'&&e&&(e.name==='SecurityError'||e.name==='NetworkError'||/claim|access denied/i.test(m))){toast('O Linux não deixou o navegador usar a impressora USB. Rode o arquivo de configuração da impressora e reconecte o cabo.','err');return}
     if(m==='no_char'||(e&&e.name==='NotFoundError')){toast('Esta impressora não aceita impressão direta pelo navegador. Use Copiar p/ impressora.','err');return}
     toast('Não foi possível imprimir. Confira se a impressora está ligada e tente de novo.','err');
   });
@@ -1471,7 +1525,7 @@ function processLogo(file){
 function vAjExtra(){
   if(!window.BTP)return '';
   var sup=window.BTP.supported,pm=window.BTP.mode?window.BTP.mode():'direct';
-  return '<div class="two" style="margin-top:16px"><div class="card"><h3>Impressora Bluetooth</h3><p class="muted" style="margin-bottom:12px">Como imprimir neste celular:</p><div class="acts" style="margin-bottom:12px"><button type="button" class="btn'+(pm==='rawbt'?' primary':'')+'" data-act="pmraw">Pelo app RawBT</button><button type="button" class="btn'+(pm==='direct'?' primary':'')+'" data-act="pmdir">Direto (Chrome)</button></div><p class="muted" style="margin-bottom:12px">'+(pm==='rawbt'?'O RawBT recebe a comanda e imprime. Instale o app RawBT na Play Store e conecte a impressora lá uma vez.':'')+(sup?' Modo direto: toque em Imprimir numa comanda para enviar direto à impressora. Na primeira vez você escolhe a impressora na lista. Se ela não aparecer ou o teste falhar, use Copiar p/ impressora.':'Este navegador não permite imprimir por Bluetooth. Abra no Chrome do Android ou use Copiar p/ impressora.')+'</p>'+((sup||pm==='rawbt')?'<button type="button" class="btn" data-act="bttest">Testar impressão</button>':'')+
+  return '<div class="two" style="margin-top:16px"><div class="card"><h3>Impressora Bluetooth</h3><p class="muted" style="margin-bottom:12px">Como imprimir neste celular:</p><div class="acts" style="margin-bottom:12px"><button type="button" class="btn'+(pm==='rawbt'?' primary':'')+'" data-act="pmraw">Pelo app RawBT</button><button type="button" class="btn'+(pm==='direct'?' primary':'')+'" data-act="pmdir">Direto (Chrome)</button>'+(window.BTP.usbSupported?'<button type="button" class="btn'+(pm==='usb'?' primary':'')+'" data-act="pmusb">USB (computador)</button>':'')+'</div><p class="muted" style="margin-bottom:12px">'+(pm==='rawbt'?'O RawBT recebe a comanda e imprime. Instale o app RawBT na Play Store e conecte a impressora lá uma vez.':'')+(pm==='usb'?'Modo USB: a impressora fica ligada por cabo no computador (Chrome ou Chromium). Na primeira vez, toque em Testar impressão e escolha a impressora na lista. Se der erro de permissão no Linux, rode o arquivo de configuração que a Claude enviou.':'')+(sup?' Modo direto: toque em Imprimir numa comanda para enviar direto à impressora. Na primeira vez você escolhe a impressora na lista. Se ela não aparecer ou o teste falhar, use Copiar p/ impressora.':'Este navegador não permite imprimir por Bluetooth. Abra no Chrome do Android ou use Copiar p/ impressora.')+'</p>'+((sup||pm==='rawbt')?'<button type="button" class="btn" data-act="bttest">Testar impressão</button>':'')+
   '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line,rgba(128,128,128,.3))"><h3 style="margin-bottom:6px">Pedidos do site</h3><button type="button" class="btn'+(autoPrintOn()?' primary':'')+'" data-act="autop">'+(autoPrintOn()?'Imprimir sozinho neste aparelho: ligado':'Imprimir sozinho neste aparelho: desligado')+'</button><p class="muted" style="margin-top:10px">Ligue só no aparelho que fica perto da impressora. Ele precisa ficar com o sistema aberto e a tela ligada. '+(pm==='rawbt'?'No modo RawBT o Android pede um toque para cada impressão, então aqui o pedido chega e aparece o botão Imprimir. Para imprimir sozinho, use o modo Direto (Chrome).':'No modo Direto, depois que a impressora for conectada uma vez (toque em Testar impressão), os pedidos novos saem sozinhos.')+'</p></div></div>'+
   (window.__DB?'<div class="card"><h3>Backup dos dados</h3><p class="muted" style="margin-bottom:12px">'+(window.__logout?'Os dados ficam na nuvem. Baixe uma cópia de vez em quando e guarde no Drive ou no WhatsApp, por segurança.':'Os dados ficam só neste aparelho. Baixe uma cópia de vez em quando e guarde no Drive ou no WhatsApp.')+'</p><div class="acts"><button type="button" class="btn" data-act="bkexp">Baixar backup</button><button type="button" class="btn" data-act="bkimp">Restaurar backup</button></div><input type="file" id="bk-file" accept="application/json,.json" hidden></div>':'')+(window.__logout?'<div class="card"><h3>Conta</h3><p class="muted" style="margin-bottom:12px">Conectado como <b style="color:var(--ink)">'+esc(window.__userEmail||'')+'</b>. As comandas e o estoque aparecem em todos os celulares da equipe.</p><button type="button" class="btn" data-act="logout">Sair</button></div>':'')+'</div>';
 }
@@ -2151,6 +2205,7 @@ document.addEventListener('click',function(e){
     case 'autop':setAutoPrint(!autoPrintOn());draw();break;
     case 'pmraw':window.BTP.setMode('rawbt');draw();break;
     case 'pmdir':window.BTP.setMode('direct');draw();break;
+    case 'pmusb':window.BTP.setMode('usb');draw();break;
     case 'goal':openGoal();break;
     case 'staffadd':{var em=($('#staff-email')||{}).value||'';em=em.trim().toLowerCase();var se=$('#staff-e'),sl=(S.cfg&&S.cfg.staff||[]).slice();
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){se.textContent='Digite um e-mail válido.';break}
