@@ -4,7 +4,7 @@
 #   bash configurar-impressora-usb.sh
 set -u
 
-URL="https://bitpup.app.br/sistema/"
+URL="https://bitpub.app.br/sistema/"
 
 if [ "$(id -u)" -eq 0 ]; then
   echo "Rode como usuário normal (sem sudo). O script pede a senha quando precisar."
