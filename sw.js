@@ -1,24 +1,3 @@
-/* BitPub: guarda o programa para abrir rápido e atualiza em segundo plano.
-   Os dados (comandas, estoque) nunca passam por aqui: vão direto ao banco. */
-var CACHE='bitpub-v14';
-var FILES=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png'];
-self.addEventListener('install',function(e){e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(FILES)}).then(function(){return self.skipWaiting()}))});
-self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k!==CACHE}).map(function(k){return caches.delete(k)}))}).then(function(){return self.clients.claim()}))});
-self.addEventListener('fetch',function(e){
-  var r=e.request;if(r.method!=='GET')return;
-  var u=new URL(r.url);
-  // Domínio do site de pedidos: a página inicial vai direto ao cardápio (o sistema de comandas fica em /index.html)
-  if(r.mode==='navigate'&&/(^|\.)bitpup\.app\.br$/.test(u.hostname)&&u.pathname==='/'&&!/[?&]sistema/.test(u.search)){e.respondWith(Response.redirect('/pedido/',302));return}
-  var fonts=/(^|\.)fonts\.(googleapis|gstatic)\.com$/.test(u.hostname);
-  if(/\/(rest|auth)\/v1\//.test(u.pathname))return;               // dados do banco: nunca
-  if(u.origin!==self.location.origin&&!fonts)return;           // nada de dados do banco no cache
-  if(u.origin===self.location.origin&&/config\.js$/.test(u.pathname)){ // config: sempre a mais nova
-    e.respondWith(fetch(r).catch(function(){return caches.match(r)}));return;
-  }
-  e.respondWith(caches.open(CACHE).then(function(c){
-    return c.match(r,{ignoreSearch:true}).then(function(hit){
-      var net=fetch(r).then(function(res){if(res&&(res.ok||res.type==='opaque'))c.put(r,res.clone());return res}).catch(function(){return hit});
-      return hit||net;
-    });
-  }));
-});
+/* Antigo service worker da raiz: remove a si mesmo e limpa o cache. O sistema de comandas agora fica em /sistema/. */
+self.addEventListener('install',function(){self.skipWaiting()});
+self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}).then(function(){return self.registration.unregister()}).then(function(){return self.clients.matchAll({type:'window'})}).then(function(cs){cs.forEach(function(c){try{c.navigate(c.url)}catch(x){}})}))});
