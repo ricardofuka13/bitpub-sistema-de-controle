@@ -2,7 +2,7 @@
   "name": "BitPub Comandas",
   "short_name": "BitPub Comandas",
   "description": "Comandas, cardápio e estoque da hamburgueria",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
