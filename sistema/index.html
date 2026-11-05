@@ -1272,7 +1272,7 @@ function vComandas(){
     return '<button type="button" class="tk'+(id===sel?' on':'')+'" data-t="'+esc(o.type||'mesa')+'" data-act="sel" data-id="'+id+'"><span class="tk-num">'+pad(o.num)+'<i>'+(o.online?'online':(o.type==='delivery'?'delivery':(o.type==='viagem'?'viagem':'mesa')))+'</i></span><span class="tk-main"><b>'+esc(o.label)+'</b><small'+(Date.now()-o.openedAt>20*60000?' class="late"':'')+'>'+countOf(o)+(countOf(o)===1?' item':' itens')+' · há '+ago(o.openedAt)+'</small></span><span class="tk-tot">'+brl(subOf(o))+'</span></button>'}).join('')
     :'<div class="empty"><b>Nenhuma comanda aberta</b>Toque em Nova comanda para começar o atendimento.</div>';
   var tot=ids.reduce(function(t,id){return t+subOf(S.open[id])},0);
-  return onlineBanner()+exBanner()+
+  return bdayBanner()+onlineBanner()+exBanner()+
   '<div class="split'+(sel?' has-sel':'')+'"><section class="rail" aria-label="Comandas abertas"><div class="sec-h"><div><h2>Em aberto</h2><p class="sub">'+ids.length+' comandas · '+brl(tot)+'</p></div><button type="button" class="btn primary" data-act="newo">Nova comanda</button></div><div class="rail-list">'+list+'</div></section>'+
   '<section class="ticket" aria-label="Comanda selecionada">'+(sel?vTicket(sel):'<div class="ph"><b>Nenhuma comanda selecionada</b>Escolha uma comanda da lista ou abra uma nova.</div>')+'</section></div>';
 }
@@ -1483,6 +1483,7 @@ function vAjustes0(){
   '<div class="row2">'+f('st-phone','Telefone / WhatsApp',c.phone,'(11) 99999-9999',20)+f('st-cnpj','CNPJ (opcional)',c.cnpj,'00.000.000/0000-00',20)+'</div>'+
   f('st-pix','Chave Pix (opcional)',c.pix,'Aparece no rodapé da comanda',60)+
   f('st-msg','Mensagem final',c.msg,'Ex.: Obrigado pela preferência!',60)+
+  '<label>Mensagem de aniversário (WhatsApp)<textarea id="st-bm" rows="3" maxlength="300" autocomplete="off" placeholder="Use {nome} para o primeiro nome do cliente">'+esc(c.bdayMsg||'')+'</textarea><small class="muted">Se ficar em branco, usa uma mensagem padrão. {nome} vira o primeiro nome do cliente.</small></label>'+
   (window.BTP?'<div><div class="muted" style="font-size:13px;font-weight:500;margin-bottom:8px">Logo no topo da impressão</div><div class="logo-row"><img id="st-logo-img" alt="Logo"'+(c.logo?' src="'+c.logo+'"':' hidden')+'><div class="acts"><button type="button" class="btn sm" id="st-logo-pick">Escolher imagem</button><button type="button" class="btn sm ghost" id="st-logo-del"'+(c.logo?'':' hidden')+'>Remover</button></div></div><input type="file" id="st-logo-file" accept="image/*" hidden></div><label>Tamanho do logo<select id="st-logo-size">'+opt('40','Pequeno',Number(c.logoSize)===40)+opt('60','Médio',!c.logoSize||Number(c.logoSize)===60)+opt('90','Grande',Number(c.logoSize)===90)+'</select></label>':'')+
   '<div class="row2"><label>Largura do papel<select id="st-paper">'+opt('58','58 mm (32 colunas)',Number(c.paper)!==80)+opt('80','80 mm (48 colunas)',Number(c.paper)===80)+'</select></label>'+
   '<label>Taxa de serviço (%)<input id="st-svc" inputmode="decimal" value="'+inpN(svcPct())+'"></label></div>'+
@@ -1494,7 +1495,7 @@ function vAjustes0(){
 function readSet(){
   var v=function(id){return ($('#'+id)||{}).value||''};
   var svc=parseN(v('st-svc'));
-  return {name:v('st-name').trim(),tagline:v('st-tag').trim(),address:v('st-addr').trim(),phone:v('st-phone').trim(),cnpj:v('st-cnpj').trim(),pix:v('st-pix').trim(),msg:v('st-msg').trim(),paper:Number(v('st-paper'))||58,fs:v('st-fs')||'g',svcPct:Math.min(Math.max(svc,0),30),fiscal:!!($('#st-fisc')||{}).checked,hTitle:v('st-ht').trim(),hDesc:v('st-hd').trim(),hLogo:curHLogo(),logo:curLogo(),logoSize:Number(v('st-logo-size'))||(S.cfg&&S.cfg.logoSize)||60,cats:(S.cfg&&S.cfg.cats)||undefined};
+  return {name:v('st-name').trim(),tagline:v('st-tag').trim(),address:v('st-addr').trim(),phone:v('st-phone').trim(),cnpj:v('st-cnpj').trim(),pix:v('st-pix').trim(),msg:v('st-msg').trim(),bdayMsg:v('st-bm').trim(),paper:Number(v('st-paper'))||58,fs:v('st-fs')||'g',svcPct:Math.min(Math.max(svc,0),30),fiscal:!!($('#st-fisc')||{}).checked,hTitle:v('st-ht').trim(),hDesc:v('st-hd').trim(),hLogo:curHLogo(),logo:curLogo(),logoSize:Number(v('st-logo-size'))||(S.cfg&&S.cfg.logoSize)||60,cats:(S.cfg&&S.cfg.cats)||undefined};
 }
 function btPrint(id,test){
   var o=test?SAMPLE:S.open[id];if(!o||!window.BTP)return;
@@ -2203,6 +2204,8 @@ document.addEventListener('click',function(e){
     case 'btprint':btPrint(S.sel,false);break;
     case 'bttest':btPrint(null,true);break;
     case 'onprint':printPendingOnline(true);break;
+    case 'bdsend':bdaySend(d.id,true);break;
+    case 'bdskip':bdaySend(d.id,false);break;
     case 'autop':setAutoPrint(!autoPrintOn());draw();break;
     case 'pmraw':window.BTP.setMode('rawbt');draw();break;
     case 'pmdir':window.BTP.setMode('direct');draw();break;
@@ -2415,6 +2418,25 @@ async function onlineTick(){
   finally{ON.busy=false}
 }
 function startOnline(){setTimeout(onlineTick,1500);setInterval(onlineTick,4000)}
+var BDAY_DEF='Parabéns, {nome}! 🎂 A equipe do BitPub deseja um dia incrível. Passe aqui hoje e ganhe uma surpresa! 🍔';
+function bdayList(){
+  var k=bdayKey(),y=new Date().getFullYear();
+  return Object.keys(S.cust||{}).map(function(id){return [id,S.cust[id]]}).filter(function(x){var c=x[1];return c&&c.bday===k&&c.bdaySent!==y&&digits(c.phone).length>=10});
+}
+function bdayMsg(c){
+  var t=(S.cfg&&S.cfg.bdayMsg)||BDAY_DEF,first=String(c.name||'').trim().split(/\s+/)[0]||'';
+  return t.replace(/\{nome\}/gi,first);
+}
+function bdayBanner(){
+  var l=bdayList();if(!l.length)return '';
+  return '<div class="strip info" style="flex-direction:column;align-items:stretch"><div><b>&#127874; '+(l.length===1?'1 aniversariante hoje':l.length+' aniversariantes hoje')+'.</b> Toque para mandar o parabéns no WhatsApp.</div>'+
+    l.map(function(x){return '<div style="display:flex;gap:8px;align-items:center;justify-content:space-between"><span>'+esc(x[1].name)+' <small class="muted">'+esc(fmtPhone(x[1].phone))+'</small></span><span style="display:flex;gap:6px"><button class="btn sm primary" type="button" data-act="bdsend" data-id="'+x[0]+'">Enviar parabéns</button><button class="btn sm ghost" type="button" data-act="bdskip" data-id="'+x[0]+'">Já enviei</button></span></div>'}).join('')+'</div>';
+}
+function bdaySend(id,send){
+  var c=S.cust[id];if(!c)return;
+  if(send){var d=digits(c.phone);if(d.length<=11)d='55'+d;window.open('https://wa.me/'+d+'?text='+encodeURIComponent(bdayMsg(c)),'_blank','noopener')}
+  saveCustomer(id,{bdaySent:new Date().getFullYear()}).then(function(){render()});
+}
 function onlineBanner(){
   var ids=pendingPrint();if(!ids.length)return '';
   var auto=autoPrintOn()&&autoCan();
