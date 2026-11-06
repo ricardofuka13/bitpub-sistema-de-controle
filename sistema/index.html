@@ -2109,7 +2109,8 @@ function vClientes(){
 }
 
 /* ---------- fiado ---------- */
-function fiadoTotal(o){return r2(o.total!=null?o.total:subOf(o))}
+function fiadoBase(o){return r2(o.total!=null?o.total:subOf(o))}
+function fiadoTotal(o){return Math.max(0,r2(fiadoBase(o)-(o.fiadoPaid||0)))} /* o que ainda falta pagar */
 function fiadoGroups(){
   var g={};
   Object.keys(S.fiado||{}).forEach(function(id){var o=S.fiado[id];if(o.status!=='fiado')return;var k=o.cid||('sem:'+(o.cname||o.label||id));
@@ -2129,6 +2130,7 @@ function sendFiado(id,t){
 }
 function reopenFiado(id){
   var o=S.fiado[id];if(!o)return;
+  if(o.fiadoPaid>0){toast('Essa comanda já tem pagamento parcial. Receba o restante em vez de reabrir.','err');return}
   enqueue(function(){return db.doc('orders/'+id).update({status:'open',fiadoAt:null,fiadoDay:null})}).then(function(){delete S.fiado[id];S.open[id]=Object.assign({},o,{status:'open'});S.tab='comandas';S.sel=id;toast('Comanda reaberta');draw()});
 }
 function openFiadoPay(ids){
@@ -2136,15 +2138,33 @@ function openFiadoPay(ids){
   var tot=r2(list.reduce(function(t,x){return t+fiadoTotal(x[1])},0)),name=list[0][1].cname||'cliente',pay='pix';
   var body='<form id="fpf"><div class="paybox"><div class="big"><span>'+(list.length===1?esc(list[0][1].label):list.length+' comandas')+' · '+esc(name)+'</span><span>'+brl(tot)+'</span></div></div>'+
     '<div><div class="muted" style="font-size:13px;font-weight:500;margin:10px 0 6px">Forma de pagamento</div><div class="seg" id="fpf-pay" role="group" aria-label="Forma de pagamento">'+PAY.map(function(p){return '<button type="button" data-p="'+p[0]+'" aria-pressed="'+(p[0]==='pix')+'">'+p[1]+'</button>'}).join('')+'</div></div>'+
-    '<p class="err" id="fpf-e"></p><div class="actions"><button class="btn primary" type="submit">Confirmar recebimento</button></div></form>';
+    '<label style="margin-top:10px">Valor recebido agora (R$)<input id="fpf-v" inputmode="decimal" autocomplete="off" value="'+inpN(tot)+'"></label><p class="muted" id="fpf-r" style="margin:4px 0 0;font-size:14px"></p>'+
+    '<p class="err" id="fpf-e"></p><div class="actions"><button class="btn primary" type="submit" id="fpf-b">Confirmar recebimento</button></div></form>';
   openModal('Receber fiado',body,function(sh){
+    function fpv(){var v=parseN($('#fpf-v',sh).value);return isFinite(v)?r2(v):0}
+    function fpUp(){var v=fpv(),r=r2(tot-v),b=$('#fpf-b',sh),rr=$('#fpf-r',sh);
+      if(v>0&&v<tot){rr.textContent='Pagamento parcial. Vai continuar devendo '+brl(r)+'.';b.textContent='Receber '+brl(v)+' (restam '+brl(r)+')'}
+      else{rr.textContent=v>tot?'O valor é maior que a dívida ('+brl(tot)+').':'Quita tudo.';b.textContent='Confirmar recebimento'}}
+    $('#fpf-v',sh).addEventListener('input',fpUp);fpUp();
     $('#fpf-pay',sh).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;pay=b.dataset.p;this.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b)})});
     $('#fpf',sh).addEventListener('submit',function(e){e.preventDefault();
       if(!canWrite){toast('Você está no modo leitura.','err');return}
+      var v=fpv();
+      if(!(v>0)){$('#fpf-e',sh).textContent='Digite o valor recebido.';return}
+      if(v>tot+0.004){$('#fpf-e',sh).textContent='O valor é maior que a dívida ('+brl(tot)+').';return}
       var now=Date.now(),card=pay==='debito'||pay==='credito',m=card?machById(null):null,pct=feePctOf(m,pay),btn=$('button[type=submit]',sh);btn.disabled=true;
-      list.reduce(function(p,x){return p.then(function(){var o=x[1],t=fiadoTotal(o),fee=pct>0?r2(t*pct/100):0;
-        return enqueue(function(){return db.doc('orders/'+x[0]).update({status:'paid',pay:pay,service:0,discount:0,total:t,fee:fee,feePct:pct,machine:m?m.name:'',net:r2(t-fee),feePass:0,closedAt:now,payDay:dayKey(new Date(now)),fiadoPaidAt:now})}).then(function(){delete S.fiado[x[0]];return bumpCustomer(o,t,now)})})},Promise.resolve())
-      .then(function(){closeModal();toast('Fiado recebido: '+brl(tot)+' de '+name.split(' ')[0]);draw()},function(er){btn.disabled=false;$('#fpf-e',sh).textContent=errMsg(er)});
+      var left=Math.min(v,tot);
+      list.reduce(function(p,x){return p.then(function(){
+        if(left<=0.004)return;
+        var o=x[1],rem=fiadoTotal(o),take=Math.min(rem,left),fee=pct>0?r2(take*pct/100):0;left=r2(left-take);
+        var parts=(o.fiadoParts||[]).concat([{at:now,amount:take,pay:pay,fee:fee}]);
+        if(take<rem-0.004){
+          var upd={fiadoPaid:r2((o.fiadoPaid||0)+take),fiadoParts:parts};
+          return enqueue(function(){return db.doc('orders/'+x[0]).update(upd)}).then(function(){S.fiado[x[0]]=Object.assign({},o,upd)});
+        }
+        var base=fiadoBase(o),feeAll=r2(parts.reduce(function(t,q){return t+(q.fee||0)},0));
+        return enqueue(function(){return db.doc('orders/'+x[0]).update({status:'paid',pay:pay,service:0,discount:0,total:base,fee:feeAll,feePct:pct,machine:m?m.name:'',net:r2(base-feeAll),feePass:0,closedAt:now,payDay:dayKey(new Date(now)),fiadoPaidAt:now,fiadoPaid:base,fiadoParts:parts})}).then(function(){delete S.fiado[x[0]];return bumpCustomer(o,base,now)})})},Promise.resolve())
+      .then(function(){closeModal();toast((v<tot?'Recebido '+brl(v)+' de '+name.split(' ')[0]+'. Ainda deve '+brl(r2(tot-v)):'Fiado recebido: '+brl(tot)+' de '+name.split(' ')[0]));draw()},function(er){btn.disabled=false;$('#fpf-e',sh).textContent=errMsg(er)});
     });
   });
 }
@@ -2160,7 +2180,7 @@ function vFiado(){
   return head+gs.map(function(g){
     var open=!!S.fopen[g.key],wa=fiadoWa(g),idl=g.orders.map(function(x){return x[0]}).join(',');
     var rows=open?'<div style="margin-top:10px;border-top:1px solid var(--line)">'+g.orders.map(function(x){var o=x[1],d=new Date(o.fiadoAt||o.openedAt||0).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-      return '<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)"><div style="min-width:0"><b>#'+pad(o.num)+' · '+d+'</b> <span class="muted">'+brl(fiadoTotal(o))+'</span><br><small class="muted">'+esc((o.items||[]).map(function(it){return it.qty+'x '+it.name}).join(', '))+'</small></div><div style="display:flex;gap:6px"><button type="button" class="btn sm" data-act="fiadoreopen" data-id="'+x[0]+'">Reabrir</button><button type="button" class="btn sm primary" data-act="fiadopay" data-id="'+x[0]+'">Receber</button></div></div>'}).join('')+'</div>':'';
+      return '<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)"><div style="min-width:0"><b>#'+pad(o.num)+' · '+d+'</b> <span class="muted">'+brl(fiadoTotal(o))+(o.fiadoPaid>0?' · já pagou '+brl(o.fiadoPaid)+' de '+brl(fiadoBase(o)):'')+'</span><br><small class="muted">'+esc((o.items||[]).map(function(it){return it.qty+'x '+it.name}).join(', '))+'</small></div><div style="display:flex;gap:6px"><button type="button" class="btn sm" data-act="fiadoreopen" data-id="'+x[0]+'">Reabrir</button><button type="button" class="btn sm primary" data-act="fiadopay" data-id="'+x[0]+'">Receber</button></div></div>'}).join('')+'</div>':'';
     return '<div class="fcard" style="background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px"><div style="display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap"><div><b style="font-size:16px">'+esc(g.name)+'</b><br><small class="muted">'+g.orders.length+(g.orders.length===1?' comanda':' comandas')+(g.phone?' · '+esc(fmtPhone(g.phone)):'')+'</small></div><div style="text-align:right"><b style="font-size:20px">'+brl(g.total)+'</b></div></div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn sm" data-act="fiadoopen" data-id="'+esc(g.key)+'">'+(open?'Esconder comandas':'Ver comandas')+'</button>'+(wa?'<a class="btn sm" href="'+wa+'" target="_blank" rel="noopener">Cobrar no WhatsApp</a>':'')+'<button type="button" class="btn sm primary" data-act="fiadopay" data-id="'+idl+'">Receber tudo</button></div>'+rows+'</div>';
   }).join('');
