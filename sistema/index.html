@@ -1147,7 +1147,17 @@ function recOk(rec){return (rec||[]).every(function(r){var s=S.stock[r[0]];retur
 var subOf=function(o){return r2((o.items||[]).reduce(function(t,x){return t+x.price*x.qty},0))};
 var countOf=function(o){return (o.items||[]).reduce(function(t,x){return t+x.qty},0)};
 function getCats(){var base=(S.cfg&&Array.isArray(S.cfg.cats)&&S.cfg.cats.length)?S.cfg.cats.slice():CATS_DEF.slice();Object.keys(S.menu).forEach(function(k){var c=S.menu[k].cat;if(c&&base.indexOf(c)<0)base.push(c)});return base}
-function menuSorted(){var cs=getCats();return Object.keys(S.menu).map(function(k){return [k,S.menu[k]]}).sort(function(a,b){var ca=cs.indexOf(a[1].cat),cb=cs.indexOf(b[1].cat);return (ca-cb)||a[1].name.localeCompare(b[1].name,'pt-BR')})}
+function menuSorted(){var cs=getCats();return Object.keys(S.menu).map(function(k){return [k,S.menu[k]]}).sort(function(a,b){var ca=cs.indexOf(a[1].cat),cb=cs.indexOf(b[1].cat);var oa=a[1].ord!=null?+a[1].ord:1e9,ob=b[1].ord!=null?+b[1].ord:1e9;return (ca-cb)||(oa-ob)||a[1].name.localeCompare(b[1].name,'pt-BR')})}
+function moveItem(id,dir){
+  var m=S.menu[id];if(!m)return;
+  var arr=menuSorted().filter(function(x){return x[1].cat===m.cat}),i=arr.findIndex(function(x){return x[0]===id}),j=i+dir;
+  if(i<0||j<0||j>=arr.length)return;
+  var t=arr[i];arr[i]=arr[j];arr[j]=t;
+  var ups=[];arr.forEach(function(x,n){if(x[1].ord!==n+1){ups.push([x[0],n+1])}});
+  ups.forEach(function(u){S.menu[u[0]]=Object.assign({},S.menu[u[0]],{ord:u[1]})});
+  draw();
+  ups.reduce(function(p,u){return p.then(function(){return enqueue(function(){return db.doc('menu/'+u[0]).update({ord:u[1]})})})},Promise.resolve()).catch(function(er){toast(errMsg(er),'err')});
+}
 function recipeText(m){return (m.recipe||[]).map(function(r){var s=S.stock[r.ing];if(!s)return '';return (s.unit==='un'||s.unit==='fatia'?fmt(r.qty)+'× ':fmt(r.qty)+' '+s.unit+' ')+s.name}).filter(Boolean).join(' · ')||'Sem receita (não baixa estoque)'}
 
 /* ---------- stock + orders writes ---------- */
@@ -1328,11 +1338,12 @@ function vCardapio(){
     var its=menuSorted().filter(function(x){return x[1].cat===c});if(!its.length)return '';
     return '<div class="group"><h3>'+esc(c)+'</h3><div class="rows'+(getView()==='grade'?' tiles':'')+'">'+its.map(function(x){
       var m=x[1],cost=costOf(m),mg=m.price>0?Math.round((m.price-cost)/m.price*100):0,a=avail(m);
-      return '<div class="row'+(m.active===false?' paused':'')+'">'+(m.photo?'<img class="mth" alt="Foto de '+esc(m.name)+'" loading="lazy" src="'+esc(m.photo)+'">':'')+'<div class="grow"><b>'+esc(m.name)+'</b>'+(m.onlineOff?' <small class="mi-c" style="display:inline">· só na loja</small>':'')+'<small>'+esc(recipeText(m))+'</small>'+((m.choices||[]).length?'<small class="mi-c">Escolha: '+esc(m.choices.map(function(g){return g.label+' ('+g.opts.length+')'}).join(', '))+'</small>':(/combo/i.test(m.name+' '+(m.cat||''))?'<small class="mi-c">Combo sem escolha de bebida. Toque em "Escolhas" para configurar.</small>':''))+'</div>'+
+      var ordBtns=S.mord?'<div class="acts" style="flex-direction:column;gap:4px"><button type="button" class="btn sm" data-act="mup" data-id="'+x[0]+'" aria-label="Subir '+esc(m.name)+'"'+(its[0][0]===x[0]?' disabled':'')+'>&#9650;</button><button type="button" class="btn sm" data-act="mdn" data-id="'+x[0]+'" aria-label="Descer '+esc(m.name)+'"'+(its[its.length-1][0]===x[0]?' disabled':'')+'>&#9660;</button></div>':'';
+      return '<div class="row'+(m.active===false?' paused':'')+'">'+ordBtns+(m.photo?'<img class="mth" alt="Foto de '+esc(m.name)+'" loading="lazy" src="'+esc(m.photo)+'">':'')+'<div class="grow"><b>'+esc(m.name)+'</b>'+(m.onlineOff?' <small class="mi-c" style="display:inline">· só na loja</small>':'')+'<small>'+esc(recipeText(m))+'</small>'+((m.choices||[]).length?'<small class="mi-c">Escolha: '+esc(m.choices.map(function(g){return g.label+' ('+g.opts.length+')'}).join(', '))+'</small>':(/combo/i.test(m.name+' '+(m.cat||''))?'<small class="mi-c">Combo sem escolha de bebida. Toque em "Escolhas" para configurar.</small>':''))+'</div>'+
       '<div class="num">'+brl(m.price)+'<small class="muted" style="display:block;font-size:12px">custo '+brl(cost)+' · margem '+mg+'%</small></div>'+
       '<span class="pill '+(a<1?'zero':'ok')+'">'+(a===Infinity?'Sem receita':(a<1?'Sem estoque':'Dá para '+a))+'</span>'+
       '<div class="acts"><button type="button" class="btn sm" data-act="mactive" data-id="'+x[0]+'" aria-pressed="'+(m.active!==false)+'">'+(m.active===false?'Pausado':'No cardápio')+'</button><button type="button" class="btn sm" data-act="mkit" data-id="'+x[0]+'" aria-pressed="'+(!!m.kitchen)+'">'+(m.kitchen?'Cozinha: sim':'Cozinha: não')+'</button><button type="button" class="btn sm'+((m.choices||[]).length?'':(/combo/i.test(m.name+' '+(m.cat||''))?' primary':''))+'" data-act="mchoice" data-id="'+x[0]+'">Escolhas</button><button type="button" class="btn sm" data-act="medit" data-id="'+x[0]+'">Editar</button></div></div>'}).join('')+'</div></div>'}).join('');
-  return '<div class="sec-h"><div><h2>Cardápio</h2><p class="sub">Preço, receita e margem de cada item</p></div><div class="acts">'+viewToggle()+'<button type="button" class="btn" data-act="cats">Categorias</button><button type="button" class="btn primary" data-act="mnew">Novo item</button></div></div>'+(groups||'<div class="empty"><b>Cardápio vazio</b>Cadastre o primeiro item e informe quais insumos ele consome.</div>');
+  return '<div class="sec-h"><div><h2>Cardápio</h2><p class="sub">'+(S.mord?'Use as setas para colocar os itens na ordem do primeiro ao último. A ordem vale aqui e no site de pedidos.':'Preço, receita e margem de cada item')+'</p></div><div class="acts">'+viewToggle()+'<button type="button" class="btn'+(S.mord?' primary':'')+'" data-act="mord" aria-pressed="'+(!!S.mord)+'">'+(S.mord?'Concluir ordem':'Organizar ordem')+'</button><button type="button" class="btn" data-act="cats">Categorias</button><button type="button" class="btn primary" data-act="mnew">Novo item</button></div></div>'+(groups||'<div class="empty"><b>Cardápio vazio</b>Cadastre o primeiro item e informe quais insumos ele consome.</div>');
 }
 function esFilter(k){var s=S.stock[k],f=S.efil||'todos';
   if(f==='baixo'&&!(s.qty<=s.min))return false;
@@ -2187,11 +2198,11 @@ function vFiado(){
 }
 
 /* ---------- events ---------- */
-var READ={fiadoopen:1,autop:1,efil:1,cview:1,rsort:1,rcat:1,rcsv:1,cmode:1,cnav:1,ctoday:1,cquick:1,ccsv:1,pview:1,cprof:1,cfilter:1,tab:1,sel:1,back:1,cat:1,copy:1,copyt:1,savet:1,btprint:1,kprint:1,bttest:1,pmraw:1,pmdir:1,bkexp:1,bkimp:1,logout:1};
+var READ={mord:1,fiadoopen:1,autop:1,efil:1,cview:1,rsort:1,rcat:1,rcsv:1,cmode:1,cnav:1,ctoday:1,cquick:1,ccsv:1,pview:1,cprof:1,cfilter:1,tab:1,sel:1,back:1,cat:1,copy:1,copyt:1,savet:1,btprint:1,kprint:1,bttest:1,pmraw:1,pmdir:1,bkexp:1,bkimp:1,logout:1};
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-act]');if(!t||t.closest('#modal-root'))return;
   var a=t.dataset.act,d=t.dataset;
-  if(isStaff()){var SB={reopen:1,mnew:1,medit:1,mchoice:1,mkit:1,mactive:1,cats:1,snew:1,sedit:1,sin:1,scount:1,goal:1,mqadd:1,mqdel:1,mqon:1,mqsave:1,bkexp:1,bkimp:1,ccsv:1,rcsv:1,cancel:1,bttest:1,pmraw:1,pmdir:1,cview:1,cmode:1,cnav:1,ctoday:1,cquick:1,rsort:1,rcat:1,rall:1,staffadd:1,staffdel:1,cnew:1,cprof:1,cfilter:1};
+  if(isStaff()){var SB={mup:1,mdn:1,reopen:1,mnew:1,medit:1,mchoice:1,mkit:1,mactive:1,cats:1,snew:1,sedit:1,sin:1,scount:1,goal:1,mqadd:1,mqdel:1,mqon:1,mqsave:1,bkexp:1,bkimp:1,ccsv:1,rcsv:1,cancel:1,bttest:1,pmraw:1,pmdir:1,cview:1,cmode:1,cnav:1,ctoday:1,cquick:1,rsort:1,rcat:1,rall:1,staffadd:1,staffdel:1,cnew:1,cprof:1,cfilter:1};
     if(SB[a]||(a==='pay'&&!staffCanPay())||(a==='tab'&&d.id!=='comandas')){toast('Sem permissão para esta função.','err');return}}
   if(!canWrite&&!READ[a]){toast('Você está no modo leitura.','err');return}
   switch(a){
@@ -2224,6 +2235,9 @@ document.addEventListener('click',function(e){
     case 'btprint':btPrint(S.sel,false);break;
     case 'bttest':btPrint(null,true);break;
     case 'onprint':printPendingOnline(true);break;
+    case 'mord':S.mord=!S.mord;draw();break;
+    case 'mup':moveItem(d.id,-1);break;
+    case 'mdn':moveItem(d.id,1);break;
     case 'bdsend':bdaySend(d.id,true);break;
     case 'bdskip':bdaySend(d.id,false);break;
     case 'autop':setAutoPrint(!autoPrintOn());draw();break;
