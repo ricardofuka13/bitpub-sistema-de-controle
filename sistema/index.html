@@ -5,6 +5,11 @@
 .mftabs button.on{opacity:1;border-bottom-color:var(--accent,#F7B500)}
 .mftabs .cnt{font-weight:400;font-size:12px}
 .mfp[hidden]{display:none!important}
+.plc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px}
+.plc{min-height:62px;border-radius:12px;border:2px solid var(--line2);background:var(--raised);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;font:inherit;cursor:pointer}
+.plc b{font-size:20px;line-height:1.1}.plc small{font-size:11px}
+.plc.free{border-color:#2E9E5B}.plc.free small{color:#1E7A43}
+.plc.busy{background:#FDE6E1;border-color:#E5341D}.plc.busy small{color:#B3261E}
 </style>
 <title>BitPub Sistema de Controle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1238,10 +1243,10 @@ function setNote(orderId,line,note){
     await db.doc('orders/'+orderId).update({items:items});
   });
 }
-async function createOrder(type,name,cust){
+async function createOrder(type,name,cust,baseOver){
   var day=dayKey(),snap=await db.collection('orders').where('day','==',day).get(),max=0;
   snap.docs.forEach(function(d){max=Math.max(max,d.data().num||0)});
-  var base=type==='mesa'?'Mesa '+name:(type==='balcao'?'Viagem'+(name?' · '+name:''):'Delivery'+(name?' · '+name:''));
+  var base=baseOver||(type==='mesa'?'Mesa '+name:(type==='balcao'?'Viagem'+(name?' · '+name:''):'Delivery'+(name?' · '+name:'')));
   var label=cust?mkLabel(base,cust.c.name):base;
   var ref=db.collection('orders').doc(),doc={num:max+1,type:type,name:name,label:label,base:base,status:'open',items:[],openedAt:Date.now(),day:day};
   if(cust){doc.cid=cust.id;doc.cname=cust.c.name}
@@ -1634,7 +1639,57 @@ function closeModal(quiet){$('#modal-root').innerHTML='';if(!quiet&&S.lastFocus&
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('#modal-root').firstChild)closeModal()});
 var opt=function(v,l,sel){return '<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'+esc(l)+'</option>'};
 
+function placeNames(){
+  var n=Math.max(0,Math.min(60,parseInt(S.cfg&&S.cfg.mesasQtd,10)||0)),l=[];
+  for(var i=1;i<=n;i++)l.push('Mesa '+i);
+  ((S.cfg&&S.cfg.locais)||[]).forEach(function(x){x=String(x||'').trim();if(x&&l.indexOf(x)<0)l.push(x)});
+  return l;
+}
+function placeBusy(label){var k=Object.keys(S.open||{});for(var i=0;i<k.length;i++){var o=S.open[k[i]];if(o&&o.base===label)return k[i]}return null}
+function openPlaces(){
+  var qtd=parseInt(S.cfg&&S.cfg.mesasQtd,10)||0,loc=((S.cfg&&S.cfg.locais)||[]).join('\n');
+  openModal('Mesas e locais','<form id="pf"><label>Quantidade de mesas<input id="pf-q" inputmode="numeric" autocomplete="off" value="'+(qtd||'')+'" placeholder="Ex.: 12"></label><p class="muted" style="font-size:13px;margin:0 0 10px">Cria os botões Mesa 1, Mesa 2... até esse número.</p>'+
+    '<label>Outros locais (um por linha)<textarea id="pf-l" rows="4" maxlength="400" autocomplete="off" placeholder="Balcão&#10;Bistrô&#10;Varanda">'+esc(loc)+'</textarea></label><p class="err" id="pf-e"></p><div class="actions"><button class="btn primary" type="submit">Salvar</button></div></form>',function(sh){
+    $('#pf',sh).addEventListener('submit',function(e){e.preventDefault();
+      var q=parseInt($('#pf-q',sh).value,10)||0;if(q<0||q>60){$('#pf-e',sh).textContent='Use de 0 a 60 mesas.';return}
+      var ls=$('#pf-l',sh).value.split(/\n|,/).map(function(x){return x.trim()}).filter(Boolean).filter(function(x,i,a){return a.indexOf(x)===i}).slice(0,30);
+      enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{mesasQtd:q,locais:ls}))}).then(function(){closeModal();toast('Mesas e locais salvos');draw()},function(er){$('#pf-e',sh).textContent=errMsg(er)})});
+  });
+}
 function openNewOrder(){
+  var pl=placeNames();
+  if(!pl.length)return openNewOrderOld();
+  var busy=function(l){return placeBusy(l)};
+  var body='<div id="pn"><div class="nf-c"><div class="nf-cl">Cliente <span class="muted">(opcional)</span></div><div id="nf-cust"></div></div>'+
+    '<div class="nf-cl" style="margin:12px 0 6px">Escolha o local <span class="muted" id="pn-cnt"></span></div><div class="plc-grid" id="pn-grid"></div>'+
+    '<div class="nf-cl" style="margin:14px 0 6px">Viagem ou delivery</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input id="pn-name" autocomplete="off" placeholder="Nome do cliente (opcional)" style="flex:1;min-width:150px"><button type="button" class="btn" data-t="balcao">Viagem</button><button type="button" class="btn" data-t="delivery">Delivery</button></div>'+
+    '<p class="err" id="pn-e"></p><div class="actions"><button type="button" class="btn ghost" id="pn-edit">Editar mesas e locais</button></div></div>';
+  openModal('Nova comanda',body,function(sh){
+    var chosen=null,ch=$('#nf-cust',sh);
+    function showPick(){custPicker(ch,function(id,c){chosen={id:id,c:c};showChosen()})}
+    function showChosen(){ch.innerHTML='<div class="cres sel">'+custMini(chosen.c)+'<button type="button" class="btn sm" id="nf-cx">Trocar</button></div>'+(chosen.c.note?'<div class="cnote"><b>Atenção:</b> '+esc(chosen.c.note)+'</div>':'');$('#nf-cx',sh).addEventListener('click',function(){chosen=null;showPick()})}
+    showPick();
+    function grid(){var free=0;
+      $('#pn-grid',sh).innerHTML=pl.map(function(l,i){var id=busy(l);if(!id)free++;var o=id&&S.open[id];
+        return '<button type="button" class="plc '+(id?'busy':'free')+'" data-i="'+i+'"'+(id?' data-oid="'+id+'"':'')+' aria-label="'+esc(l)+(id?' ocupada':' livre')+'"><b>'+esc(l.replace(/^Mesa /,''))+'</b><small>'+(id?'Ocupada'+(o&&o.cname?' · '+esc(o.cname.split(' ')[0]):''):(/^Mesa /.test(l)?'Mesa livre':'Livre'))+'</small></button>'}).join('');
+      $('#pn-cnt',sh).textContent='· '+free+' livre'+(free===1?'':'s')+' de '+pl.length}
+    grid();
+    sh.addEventListener('click',function(e){
+      var b=e.target.closest('.plc');
+      if(b){
+        if(b.dataset.oid){S.sel=b.dataset.oid;S.tab='comandas';closeModal();draw();toast('Essa já tem comanda aberta. Abri ela para você.');return}
+        if(!canWrite){toast('Você está no modo leitura.','err');return}
+        var l=pl[+b.dataset.i];if(busy(l)){grid();return}
+        var isMesa=/^Mesa \d+$/.test(l);
+        createOrder('mesa',isMesa?l.replace('Mesa ',''):l,chosen,l).then(function(id){S.sel=id;S.tab='comandas';closeModal();draw()}).catch(function(er){$('#pn-e',sh).textContent=errMsg(er)});return}
+      var t=e.target.closest('[data-t]');
+      if(t){if(!canWrite){toast('Você está no modo leitura.','err');return}
+        createOrder(t.dataset.t,$('#pn-name',sh).value.trim(),chosen).then(function(id){S.sel=id;S.tab='comandas';closeModal();draw()}).catch(function(er){$('#pn-e',sh).textContent=errMsg(er)})}
+    });
+    $('#pn-edit',sh).addEventListener('click',function(){if(isStaff()){toast('Sem permissão para esta função.','err');return}closeModal();openPlaces()});
+  });
+}
+function openNewOrderOld(){
   S.newType='mesa';
   var body='<form id="nf"><div class="nf-c"><div class="nf-cl">Cliente <span class="muted">(opcional)</span></div><div id="nf-cust"></div></div><div class="seg" id="nf-seg" role="group" aria-label="Tipo"><button type="button" data-t="mesa" aria-pressed="true">Mesa</button><button type="button" data-t="balcao" aria-pressed="false">Viagem</button><button type="button" data-t="delivery" aria-pressed="false">Delivery</button></div>'+
   '<label><span id="nf-l">Número da mesa</span><input id="nf-name" autocomplete="off" required placeholder="Ex.: 5"></label><p class="err" id="nf-e"></p><div class="actions"><button class="btn primary" type="submit">Abrir comanda</button></div></form>';
@@ -1648,7 +1703,9 @@ function openNewOrder(){
       lab.textContent=m[0];inp.placeholder=m[1];inp.required=m[2];inp.focus()});
     $('#nf',sh).addEventListener('submit',function(e){e.preventDefault();var name=inp.value.trim();
       if(!canWrite){toast('Você está no modo leitura.','err');return}
+      if(S.newType==='mesa'){var dup=placeBusy('Mesa '+name);if(dup){S.sel=dup;S.tab='comandas';closeModal();draw();toast('A Mesa '+name+' já tem comanda aberta. Abri ela para você.');return}}
       createOrder(S.newType,name,chosen).then(function(id){S.sel=id;S.tab='comandas';closeModal();draw()}).catch(function(er){$('#nf-e',sh).textContent=errMsg(er)})});
+    $('#nf-e',sh).insertAdjacentHTML('afterend','<button type="button" class="btn sm" id="nf-pl" style="margin-bottom:8px">Cadastrar mesas e locais (Balcão, Bistrô...)</button>');$('#nf-pl',sh).addEventListener('click',function(){closeModal();openPlaces()});
   });
 }
 function openNote(orderId,line){
