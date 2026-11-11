@@ -186,6 +186,7 @@ h1,h2,h3{font-family:var(--f-corpo)}
 .cab-meta{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:13px;color:var(--suave)}
 .cab-meta i{font-style:normal;font-size:10px}
 .hor-l{color:#B07A00;font-weight:700}
+.ig{display:inline-flex;align-items:center;gap:5px;color:var(--texto);font-weight:700;text-decoration:none}.ig:hover{color:var(--laranja-escuro)}.ig svg{flex:none}
 .link-inf{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--texto);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .grade{display:block;margin-top:18px}
 .col{display:flex;flex-direction:column;min-width:0}
@@ -273,7 +274,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
     <img class="logo-card" src="logo.png" alt="BitPub" width="124" height="124">
     <div class="cab-txt">
       <h1 id="lojaNome">BitPub</h1>
-      <p class="cab-meta"><span class="hor-l" id="lojaHor"></span><i>&bull;</i><span class="loc-l">Suzano - SP</span><i>&bull;</i><button type="button" class="link-inf" id="btnInfo">Mais informações</button></p>
+      <p class="cab-meta"><span class="hor-l" id="lojaHor"></span><i>&bull;</i><span class="loc-l">Suzano - SP</span><i>&bull;</i><a class="ig" href="https://www.instagram.com/bit_pub/" target="_blank" rel="noopener" aria-label="Instagram @bit_pub"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor"/></svg>@bit_pub</a><i>&bull;</i><button type="button" class="link-inf" id="btnInfo">Mais informações</button></p>
     </div>
   </div>
   <div class="grade">
@@ -513,7 +514,7 @@ function desenharMenu(){
   $('#lojaNome').textContent=M.nome||'BitPub';
   $('#lojaHor').textContent=M.horario?M.horario.split('\n')[0]:'';
   $('#lojaHor').nextElementSibling.hidden=!M.horario;
-  $('#infoCorpo').innerHTML=(M.frase?'<p><strong>'+esc(M.frase)+'</strong></p>':'')+(M.endereco?'<p>'+esc(M.endereco)+'</p>':'')+(M.horario?'<p class="hor"><strong>Horário:</strong> '+esc(M.horario)+'</p>':'')+(M.info?'<p class="info">'+esc(M.info)+'</p>':'')+(M.telefone?'<p><a href="https://wa.me/'+WHATS_LOJA+'" target="_blank" rel="noopener">WhatsApp '+esc(M.telefone)+'</a></p>':'');
+  $('#infoCorpo').innerHTML=(M.frase?'<p><strong>'+esc(M.frase)+'</strong></p>':'')+(M.endereco?'<p>'+esc(M.endereco)+'</p>':'')+(M.horario?'<p class="hor"><strong>Horário:</strong> '+esc(M.horario)+'</p>':'')+(M.info?'<p class="info">'+esc(M.info)+'</p>':'')+'<p><a href="https://www.instagram.com/bit_pub/" target="_blank" rel="noopener">Instagram @bit_pub</a></p>'+(M.telefone?'<p><a href="https://wa.me/'+WHATS_LOJA+'" target="_blank" rel="noopener">WhatsApp '+esc(M.telefone)+'</a></p>':'');
   var okImg=function(u){return /^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(u||'')};
   var hb=$('#heroBox'),hi=$('#hero');
   if(okImg(M.cabecalho)){ if(hi.getAttribute('src')!==M.cabecalho)hi.src=M.cabecalho; hi.hidden=false; hb.classList.remove('sem') }else{ hi.hidden=true; hb.classList.add('sem') }
