@@ -2418,9 +2418,13 @@ async function importOnline(p,claimed){
     var total={};
     var items=(p.itens||[]).map(function(it){
       var m=S.menu[it.id],rec=m?(m.recipe||[]).map(function(r){return [r.ing,r.qty]}):[],ops=it.opcoes||[],xc=0;
+      if(it.promo&&it.inclui&&it.inclui.length){ /* promoção: baixa o estoque dos itens que vêm nela */
+        it.inclui.forEach(function(inc){var mm=S.menu[inc.id]; if(!mm)return; var q=+inc.qtd||1;
+          (mm.recipe||[]).forEach(function(r){rec.push([r.ing,r.qty*q])}); xc+=costOf(mm)*q });
+      }
       ops.forEach(function(o){var st=o.ing&&S.stock[o.ing],q=o.qty>0?+o.qty:1;if(st){rec.push([o.ing,q]);xc+=st.cost*q}});
       var d=recDelta(rec,it.qtd,-1);Object.keys(d).forEach(function(k){total[k]=r3((total[k]||0)+d[k])});
-      return {lid:lid(),k:it.id,name:(m?m.name:it.nome)+(ops.length?' + '+ops.map(function(o){return o.nome}).join(' + '):''),price:r2(it.preco),cost:m?r2(costOf(m)+xc):0,qty:it.qtd,note:it.obs||'',rec:rec,sig:ops.map(function(o){return o.ing||('v:'+o.nome)}).join('|')};
+      return {lid:lid(),k:it.id,name:(m?m.name:it.nome)+(ops.length?' + '+ops.map(function(o){return o.nome}).join(' + '):''),price:r2(it.preco),cost:m?r2(costOf(m)+xc):r2(xc),qty:it.qtd,note:it.obs||'',rec:rec,sig:ops.map(function(o){return o.ing||('v:'+o.nome)}).join('|')};
     });
     var fv=r2(Number(p.frete)||0);
     if(fv>0)items.push({lid:lid(),k:'__frete',name:'Frete',price:fv,cost:0,qty:1,note:'',rec:[],sig:'',isFrete:true});

@@ -446,25 +446,31 @@ $('#formLoja').addEventListener('submit',async function(e){
 });
 
 /* ---------- promoções ---------- */
-var promos=[],promoFoto='';
+var promos=[],promoFoto='',promoInclui=[],menuLista=[];
 async function carregarPromos(){
-  try{promos=await http('/rest/v1/promocoes?select=*&order=ordem.asc,criado_em.desc&limit=200');desenharPromos()}
+  try{promos=await http('/rest/v1/promocoes?select=*&order=ordem.asc,criado_em.desc&limit=200');desenharPromos()
+    try{var ms=await http('/rest/v1/docs?coll=eq.menu&select=id,data&limit=1000');menuLista=ms.filter(function(d){return d.data&&d.data.name}).map(function(d){return {id:d.id,nome:d.data.name,cat:d.data.cat||''}}).sort(function(a,b){return (a.cat+a.nome).localeCompare(b.cat+b.nome,'pt-BR')})}catch(x){}}
   catch(e){$('#listaPromos').innerHTML='<p class="erro">'+esc(e.message)+'</p>'}
 }
 function desenharPromos(){
   $('#listaPromos').innerHTML=promos.length?promos.map(function(p){
     var venc=p.validade&&p.validade<new Date().toLocaleDateString('en-CA');
     return '<div class="fi" data-id="'+p.id+'">'+(p.foto?'<img class="th" src="'+esc(p.foto)+'" alt="" loading="lazy">':'<div class="th">sem foto</div>')+
-      '<div><b>'+esc(p.titulo)+'</b> <span class="sel '+(p.ativa&&!venc?'entregue':'cancelado')+'">'+(venc?'Vencida':p.ativa?'No ar':'Pausada')+'</span><br><span class="mini">'+esc(p.descricao||'')+'</span>'+(p.preco_por!=null?'<br><span class="mini">'+(p.preco_de!=null?'De R$ '+Number(p.preco_de).toFixed(2).replace('.',',')+' por ':'Por ')+'<b>R$ '+Number(p.preco_por).toFixed(2).replace('.',',')+'</b></span>':'')+(p.validade?'<br><span class="mini">Vale até '+p.validade.split('-').reverse().join('/')+'</span>':'')+'</div>'+
+      '<div><b>'+esc(p.titulo)+'</b> <span class="sel '+(p.ativa&&!venc?'entregue':'cancelado')+'">'+(venc?'Vencida':p.ativa?'No ar':'Pausada')+'</span><br><span class="mini">'+esc(p.descricao||'')+'</span>'+(p.preco_por!=null?'<br><span class="mini">'+(p.preco_de!=null?'De R$ '+Number(p.preco_de).toFixed(2).replace('.',',')+' por ':'Por ')+'<b>R$ '+Number(p.preco_por).toFixed(2).replace('.',',')+'</b></span>':'')+((p.inclui&&p.inclui.length)?'<br><span class="mini">Inclui (baixa estoque): '+p.inclui.map(function(x){var m=menuLista.find(function(y){return y.id===x.id});return x.qtd+'x '+esc(m?m.nome:'item removido')}).join(', ')+'</span>':'')+(p.validade?'<br><span class="mini">Vale até '+p.validade.split('-').reverse().join('/')+'</span>':'')+'</div>'+
       '<div class="bt"><button class="sec" type="button" data-edit>Editar</button><button class="sec" type="button" data-tog>'+(p.ativa?'Pausar':'Pôr no ar')+'</button><button class="sec" type="button" data-del>Excluir</button></div></div>';
   }).join(''):'<p class="vazio">Nenhuma promoção cadastrada.</p>';
 }
+function incHtml(){
+  var opts=function(sel){return '<option value="">Escolha um item</option>'+menuLista.map(function(m){return '<option value="'+esc(m.id)+'"'+(m.id===sel?' selected':'')+'>'+esc(m.nome)+(m.cat?' ('+esc(m.cat)+')':'')+'</option>'}).join('')};
+  return promoInclui.map(function(x,n){return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px" data-inc="'+n+'"><input type="number" min="1" max="20" step="1" value="'+x.qtd+'" data-incq style="width:70px" aria-label="Quantidade"><select data-incs style="flex:1;min-height:44px;border:2px solid var(--preto);background:#fff;padding:6px">'+opts(x.id)+'</select><button class="sec" type="button" data-incdel aria-label="Tirar item">&times;</button></div>'}).join('')+'<button class="sec" type="button" id="pIncAdd">+ Incluir item do cardápio</button>';
+}
 function formPromo(p){
-  p=p||{};promoFoto=p.foto||'';
+  p=p||{};promoFoto=p.foto||'';promoInclui=(p.inclui||[]).map(function(x){return {id:x.id,qtd:x.qtd||1}});
   $('#formPromoBox').innerHTML='<form id="fPromo" class="card" style="margin-bottom:14px" novalidate data-id="'+esc(p.id||'')+'"><h3 style="margin:0">'+(p.id?'Editar promoção':'Nova promoção')+'</h3>'+
     '<label>Título<input type="text" id="pTit" maxlength="80" value="'+esc(p.titulo||'')+'" placeholder="Ex.: Combo Casal"></label>'+
     '<label>Descrição<textarea id="pDesc" rows="4" maxlength="600" style="border:2px solid var(--preto);padding:10px 12px;font:inherit" placeholder="O que está incluso, valor, regras...">'+esc(p.descricao||'')+'</textarea></label>'+
     '<div><img id="pImg" alt="" style="width:100%;max-height:180px;object-fit:cover;border:2px solid var(--preto)"'+(promoFoto?' src="'+esc(promoFoto)+'"':' hidden')+'><div class="acoes" style="margin-top:8px"><button class="sec" type="button" id="pFotoBtn">'+(promoFoto?'Trocar foto':'Colocar foto')+'</button><button class="sec" type="button" id="pFotoRm"'+(promoFoto?'':' hidden')+'>Tirar foto</button></div></div>'+
+    '<div><b>Itens que vêm na promoção</b><p class="mini" style="margin:2px 0 8px">O sistema dá baixa no estoque desses itens (receita de cada um) quando o pedido da promoção entra na comanda. Se deixar vazio, não baixa estoque.</p><div id="pInc">'+incHtml()+'</div></div>'+
     '<div style="display:flex;gap:10px;flex-wrap:wrap"><label style="flex:1;min-width:140px">Preço normal (De) — fica riscado<input type="text" id="pDe" inputmode="decimal" placeholder="Ex.: 50,00" value="'+(p.preco_de!=null?String(p.preco_de).replace('.',','):'')+'"></label><label style="flex:1;min-width:140px">Preço da promoção (Por)<input type="text" id="pPor" inputmode="decimal" placeholder="Ex.: 39,90" value="'+(p.preco_por!=null?String(p.preco_por).replace('.',','):'')+'"></label></div><p class="mini" style="margin:-4px 0 0">Preencha os dois para mostrar "De R$ 50,00 por R$ 39,90" com o preço antigo riscado. Só o "Por" mostra apenas o preço. Deixe em branco para não mostrar preço.</p>'+
     '<div style="display:flex;gap:10px;flex-wrap:wrap"><label style="flex:1;min-width:140px">Vale até (opcional)<input type="date" id="pVal" value="'+esc(p.validade||'')+'" style="border:2px solid var(--preto);padding:10px 12px;min-height:44px"></label><label style="flex:1;min-width:120px">Ordem (menor aparece primeiro)<input type="number" id="pOrd" step="1" value="'+(p.ordem||0)+'"></label></div>'+
     '<label style="flex-direction:row;align-items:center;gap:10px"><input type="checkbox" id="pAtiva" style="width:22px;height:22px"'+(p.ativa===false?'':' checked')+'> Mostrar no site</label>'+
@@ -480,10 +486,20 @@ $('#formPromoBox').addEventListener('click',async function(e){
     try{promoFoto=await subirImagem(f,'promo',1000);$('#pImg').src=promoFoto;$('#pImg').hidden=false;$('#pFotoRm').hidden=false;$('#pFotoBtn').textContent='Trocar foto';er.textContent=''}catch(x){er.textContent=x.message}
   }
 });
+function reInc(){ $('#pInc').innerHTML=incHtml() }
+$('#formPromoBox').addEventListener('click',function(e){
+  if(e.target.closest('#pIncAdd')){promoInclui.push({id:'',qtd:1});reInc();return}
+  var d=e.target.closest('[data-incdel]');if(d){promoInclui.splice(Number(d.parentNode.getAttribute('data-inc')),1);reInc()}
+});
+$('#formPromoBox').addEventListener('change',function(e){
+  var row=e.target.closest('[data-inc]');if(!row)return;var x=promoInclui[Number(row.getAttribute('data-inc'))];if(!x)return;
+  if(e.target.matches('[data-incs]'))x.id=e.target.value;
+  if(e.target.matches('[data-incq]'))x.qtd=Math.max(1,Math.min(20,parseInt(e.target.value,10)||1));
+});
 $('#formPromoBox').addEventListener('submit',async function(e){
   e.preventDefault();var f=e.target,id=f.getAttribute('data-id'),er=$('#pErro');er.textContent='';
   var tit=$('#pTit').value.trim();if(!tit){er.textContent='Escreva o título da promoção.';return}
-  var pn=function(v){v=String(v||'').trim().replace(/[R$\s]/g,'');if(v.indexOf(',')>=0)v=v.replace(/\./g,'').replace(',','.');if(v==='')return null;var n=Number(v);return isFinite(n)&&n>=0?Math.round(n*100)/100:NaN};var de=pn($('#pDe').value),por=pn($('#pPor').value);if(Number.isNaN(de)||Number.isNaN(por)){er.textContent='Preço inválido. Use números, como 39,90.';return}if(de!=null&&por==null){er.textContent='Preencha também o preço da promoção (Por).';return}var body={preco_de:de,preco_por:por,titulo:tit,descricao:$('#pDesc').value.trim()||null,foto:promoFoto||null,validade:$('#pVal').value||null,ordem:parseInt($('#pOrd').value,10)||0,ativa:$('#pAtiva').checked};
+  var pn=function(v){v=String(v||'').trim().replace(/[R$\s]/g,'');if(v.indexOf(',')>=0)v=v.replace(/\./g,'').replace(',','.');if(v==='')return null;var n=Number(v);return isFinite(n)&&n>=0?Math.round(n*100)/100:NaN};var de=pn($('#pDe').value),por=pn($('#pPor').value);if(Number.isNaN(de)||Number.isNaN(por)){er.textContent='Preço inválido. Use números, como 39,90.';return}if(de!=null&&por==null){er.textContent='Preencha também o preço da promoção (Por).';return}var inc=promoInclui.filter(function(x){return x.id}).map(function(x){return {id:x.id,qtd:x.qtd||1}});var body={inclui:inc,preco_de:de,preco_por:por,titulo:tit,descricao:$('#pDesc').value.trim()||null,foto:promoFoto||null,validade:$('#pVal').value||null,ordem:parseInt($('#pOrd').value,10)||0,ativa:$('#pAtiva').checked};
   var btn=f.querySelector('button[type=submit]');btn.disabled=true;
   try{
     if(id)await http('/rest/v1/promocoes?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:body});

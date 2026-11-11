@@ -323,6 +323,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
     <div class="d-topo"><h2 id="tPromo">Promoção</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
     <img class="promo-foto" id="promoFoto" alt="" hidden>
     <div id="promoPreco"></div>
+    <p id="promoInclui" style="margin:0"></p>
     <p id="promoTexto" style="margin:0;white-space:pre-line"></p>
     <button class="principal" type="button" id="promoAdd" hidden>Adicionar à sacola</button>
     <button class="secundario" type="button" data-fechar id="promoVer">Ver o cardápio</button>
@@ -761,7 +762,7 @@ $('#btnFrete').addEventListener('click',calcularFrete);
 $('#endereco').addEventListener('input',function(){ if(freteAtual){freteAtual=null; $('#freteMsg').textContent=''; desenharTotais()} });
 $('#promosLista').addEventListener('click',function(e){
   var b=e.target.closest('[data-promo]'); if(!b)return; var p=(M.promocoes||[])[Number(b.getAttribute('data-promo'))]; if(!p)return;
-  $('#tPromo').textContent=p.titulo; $('#promoTexto').textContent=p.descricao||''; $('#promoPreco').innerHTML=precoPromo(p);
+  $('#tPromo').textContent=p.titulo; $('#promoTexto').textContent=p.descricao||''; $('#promoPreco').innerHTML=precoPromo(p); $('#promoInclui').innerHTML=(p.inclui&&p.inclui.length)?'<b>Inclui:</b> '+p.inclui.map(function(x){return x.qtd+'x '+esc(x.nome)}).join(', '):'';
   var f=$('#promoFoto'); if(/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(p.foto||'')){f.src=p.foto;f.alt=p.titulo;f.hidden=false}else{f.hidden=true}
   var add=$('#promoAdd'), tem=p.preco_por!=null;
   add.hidden=!tem; add.setAttribute('data-key','promo:'+p.id); if(tem)add.textContent='Adicionar à sacola · '+R(p.preco_por);
