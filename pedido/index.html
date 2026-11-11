@@ -172,6 +172,7 @@ textarea{min-height:76px;resize:vertical}
 .p-p .de{text-decoration:line-through;color:#8A8A92;font-size:14px}
 .p-p .por{color:var(--ok);font-size:18px;font-weight:800}
 .p-p .off{font-style:normal;background:#DDF3E3;color:#17703A;font-weight:700;font-size:12px;padding:2px 6px;border-radius:6px}
+.p-btn{display:inline-block;margin:4px 12px 2px;background:var(--laranja);color:#fff;font-weight:700;font-size:13px;padding:6px 12px;border-radius:8px;align-self:flex-start}
 #promoPreco .p-p{padding:0}
 .sf{border:1px solid var(--borda);border-radius:var(--raio);background:#fff;margin-bottom:12px;overflow:hidden}
 .sf-row{display:flex;align-items:center;gap:10px;width:100%;background:#fff;border:0;text-align:left;padding:12px 14px;color:var(--suave);cursor:pointer;min-height:56px}
@@ -323,7 +324,8 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
     <img class="promo-foto" id="promoFoto" alt="" hidden>
     <div id="promoPreco"></div>
     <p id="promoTexto" style="margin:0;white-space:pre-line"></p>
-    <button class="principal" type="button" data-fechar>Ver o cardápio</button>
+    <button class="principal" type="button" id="promoAdd" hidden>Adicionar à sacola</button>
+    <button class="secundario" type="button" data-fechar id="promoVer">Ver o cardápio</button>
   </div>
 </dialog>
 
@@ -498,6 +500,7 @@ try{ var c0=JSON.parse(localStorage.getItem(CK)||'[]'); if(Array.isArray(c0))car
 function salvarCarrinho(){ try{localStorage.setItem(CK,JSON.stringify(carrinho))}catch(e){} }
 carrinho.forEach(function(l){ if(!l.key)l.key=l.id });
 function linha(key){ return carrinho.find(function(i){return i.key===key}) }
+function promoDe(id){ return (M.promocoes||[]).find(function(p){return 'promo:'+p.id===id}) }
 function itemDe(id){ return M.itens.find(function(i){return i.id===id}) }
 function temOpc(it){ return !!(it&&it.opcoes&&it.opcoes.length) }
 function qtdDoItem(id){ return carrinho.reduce(function(s,l){return l.id===id?s+l.qtd:s},0) }
@@ -527,6 +530,7 @@ async function carregarMenu(){
     try{var c=JSON.parse(localStorage.getItem('bitpub_site_menu')||'null'); if(c){M=c; toast('Sem conexão: mostrando o último cardápio salvo.')}}catch(x){}
   }
   carrinho=carrinho.filter(function(l){
+    if(String(l.id).indexOf('promo:')===0){ var pr=promoDe(l.id); if(!pr||pr.preco_por==null)return false; l.nome=pr.titulo; l.preco=Number(pr.preco_por); l.sel=[]; l.ops=[]; return true }
     var it=itemDe(l.id); if(!it)return false;
     l.nome=it.nome;
     if(l.sel&&l.sel.length||temOpc(it)){ var p=precoComOpcoes(it,l.sel||[]); if(p==null)return false; l.preco=p; l.ops=nomesOpc(it,l.sel||[]) }
@@ -552,7 +556,7 @@ function desenharMenu(){
   var pr=(M.promocoes||[]).filter(function(p){return p&&p.titulo});
   $('#promos').hidden=!pr.length;
   $('#promosLista').innerHTML=pr.map(function(p,n){
-    return '<button type="button" class="promo" data-promo="'+n+'">'+(okImg(p.foto)?'<img src="'+esc(p.foto)+'" alt="" loading="lazy" decoding="async">':'')+'<h3 class="p-t">'+esc(p.titulo)+'</h3>'+precoPromo(p)+(p.descricao?'<p class="p-d">'+esc(p.descricao)+'</p>':'')+'</button>';
+    return '<button type="button" class="promo" data-promo="'+n+'">'+(okImg(p.foto)?'<img src="'+esc(p.foto)+'" alt="" loading="lazy" decoding="async">':'')+'<h3 class="p-t">'+esc(p.titulo)+'</h3>'+precoPromo(p)+(p.preco_por!=null?'<span class="p-btn">Adicionar à sacola</span>':'')+(p.descricao?'<p class="p-d">'+esc(p.descricao)+'</p>':'')+'</button>';
   }).join('');
   var cats=M.cats.slice(); M.itens.forEach(function(i){ if(cats.indexOf(i.cat)<0)cats.push(i.cat) });
   cats=cats.filter(function(c){return M.itens.some(function(i){return i.cat===c})});
@@ -587,7 +591,8 @@ function acaoItem(id){
 function mudar(key,delta){
   var l=linha(key);
   if(!l){
-    var it=itemDe(key); if(!it||delta<0||temOpc(it))return;
+    var it=String(key).indexOf('promo:')===0?(function(){var q=promoDe(key);return q&&q.preco_por!=null?{nome:q.titulo,preco:Number(q.preco_por)}:null})():itemDe(key);
+    if(!it||delta<0||(itemDe(key)&&temOpc(it)))return;
     l={key:key,id:key,nome:it.nome,preco:it.preco,qtd:0,obs:'',sel:[],ops:[]}; carrinho.push(l);
   }
   l.qtd=Math.max(0,Math.min(50,l.qtd+delta));
@@ -758,7 +763,14 @@ $('#promosLista').addEventListener('click',function(e){
   var b=e.target.closest('[data-promo]'); if(!b)return; var p=(M.promocoes||[])[Number(b.getAttribute('data-promo'))]; if(!p)return;
   $('#tPromo').textContent=p.titulo; $('#promoTexto').textContent=p.descricao||''; $('#promoPreco').innerHTML=precoPromo(p);
   var f=$('#promoFoto'); if(/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(p.foto||'')){f.src=p.foto;f.alt=p.titulo;f.hidden=false}else{f.hidden=true}
+  var add=$('#promoAdd'), tem=p.preco_por!=null;
+  add.hidden=!tem; add.setAttribute('data-key','promo:'+p.id); if(tem)add.textContent='Adicionar à sacola · '+R(p.preco_por);
+  $('#promoVer').textContent=tem?'Continuar vendo o cardápio':'Ver o cardápio';
   abrir($('#dPromo'));
+});
+$('#promoAdd').addEventListener('click',function(){
+  var key=this.getAttribute('data-key'); mudar(key,1); $('#dPromo').close();
+  toast('Adicionado à sacola: '+R(totalCarrinho())+' no total');
 });
 function desenharCarrinho(){
   var box=$('#itensCarrinho');
