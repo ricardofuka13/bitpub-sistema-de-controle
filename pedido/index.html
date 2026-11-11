@@ -167,6 +167,20 @@ textarea{min-height:76px;resize:vertical}
 
 .ig{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:#C13584;text-decoration:none}
 .ig:hover{text-decoration:underline}
+/* promo preços e frete na sacola */
+.p-p{margin:0;padding:0 12px 4px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.p-p .de{text-decoration:line-through;color:#8A8A92;font-size:14px}
+.p-p .por{color:var(--ok);font-size:18px;font-weight:800}
+.p-p .off{font-style:normal;background:#DDF3E3;color:#17703A;font-weight:700;font-size:12px;padding:2px 6px;border-radius:6px}
+#promoPreco .p-p{padding:0}
+.sf{border:1px solid var(--borda);border-radius:var(--raio);background:#fff;margin-bottom:12px;overflow:hidden}
+.sf-row{display:flex;align-items:center;gap:10px;width:100%;background:#fff;border:0;text-align:left;padding:12px 14px;color:var(--suave);cursor:pointer;min-height:56px}
+.sf-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.sf-t b{font-size:13px;color:var(--texto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sf-t small{font-size:12px}
+.sf-form{display:flex;flex-direction:column;gap:8px;padding:12px 14px 14px;border-top:1px dashed var(--borda)}
+.frete-topo{background:#FFF4E8;border:1px solid #FFD9B3;border-radius:8px;padding:10px 12px;font-size:14px}
+.sac-l.sub{border-bottom:0;color:var(--suave)}
 /* ===== tema 2: layout de loja (barra superior, capa, cartões) ===== */
 :root{--fundo:#F4F4F5;--borda:#E3E3E6;--raio:10px}
 body{background:var(--fundo)}
@@ -199,7 +213,7 @@ h1,h2,h3{font-family:var(--f-corpo)}
 .cats-in{padding:8px 0;gap:8px}
 .chip{border:1px solid var(--borda);border-radius:999px;background:#fff;color:var(--texto);padding:6px 14px;font-weight:700;font-size:13px;min-height:36px}
 .chip[aria-current="true"]{background:var(--laranja);border-color:var(--laranja);color:#fff}
-.promos{order:2;max-width:none;padding:10px 0 0}
+.promos{order:2;max-width:none;width:100%;margin:0;padding:10px 0 0}
 .promos h2,.secao h2{font:800 20px/1.2 var(--f-corpo);letter-spacing:0;margin:0 0 12px;color:var(--texto)}
 .promo{width:230px;border:1px solid var(--borda);border-radius:var(--raio);overflow:hidden;background:#fff}
 .promo img{height:130px}
@@ -249,7 +263,8 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
 @media(min-width:700px){.itens{grid-template-columns:1fr 1fr}.logo-card{width:124px;height:124px}.cab{margin-top:-56px}.cab-txt h1{padding-top:60px}}
 @media(min-width:960px){
   .grade{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
-  .side{display:block;position:sticky;top:12px;background:#fff;border:1px solid var(--borda);border-radius:var(--raio);padding:14px;order:2}
+  .side{display:block;position:sticky;top:12px;order:2}
+  #sCarr{background:#fff;border:1px solid var(--borda);border-radius:var(--raio);padding:14px}
   .barra{display:none!important}
   .cats{margin:0;padding:0}
 }
@@ -286,7 +301,13 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
 <nav class="cats" aria-label="Categorias do cardápio"><div class="cats-in" id="cats"></div></nav>
 <main id="menu"><p class="vazio">Carregando o cardápio...</p></main>
     </div>
-    <aside class="side" id="side" aria-label="Sua sacola"></aside>
+    <aside class="side" id="side" aria-label="Sua sacola">
+      <div id="sFrete" class="sf" hidden>
+        <button type="button" class="sf-row" id="sfRow" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.7" d="M5 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8 15h5l3-6h3M13 9h-3M10 6h2"/></svg><span class="sf-t"><b id="sfB">Entrega</b><small id="sfS"></small></span><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="m9 6 6 6-6 6"/></svg></button>
+        <form class="sf-form" id="sfForm" hidden novalidate><input type="text" id="sfEnd" maxlength="200" placeholder="Rua, número, bairro, cidade" aria-label="Endereço de entrega" autocomplete="street-address"><button class="btn-frete" type="submit" id="sfBtn">Calcular frete</button></form>
+      </div>
+      <div id="sCarr"></div>
+    </aside>
   </div>
 </div>
 <dialog id="dInfo" aria-labelledby="tInfo"><div class="d-in"><div class="d-topo"><h2 id="tInfo">Informações</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div><div id="infoCorpo" class="info-corpo"></div><button class="secundario" type="button" data-fechar>Fechar</button></div></dialog>
@@ -300,6 +321,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
   <div class="d-in">
     <div class="d-topo"><h2 id="tPromo">Promoção</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
     <img class="promo-foto" id="promoFoto" alt="" hidden>
+    <div id="promoPreco"></div>
     <p id="promoTexto" style="margin:0;white-space:pre-line"></p>
     <button class="principal" type="button" data-fechar>Ver o cardápio</button>
   </div>
@@ -309,6 +331,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
 <dialog id="dCarrinho" aria-labelledby="tCarrinho">
   <div class="d-in">
     <div class="d-topo"><h2 id="tCarrinho">Seu pedido</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
+    <div id="freteTopo" class="frete-topo" hidden></div>
     <div id="itensCarrinho"></div>
     <fieldset class="tipos">
       <legend>Como você quer receber?</legend>
@@ -512,6 +535,12 @@ async function carregarMenu(){
   });
   desenharMenu();
 }
+function precoPromo(p){
+  var de=p&&p.preco_de!=null?Number(p.preco_de):null, por=p&&p.preco_por!=null?Number(p.preco_por):null;
+  if(por==null&&de==null)return '';
+  if(por==null)return '<p class="p-p"><b class="por">'+R(de)+'</b></p>';
+  return '<p class="p-p">'+(de!=null&&de>por?'<span class="de">'+R(de)+'</span> ':'')+'<b class="por">'+R(por)+'</b>'+(de!=null&&de>por?' <em class="off">-'+Math.round((1-por/de)*100)+'%</em>':'')+'</p>';
+}
 function desenharMenu(){
   $('#lojaNome').textContent=M.nome||'BitPub';
   $('#lojaHor').textContent=M.horario?M.horario.split('\n')[0]:'';
@@ -523,7 +552,7 @@ function desenharMenu(){
   var pr=(M.promocoes||[]).filter(function(p){return p&&p.titulo});
   $('#promos').hidden=!pr.length;
   $('#promosLista').innerHTML=pr.map(function(p,n){
-    return '<button type="button" class="promo" data-promo="'+n+'">'+(okImg(p.foto)?'<img src="'+esc(p.foto)+'" alt="" loading="lazy" decoding="async">':'')+'<h3 class="p-t">'+esc(p.titulo)+'</h3>'+(p.descricao?'<p class="p-d">'+esc(p.descricao)+'</p>':'')+'</button>';
+    return '<button type="button" class="promo" data-promo="'+n+'">'+(okImg(p.foto)?'<img src="'+esc(p.foto)+'" alt="" loading="lazy" decoding="async">':'')+'<h3 class="p-t">'+esc(p.titulo)+'</h3>'+precoPromo(p)+(p.descricao?'<p class="p-d">'+esc(p.descricao)+'</p>':'')+'</button>';
   }).join('');
   var cats=M.cats.slice(); M.itens.forEach(function(i){ if(cats.indexOf(i.cat)<0)cats.push(i.cat) });
   cats=cats.filter(function(c){return M.itens.some(function(i){return i.cat===c})});
@@ -633,13 +662,16 @@ $('#opcAdd').addEventListener('click',function(){
   $('#dOpc').close(); toast(opcQtd+'x '+it.nome+' no pedido');
 });
 function desenharSide(){
-  var sd=$('#side'); if(!sd)return;
+  var sd=$('#sCarr'); if(!sd)return;
   if(!carrinho.length){ sd.innerHTML='<div class="sac-vazia"><svg viewBox="0 0 24 24" width="44" height="44" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/></svg><b>Sacola vazia</b></div><button type="button" class="sac-btn" disabled>Sacola vazia</button>'; return }
-  sd.innerHTML='<h2 class="sac-t">Sua sacola</h2>'+carrinho.map(function(l){return '<div class="sac-l"><span>'+l.qtd+'x '+esc(l.nome)+'</span><b>'+R(l.preco*l.qtd)+'</b></div>'}).join('')+'<div class="sac-tot"><span>Subtotal</span><b>'+R(totalCarrinho())+'</b></div><button type="button" class="sac-btn on" id="btnCarrinho2">Ver pedido</button>';
+  var fv=freteValor(), it=totalCarrinho();
+  sd.innerHTML='<h2 class="sac-t">Sua sacola</h2>'+carrinho.map(function(l){return '<div class="sac-l"><span>'+l.qtd+'x '+esc(l.nome)+'</span><b>'+R(l.preco*l.qtd)+'</b></div>'}).join('')+
+    '<div class="sac-l sub"><span>Subtotal</span><b>'+R(it)+'</b></div>'+(fv!=null?'<div class="sac-l sub"><span>Frete</span><b>'+R(fv)+'</b></div>':'')+
+    '<div class="sac-tot"><span>Total</span><b>'+R(it+(fv||0))+'</b></div><button type="button" class="sac-btn on" id="btnCarrinho2">Ver pedido</button>';
   $('#btnCarrinho2').addEventListener('click',function(){desenharCarrinho();abrir($('#dCarrinho'))});
 }
 function atualizarBarra(){
-  desenharSide();
+  desenharSide(); desenharFrete();
   var n=qtdTotal(); $('#barra').hidden=n===0;
   $('#barraN').textContent=n; $('#barraTotal').textContent=R(totalCarrinho());
 }
@@ -689,6 +721,7 @@ function desenharTotais(){
   }
   $('#totais').innerHTML='<div class="t"><span>Itens</span><span>'+R(it)+'</span></div>'+linhaFrete+
     '<div class="t total"><span>'+(fv!=null?'Total com frete':'Total dos itens')+'</span><span>'+R(it+(fv||0))+'</span></div>';
+  desenharFrete(); desenharSide();
   $('#avisoPag').textContent = PAGAMENTO_ONLINE
     ? 'Depois de enviar, você escolhe: pagar agora (Pix ou cartão) ou combinar o pagamento no WhatsApp.'+(ent?(fv!=null?' O frete já está no total.':' Se o frete não for calculado aqui, a gente combina no WhatsApp.'):'')
     : 'O pagamento'+(ent&&fv==null?' e o valor do frete':'')+' a gente combina com você no WhatsApp, depois que você enviar o pedido.';
@@ -704,11 +737,26 @@ async function calcularFrete(){
   }catch(e){ freteAtual={combinar:true,codigo:'erro',endereco:end,mensagem:'Não foi possível calcular agora. O frete será combinado no WhatsApp.'}; msg.textContent=freteAtual.mensagem }
   btn.disabled=false; btn.textContent='Calcular frete'; desenharTotais(); return freteAtual;
 }
+function desenharFrete(){
+  var bx=$('#sFrete'); if(!bx)return;
+  bx.hidden=!freteOn();
+  var f=freteAtual, ok=f&&f.valor!=null;
+  $('#sfB').textContent=f&&f.endereco?f.endereco:'Calcule o frete da entrega';
+  $('#sfS').textContent=ok?'Frete '+R(f.valor)+(f.km?' / '+String(f.km).replace('.',',')+' km':''):(f&&f.combinar?f.mensagem:'Informe seu endereço para ver o valor');
+  var ft=$('#freteTopo'); if(ft){ var ent=tipoAtual()==='entrega'; ft.hidden=!(ent&&freteOn()); if(ent)ft.innerHTML='<b>Entrega</b> '+(ok?'· frete '+R(f.valor)+(f.km?' ('+String(f.km).replace('.',',')+' km)':''):'· frete a calcular abaixo') }
+}
+$('#sfRow').addEventListener('click',function(){ var f=$('#sfForm'); f.hidden=!f.hidden; this.setAttribute('aria-expanded',String(!f.hidden)); if(!f.hidden){ if(freteAtual&&freteAtual.endereco&&!$('#sfEnd').value)$('#sfEnd').value=freteAtual.endereco; $('#sfEnd').focus() } });
+$('#sfForm').addEventListener('submit',async function(e){
+  e.preventDefault(); var end=$('#sfEnd').value.trim(); if(!end){$('#sfEnd').focus();return}
+  var r=$('input[name="tipo"][value="entrega"]'); r.checked=true; $('#endereco').value=end; freteAtual=null;
+  var b=$('#sfBtn'); b.disabled=true; b.textContent='Calculando...';
+  desenharCarrinho(); await calcularFrete(); b.disabled=false; b.textContent='Calcular frete'; $('#sfForm').hidden=true; $('#sfRow').setAttribute('aria-expanded','false'); desenharTotais();
+});
 $('#btnFrete').addEventListener('click',calcularFrete);
 $('#endereco').addEventListener('input',function(){ if(freteAtual){freteAtual=null; $('#freteMsg').textContent=''; desenharTotais()} });
 $('#promosLista').addEventListener('click',function(e){
   var b=e.target.closest('[data-promo]'); if(!b)return; var p=(M.promocoes||[])[Number(b.getAttribute('data-promo'))]; if(!p)return;
-  $('#tPromo').textContent=p.titulo; $('#promoTexto').textContent=p.descricao||'';
+  $('#tPromo').textContent=p.titulo; $('#promoTexto').textContent=p.descricao||''; $('#promoPreco').innerHTML=precoPromo(p);
   var f=$('#promoFoto'); if(/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(p.foto||'')){f.src=p.foto;f.alt=p.titulo;f.hidden=false}else{f.hidden=true}
   abrir($('#dPromo'));
 });
@@ -905,7 +953,7 @@ async function enviarPedido(){
       p_tipo:ent?'entrega':'retirada', p_endereco:ent?end:null, p_obs:$('#obsGeral').value.trim()||null,
       p_frete_id:(ent&&freteAtual&&freteAtual.id)||null
     }});
-    freteAtual=null; $('#freteMsg').textContent='';
+    freteAtual=null; $('#freteMsg').textContent=''; desenharFrete();
     carrinho=[]; salvarCarrinho(); $$('.item').forEach(function(el){acaoItem(el.getAttribute('data-id'))}); atualizarBarra();
     $('#obsGeral').value=''; $('#dCarrinho').close();
     $('#okTexto').textContent='Seu pedido '+p.numero+' já está com a gente.'+(p.frete!=null?' Total com frete: '+R(Number(p.total)+Number(p.frete))+'.':'')+' Você pode pagar agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'&&p.frete==null?'o frete e ':'')+'o pagamento.';
