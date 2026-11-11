@@ -178,6 +178,8 @@ textarea{min-height:76px;resize:vertical}
 .sf-row{display:flex;align-items:center;gap:10px;width:100%;background:#fff;border:0;text-align:left;padding:12px 14px;color:var(--suave);cursor:pointer;min-height:56px}
 .sf-t{flex:1;min-width:0;display:flex;flex-direction:column}
 .sf-t b{font-size:13px;color:var(--texto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cep-row{display:grid;grid-template-columns:1.2fr 1fr;gap:8px}
+.cep-row input{min-height:44px}
 .sf-t small{font-size:12px}
 .sf-form{display:flex;flex-direction:column;gap:8px;padding:12px 14px 14px;border-top:1px dashed var(--borda)}
 .frete-topo{background:#FFF4E8;border:1px solid #FFD9B3;border-radius:8px;padding:10px 12px;font-size:14px}
@@ -305,7 +307,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
     <aside class="side" id="side" aria-label="Sua sacola">
       <div id="sFrete" class="sf" hidden>
         <button type="button" class="sf-row" id="sfRow" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.7" d="M5 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8 15h5l3-6h3M13 9h-3M10 6h2"/></svg><span class="sf-t"><b id="sfB">Entrega</b><small id="sfS"></small></span><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="m9 6 6 6-6 6"/></svg></button>
-        <form class="sf-form" id="sfForm" hidden novalidate><input type="text" id="sfEnd" maxlength="200" placeholder="Rua, número, bairro, cidade" aria-label="Endereço de entrega" autocomplete="street-address"><button class="btn-frete" type="submit" id="sfBtn">Calcular frete</button></form>
+        <form class="sf-form" id="sfForm" hidden novalidate><div class="cep-row"><input type="text" id="sfCep" inputmode="numeric" maxlength="9" placeholder="CEP" aria-label="CEP" autocomplete="postal-code"><input type="text" id="sfNum" maxlength="10" placeholder="Número" aria-label="Número" autocomplete="off"></div><p class="freteMsg" id="sfMsg" role="status">Digite o CEP e o número, ou o endereço completo.</p><input type="text" id="sfEnd" maxlength="200" placeholder="Rua, número, bairro, cidade" aria-label="Endereço de entrega" autocomplete="street-address"><button class="btn-frete" type="submit" id="sfBtn">Calcular frete</button></form>
       </div>
       <div id="sCarr"></div>
     </aside>
@@ -342,6 +344,9 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
       <label><input type="radio" name="tipo" value="entrega">Entrega</label>
     </fieldset>
     <div id="boxEndereco" hidden>
+      <div class="cep-row"><label>CEP<input type="text" id="cep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="postal-code"></label><label>Número<input type="text" id="numEnd" maxlength="10" placeholder="Ex.: 123" autocomplete="off"></label></div>
+      <p class="freteMsg" id="cepMsg" role="status">Digite o CEP e só falta o número. Ou escreva o endereço completo abaixo.</p>
+      <label>Complemento (opcional, vai junto no pedido)<input type="text" id="compEnd" maxlength="40" placeholder="Apto, bloco, casa 2..." autocomplete="off"></label>
       <label>Endereço de entrega<textarea id="endereco" maxlength="200" placeholder="Rua, número, bairro, cidade"></textarea></label>
       <button class="btn-frete" type="button" id="btnFrete">Calcular frete</button>
       <p class="freteMsg" id="freteMsg" role="status"></p>
@@ -732,6 +737,37 @@ function desenharTotais(){
     ? 'Depois de enviar, você escolhe: pagar agora (Pix ou cartão) ou combinar o pagamento no WhatsApp.'+(ent?(fv!=null?' O frete já está no total.':' Se o frete não for calculado aqui, a gente combina no WhatsApp.'):'')
     : 'O pagamento'+(ent&&fv==null?' e o valor do frete':'')+' a gente combina com você no WhatsApp, depois que você enviar o pedido.';
 }
+/* CEP: busca rua/bairro/cidade (ViaCEP, com BrasilAPI de reserva) e o cliente só digita o número */
+async function buscarCep(d){
+  var urls=[['https://viacep.com.br/ws/'+d+'/json/',function(r){return r&&!r.erro?{rua:r.logradouro,bairro:r.bairro,cidade:r.localidade,uf:r.uf}:null}],
+            ['https://brasilapi.com.br/api/cep/v1/'+d,function(r){return r&&r.city?{rua:r.street,bairro:r.neighborhood,cidade:r.city,uf:r.state}:null}]];
+  for(var i=0;i<urls.length;i++){
+    try{ var ctl=new AbortController(), t=setTimeout(function(){ctl.abort()},6000); var rs=await fetch(urls[i][0],{signal:ctl.signal}); clearTimeout(t);
+      if(rs.status===404||rs.status===400)return null; if(!rs.ok)continue;
+      var o=urls[i][1](await rs.json()); if(o)return o; if(i===0)return null }catch(e){}
+  }
+  return undefined; /* sem resposta: o cliente digita o endereço */
+}
+function ligarCep(o){
+  var st=null;
+  function compor(){ if(!st)return; var n=o.num.value.trim(), c=o.comp?o.comp.value.trim():'';
+    o.out.value=st.rua+(n?', '+n:'')+(st.bairro?', '+st.bairro:'')+', '+st.cidade+' - '+st.uf+', '+st.cep;
+    o.out.dispatchEvent(new Event('input',{bubbles:true})) }
+  o.cep.addEventListener('input',async function(){
+    var d=this.value.replace(/\D/g,'').slice(0,8); this.value=d.length>5?d.slice(0,5)+'-'+d.slice(5):d; st=null;
+    if(d.length<8){ o.msg.textContent=o.dica; return }
+    o.msg.textContent='Buscando o CEP...'; var r=await buscarCep(d);
+    if(this.value.replace(/\D/g,'')!==d)return;
+    if(r===undefined){ o.msg.textContent='Não consegui buscar o CEP agora. Escreva o endereço completo.'; return }
+    if(!r||!r.rua){ o.msg.textContent=r?'Esse CEP não traz a rua. Escreva o endereço completo.':'CEP não encontrado. Confira ou escreva o endereço completo.'; return }
+    st={rua:r.rua,bairro:r.bairro,cidade:r.cidade,uf:r.uf,cep:d.slice(0,5)+'-'+d.slice(5)};
+    o.msg.textContent=r.rua+(r.bairro?' · '+r.bairro:'')+' · '+r.cidade+'/'+r.uf+'. Agora é só o número.'; o.num.focus(); compor();
+  });
+  o.num.addEventListener('input',compor); if(o.comp)o.comp.addEventListener('input',compor);
+  return {semNumero:function(){ return !!st&&!o.num.value.trim() }, limpar:function(){ st=null }};
+}
+var cepCart=ligarCep({cep:$('#cep'),num:$('#numEnd'),comp:$('#compEnd'),msg:$('#cepMsg'),out:$('#endereco'),dica:'Digite o CEP e só falta o número. Ou escreva o endereço completo abaixo.'});
+var cepSide=ligarCep({cep:$('#sfCep'),num:$('#sfNum'),comp:null,msg:$('#sfMsg'),out:$('#sfEnd'),dica:'Digite o CEP e o número, ou o endereço completo.'});
 async function calcularFrete(){
   var end=$('#endereco').value.trim(), msg=$('#freteMsg'), btn=$('#btnFrete');
   if(end.length<8){ msg.textContent='Escreva o endereço completo: rua, número, bairro e cidade.'; return null }
@@ -753,12 +789,13 @@ function desenharFrete(){
 }
 $('#sfRow').addEventListener('click',function(){ var f=$('#sfForm'); f.hidden=!f.hidden; this.setAttribute('aria-expanded',String(!f.hidden)); if(!f.hidden){ if(freteAtual&&freteAtual.endereco&&!$('#sfEnd').value)$('#sfEnd').value=freteAtual.endereco; $('#sfEnd').focus() } });
 $('#sfForm').addEventListener('submit',async function(e){
-  e.preventDefault(); var end=$('#sfEnd').value.trim(); if(!end){$('#sfEnd').focus();return}
+  e.preventDefault(); if(cepSide.semNumero()){ $('#sfMsg').textContent='Falta o número do endereço.'; $('#sfNum').focus(); return }
+  var end=$('#sfEnd').value.trim(); if(!end){$('#sfEnd').focus();return}
   var r=$('input[name="tipo"][value="entrega"]'); r.checked=true; $('#endereco').value=end; freteAtual=null;
   var b=$('#sfBtn'); b.disabled=true; b.textContent='Calculando...';
   desenharCarrinho(); await calcularFrete(); b.disabled=false; b.textContent='Calcular frete'; $('#sfForm').hidden=true; $('#sfRow').setAttribute('aria-expanded','false'); desenharTotais();
 });
-$('#btnFrete').addEventListener('click',calcularFrete);
+$('#btnFrete').addEventListener('click',function(){ if(cepCart.semNumero()){ $('#cepMsg').textContent='Falta o número do endereço.'; $('#numEnd').focus(); return } calcularFrete() });
 $('#endereco').addEventListener('input',function(){ if(freteAtual){freteAtual=null; $('#freteMsg').textContent=''; desenharTotais()} });
 $('#promosLista').addEventListener('click',function(e){
   var b=e.target.closest('[data-promo]'); if(!b)return; var p=(M.promocoes||[])[Number(b.getAttribute('data-promo'))]; if(!p)return;
@@ -954,6 +991,7 @@ async function enviarPedido(){
   if(!carrinho.length)return;
   if(!cliente){ abrirAuth(function(){ abrir($('#dCarrinho')); desenharCarrinho(); enviarPedido() }); return }
   var ent=tipoAtual()==='entrega', end=$('#endereco').value.trim();
+  if(ent&&cepCart.semNumero()){erro.textContent='Falta o número do endereço.';$('#numEnd').focus();return}
   if(ent&&end.length<8){erro.textContent='Informe o endereço de entrega completo.';$('#endereco').focus();return}
   if(ent&&freteOn()){
     if(!freteAtual||freteAtual.endereco!==end){ var f0=await calcularFrete(); if(f0){ erro.textContent=f0.valor!=null?'Frete calculado: '+R(f0.valor)+'. Confira o total e toque em Enviar pedido.':f0.mensagem+(f0.codigo==='fora_da_area'?'':' Toque em Enviar pedido de novo para enviar assim mesmo.'); } return }
@@ -963,7 +1001,7 @@ async function enviarPedido(){
   try{
     var p=await http('/rest/v1/rpc/criar_pedido',{method:'POST',body:{
       p_itens:carrinho.map(function(l){return {id:l.id,qtd:l.qtd,obs:l.obs||'',sel:l.sel||[]}}),
-      p_tipo:ent?'entrega':'retirada', p_endereco:ent?end:null, p_obs:$('#obsGeral').value.trim()||null,
+      p_tipo:ent?'entrega':'retirada', p_endereco:ent?end:null, p_obs:((ent&&$('#compEnd').value.trim()?'Complemento: '+$('#compEnd').value.trim()+'. ':'')+$('#obsGeral').value.trim())||null,
       p_frete_id:(ent&&freteAtual&&freteAtual.id)||null
     }});
     freteAtual=null; $('#freteMsg').textContent=''; desenharFrete();
