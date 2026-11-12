@@ -782,6 +782,11 @@ th{font:600 12px/1 var(--f-body);letter-spacing:0;text-transform:none;color:var(
     });
   }
   window.__logout = function () { clearSession(); location.reload(); };
+  /* o painel do site (aba Site) usa o mesmo login: pede o token por aqui */
+  window.__bpToken = function () {
+    var pre = (session && session.expires_at - Date.now() < 60000) ? refresh().catch(function () {}) : Promise.resolve();
+    return pre.then(function () { return session ? session.access_token : null; });
+  };
 
   /* ---------- HTTP ---------- */
   function http(method, path, body, extra, retried) {
@@ -1270,9 +1275,9 @@ var staffCanPay=function(){return !!(S.cfg&&S.cfg.staffPay)};
 function navHtml(){
   var open=Object.keys(S.open).length,low=lowList().length;
   var st=isStaff();
-  var t=[['comandas','Comandas',open,''],['clientes','Clientes',0,''],['fiado','Fiado',Object.keys(S.fiado||{}).length,'warn'],['cardapio','Cardápio',0,''],['estoque','Estoque',low,'warn'],['caixa','Caixa',0,''],['ajustes','Ajustes',0,'']];
+  var t=[['comandas','Comandas',open,''],['clientes','Clientes',0,''],['fiado','Fiado',Object.keys(S.fiado||{}).length,'warn'],['cardapio','Cardápio',0,''],['estoque','Estoque',low,'warn'],['caixa','Caixa',0,''],['site','Site',0,''],['ajustes','Ajustes',0,'']];
   if(st)t=[t[0]];
-  var IC={fiado:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>',comandas:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',clientes:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3 3 0 010 5.7M18 14.4c1.8.8 3 2.7 3 5.6"/>',cardapio:'<path d="M4 11a8 6 0 0116 0z"/><path d="M3 14.5h18"/><path d="M5 17.5h14a0 0 0 010 0 3 3 0 01-3 3H8a3 3 0 01-3-3z"/>',estoque:'<path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/>',caixa:'<rect x="3" y="6" width="18" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>',ajustes:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',sair:'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>'};
+  var IC={site:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',fiado:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>',comandas:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',clientes:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3 3 0 010 5.7M18 14.4c1.8.8 3 2.7 3 5.6"/>',cardapio:'<path d="M4 11a8 6 0 0116 0z"/><path d="M3 14.5h18"/><path d="M5 17.5h14a0 0 0 010 0 3 3 0 01-3 3H8a3 3 0 01-3-3z"/>',estoque:'<path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/>',caixa:'<rect x="3" y="6" width="18" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>',ajustes:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',sair:'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>'};
   var ico=function(k){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[k]+'</svg>'};
   return t.map(function(x){return '<button type="button" data-act="tab" data-id="'+x[0]+'"'+(S.tab===x[0]?' aria-current="page"':'')+'>'+ico(x[0])+'<span>'+x[1]+'</span>'+(x[2]?'<span class="badge '+x[3]+'">'+x[2]+'</span>':'')+'</button>'}).join('')+(st&&window.__logout?'<button type="button" data-act="logout">'+ico('sair')+'<span>Sair</span></button>':'');
 }
@@ -1615,6 +1620,12 @@ function draw(){
   if(S.dbState==='none'){$('#nav').innerHTML='';v.innerHTML='<div class="empty"><b>Entre na sua conta para usar</b>Comandas, cardápio e estoque ficam guardados na sua conta Claude. Abra esta página logado para continuar.</div>';return}
   if(isStaff()&&S.tab!=='comandas')S.tab='comandas';
   $('#nav').innerHTML=navHtml();
+  var sfr=$('#site-frame');
+  if(S.tab==='site'&&!isStaff()&&S.dbState!=='none'){
+    if(!sfr){sfr=document.createElement('iframe');sfr.id='site-frame';sfr.title='Painel do site';sfr.src='../painel/?embed=1';sfr.style.cssText='display:block;width:100%;border:0;background:var(--bg,#fff)';v.parentNode.insertBefore(sfr,v.nextSibling)}
+    var hh=($('header.top')||{offsetHeight:60}).offsetHeight;sfr.style.height='calc(100dvh - '+hh+'px)';sfr.style.display='block';v.style.display='none';return;
+  }
+  if(sfr)sfr.style.display='none'; v.style.display='';
   if(S.err){v.innerHTML='<div class="empty"><b>Não foi possível carregar os dados</b>Recarregue a página. Se continuar, verifique sua conexão.</div>';return}
   if(!ready()){v.innerHTML='<div class="empty"><b>Carregando</b>Buscando comandas, cardápio e estoque.</div>';return}
   v.innerHTML=({comandas:vComandas,clientes:vClientes,fiado:vFiado,cardapio:vCardapio,estoque:vEstoque,caixa:vCaixa,ajustes:vAjustes})[S.tab]()+(canWrite?'':'<p class="muted" style="margin-top:16px">Modo leitura: você pode ver os dados, mas não alterá-los.</p>');

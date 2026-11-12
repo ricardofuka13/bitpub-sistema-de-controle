@@ -70,6 +70,8 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
 .fi .bt .sec{flex:1;min-width:130px}
 .fi.ocup{opacity:.55;pointer-events:none}
 .aviso{background:#FFF3CD;border:2px solid var(--preto);padding:10px 12px;margin-bottom:12px;font-weight:600}
+.emb #btnSair{display:none}
+.emb body{background:transparent;padding-bottom:96px}
 </style>
 </head>
 <body>
@@ -166,6 +168,9 @@ function mascara(d){d=String(d||'').replace(/\D/g,'');if(d.length===11)return '(
 function quando(iso){return iso?new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'-'}
 
 var SK='bitpub_painel_sessao', mem=null;
+/* modo embutido: aberto dentro do Sistema de Comandas, usa o login dele */
+var EMB=false;try{EMB=/[?&]embed=1/.test(location.search)&&window.parent!==window&&typeof window.parent.__bpToken==='function'}catch(e){}
+if(EMB)document.documentElement.classList.add('emb');
 function lerSessao(){if(mem)return mem;try{var s=JSON.parse(localStorage.getItem(SK)||'null');if(s)mem=s;return s}catch(e){return null}}
 function gravarSessao(s){mem=s;try{if(s)localStorage.setItem(SK,JSON.stringify(s));else localStorage.removeItem(SK)}catch(e){}}
 function montarSessao(d){return {access_token:d.access_token,refresh_token:d.refresh_token,expira:Date.now()+(d.expires_in||3600)*1000}}
@@ -180,6 +185,7 @@ async function http(path,o){
   return data;
 }
 async function sessaoValida(){
+  if(EMB){try{var tk=await window.parent.__bpToken();return tk?{access_token:tk,expira:Date.now()+240000}:null}catch(e){return null}}
   var s=lerSessao();if(!s)return null;if(s.expira-Date.now()>60000)return s;
   try{var d=await http('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:s.refresh_token}});s=montarSessao(d);gravarSessao(s);return s}
   catch(e){gravarSessao(null);return null}
@@ -220,7 +226,7 @@ function tocarSom(get){
   }catch(e){}
 }
 function ctxSom(){var C=window.AudioContext||window.webkitAudioContext;return som||(som=new C())}
-function beep(){tocarSom(ctxSom)}
+function beep(){if(EMB)return;tocarSom(ctxSom)}
 ['pointerdown','keydown'].forEach(function(ev){document.addEventListener(ev,function(){try{var c=ctxSom();if(c.state==='suspended')c.resume()}catch(e){}},{passive:true})});
 async function carregarPedidos(){
   try{
@@ -543,7 +549,7 @@ function iniciar(){
   carregarPedidos();parar();timer=setInterval(function(){if(!document.hidden&&!$('#vPedidos').hidden)carregarPedidos()},15000);
 }
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&lerSessao()&&!$('#vPedidos').hidden){carregarPedidos();document.title='BitPub | Painel de pedidos'}});
-(async function(){ if(lerSessao()&&await ehEquipe())iniciar(); else {gravarSessao(null);$('#telaLogin').hidden=false} })();
+(async function(){ if(EMB){iniciar();return} if(lerSessao()&&await ehEquipe())iniciar(); else {gravarSessao(null);$('#telaLogin').hidden=false} })();
 })();
 </script>
 </body>
