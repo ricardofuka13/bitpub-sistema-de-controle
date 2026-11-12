@@ -1567,15 +1567,21 @@ function mqInner(){
 function vMaq(){var c=S.cfg||{};S.mq={list:machines().map(function(m){return {id:m.id,name:m.name,deb:m.deb||0,cred:m.cred||0}}),act:c.maqAtiva||'',pass:!!c.passFee};return '<div class="card" id="mq-card" style="margin-top:16px">'+mqInner()+'</div>'}
 function syncMq(){var rows=document.querySelectorAll('#mq-card .mq-row');if(!S.mq)return;S.mq.list=[].map.call(rows,function(r,i){var o=S.mq.list[i]||{};return {id:o.id,name:r.querySelector('.mq-n').value.trim(),deb:clampP(parseN(r.querySelector('.mq-d').value)),cred:clampP(parseN(r.querySelector('.mq-c').value))}});var p=$('#mq-pass');if(p)S.mq.pass=p.checked}
 function mqPaint(){var el=$('#mq-card');if(el)el.innerHTML=mqInner()}
+function atendenteApi(body){
+  var C=window.BITPUB_CFG||{};
+  return Promise.resolve(window.__bpToken?window.__bpToken():null).then(function(tk){
+    return fetch(String(C.url||'').replace(/\/+$/,'')+'/functions/v1/atendente',{method:'POST',headers:{'Content-Type':'application/json',apikey:C.key||'',Authorization:'Bearer '+(tk||C.key||'')},body:JSON.stringify(body)})
+  }).then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok||j.erro)throw new Error(j.erro||('Erro '+r.status));return j})});
+}
 function vStaff(){
   if(!window.__logout)return '';
   var c=S.cfg||{},l=c.staff||[];
   return '<div class="card" id="staff-card" style="margin-top:16px"><h3>Acesso da equipe (atendentes)</h3><p class="muted" style="margin-bottom:12px">O atendente entra com o próprio e-mail e vê só a tela de Comandas: lança os pedidos e imprime. Não vê Estoque, Caixa, Cardápio, Clientes nem Ajustes.</p>'+
-  (l.length?l.map(function(e,i){return '<div class="row" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="overflow-wrap:anywhere">'+esc(e)+'</span><button type="button" class="btn sm ghost" data-act="staffdel" data-i="'+i+'">Remover</button></div>'}).join(''):'<p class="muted" style="margin-bottom:8px">Nenhum atendente cadastrado. Quem não está nesta lista tem acesso a tudo.</p>')+
-  '<label style="margin-top:12px">E-mail do atendente<input id="staff-email" type="email" inputmode="email" autocomplete="off" autocapitalize="off" placeholder="atendente@exemplo.com"></label><p class="err" id="staff-e"></p>'+
+  (l.length?l.map(function(e,i){return '<div class="row" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="overflow-wrap:anywhere">'+esc(e)+'</span><span style="display:flex;gap:6px;flex:none"><button type="button" class="btn sm ghost" data-act="staffpw" data-i="'+i+'">Trocar senha</button><button type="button" class="btn sm ghost" data-act="staffdel" data-i="'+i+'">Remover</button></span></div>'}).join(''):'<p class="muted" style="margin-bottom:8px">Nenhum atendente cadastrado. Quem não está nesta lista tem acesso a tudo.</p>')+
+  '<label style="margin-top:12px">E-mail do atendente<input id="staff-email" type="email" inputmode="email" autocomplete="off" autocapitalize="off" placeholder="atendente@exemplo.com"></label><label style="margin-top:8px">Senha do atendente (mínimo 6 caracteres)<input id="staff-pw" type="text" autocomplete="off" autocapitalize="off" placeholder="Crie uma senha e passe para ele"></label><p class="err" id="staff-e"></p>'+
   '<div class="acts" style="margin-bottom:12px"><button type="button" class="btn primary" data-act="staffadd">Adicionar atendente</button></div>'+
   '<label class="toggle"><input type="checkbox" id="staff-pay"'+(c.staffPay?' checked':'')+'>Atendente também pode fechar a conta (receber)</label>'+
-  '<p class="muted" style="margin-top:12px;font-size:13px">Antes, crie o login dele no Supabase: Authentication → Users → Add user → Create new user (e-mail e senha, marque Auto Confirm User). Depois cadastre o mesmo e-mail aqui. Isto esconde as telas; não é uma trava de segurança do banco de dados.</p></div>'}
+  '<p class="muted" style="margin-top:12px;font-size:13px">Ao adicionar, o sistema já cria o login (e-mail e senha) do atendente. Passe o e-mail e a senha para ele entrar nesta mesma página. Isto esconde as telas; não é uma trava de segurança do banco de dados.</p></div>'}
 function vAjustes(){return vAjustes0()+vStaff()+vMaq()+vAjExtra()}
 document.addEventListener('click',function(e){
   var t=e.target;if(!t.closest)return;
@@ -2323,12 +2329,17 @@ document.addEventListener('click',function(e){
     case 'pmdir':window.BTP.setMode('direct');draw();break;
     case 'pmusb':window.BTP.setMode('usb');draw();break;
     case 'goal':openGoal();break;
-    case 'staffadd':{var em=($('#staff-email')||{}).value||'';em=em.trim().toLowerCase();var se=$('#staff-e'),sl=(S.cfg&&S.cfg.staff||[]).slice();
+    case 'staffadd':{var em=($('#staff-email')||{}).value||'';em=em.trim().toLowerCase();var pw=($('#staff-pw')||{}).value||'';var se=$('#staff-e'),sl=(S.cfg&&S.cfg.staff||[]).slice();
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){se.textContent='Digite um e-mail válido.';break}
       if(em===String(window.__userEmail||'').toLowerCase()){se.textContent='Você não pode se colocar como atendente: perderia o acesso às telas de gestão.';break}
-      if(sl.indexOf(em)>=0){se.textContent='Esse e-mail já está na lista.';break}
-      sl.push(em);enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{staff:sl}))}).then(function(){toast('Atendente adicionado');draw()});break}
-    case 'staffdel':{var sl2=(S.cfg&&S.cfg.staff||[]).slice();sl2.splice(+d.i,1);enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{staff:sl2}))}).then(function(){toast('Atendente removido');draw()});break}
+      if(sl.indexOf(em)>=0){se.textContent='Esse e-mail já está na lista. Para mudar a senha, use "Trocar senha".';break}
+      if(pw.length<6){se.textContent='Crie uma senha com pelo menos 6 caracteres.';break}
+      se.textContent='Criando o acesso...';
+      atendenteApi({acao:'criar',email:em,senha:pw}).then(function(){sl.push(em);return enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{staff:sl}))})}).then(function(){toast('Atendente criado. Passe o e-mail e a senha para ele.');draw()}).catch(function(x){var e2=$('#staff-e');if(e2)e2.textContent=x.message||'Não foi possível criar o acesso.'});break}
+    case 'staffpw':{var em3=(S.cfg&&S.cfg.staff||[])[+d.i];if(!em3)break;var np=window.prompt('Nova senha para '+em3+' (mínimo 6 caracteres):');if(np==null)break;if(np.length<6){toast('Senha muito curta (mínimo 6).');break}
+      atendenteApi({acao:'senha',email:em3,senha:np}).then(function(){toast('Senha trocada')}).catch(function(x){toast(x.message||'Não foi possível trocar a senha')});break}
+    case 'staffdel':{var sl2=(S.cfg&&S.cfg.staff||[]).slice();var rem=sl2[+d.i];if(!rem)break;if(!window.confirm('Remover '+rem+'? O login dele será apagado.'))break;
+      atendenteApi({acao:'remover',email:rem}).then(function(){sl2.splice(+d.i,1);return enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{staff:sl2}))})}).then(function(){toast('Atendente removido');draw()}).catch(function(x){toast(x.message||'Não foi possível remover')});break}
     case 'mqadd':syncMq();var nid='m'+Date.now().toString(36);S.mq.list.push({id:nid,name:'',deb:0,cred:0});if(!S.mq.act)S.mq.act=nid;mqPaint();break;
     case 'mqdel':syncMq();S.mq.list.splice(+d.i,1);if(!S.mq.list.some(function(m){return m.id===S.mq.act}))S.mq.act=S.mq.list.length?S.mq.list[0].id:'';mqPaint();break;
     case 'mqon':syncMq();S.mq.act=(S.mq.list[+d.i]||{}).id||'';mqPaint();break;
