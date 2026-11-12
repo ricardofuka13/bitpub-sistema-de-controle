@@ -188,6 +188,34 @@ textarea{min-height:76px;resize:vertical}
 .rod p{margin:0 auto 4px;max-width:1040px;font-weight:600}
 .rod p:first-child{font-weight:700}
 @media(min-width:960px){.rod{padding-bottom:22px}}
+/* ===== janela do produto (limpa e moderna) ===== */
+dialog.prod{padding:0;overflow:hidden;border-radius:20px 20px 0 0;max-height:94dvh;background:#fff}
+@media(min-width:700px){dialog.prod{margin:auto;border-radius:20px;width:min(520px,94vw)}}
+.pd{position:relative;display:flex;flex-direction:column;max-height:94dvh}
+.pd-scroll{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.pd-x{position:absolute;top:12px;right:12px;z-index:3;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.95);box-shadow:0 1px 6px rgba(0,0,0,.25);font-size:24px;line-height:1;color:var(--texto);cursor:pointer}
+.pd-foto{background:#EEE;aspect-ratio:16/10;max-height:300px;overflow:hidden}
+.pd-foto img{width:100%;height:100%;object-fit:cover;display:block;border:0;border-radius:0;max-height:none}
+.pd-corpo{padding:18px 18px 14px;display:flex;flex-direction:column;gap:8px}
+.prod.sem-foto .pd-corpo{padding-top:30px;padding-right:64px}
+.pd-corpo h2{margin:0;font:800 24px/1.2 var(--f-corpo);letter-spacing:0}
+.pd-preco{margin:0;font:800 18px/1 var(--f-corpo);color:var(--ok)}
+.pd-corpo .opc-sub{font-size:15px;line-height:1.5;color:var(--suave);white-space:pre-line}
+.pd-corpo .opc-turbo{background:#FFF4E8;border:1px solid #FFD9B3;color:#8A4B00;border-radius:10px;font-size:13px;font-weight:600;padding:9px 12px}
+.prod .opc-g{gap:0;margin:0}
+.prod .opc-g legend{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;box-sizing:border-box;background:#F4F4F5;padding:12px 18px;margin:0;font:600 14px var(--f-corpo)}
+.prod .opc-g legend b{font:800 16px/1.2 var(--f-corpo);color:var(--texto)}
+.prod .opc-g legend small{background:#E3E3E6;color:#55555C;border-radius:999px;padding:3px 10px;font:700 12px var(--f-corpo);white-space:nowrap}
+.prod .opc-g legend small.obr{background:var(--preto);color:#fff}
+.prod .opc-o{border:0;border-bottom:1px solid #EEE;border-radius:0;padding:14px 18px;min-height:54px;font-weight:600;gap:14px;background:#fff;box-shadow:none}
+.prod .opc-o .n{order:1;flex:1}.prod .opc-o .p{order:2;color:#5A5A62;font-weight:700;font-size:14px}.prod .opc-o input{order:3;margin:0}
+.prod .opc-o:has(input:checked){background:#FFF7EF;border-color:#EEE;box-shadow:inset 4px 0 0 var(--laranja)}
+.prod .opc-o input{width:22px;height:22px}
+.prod .erro{padding:0 18px;margin:8px 0 0}
+.prod .opc-rod{border-top:1px solid var(--borda);padding:12px 18px calc(12px + env(safe-area-inset-bottom));background:#fff;position:static;gap:12px}
+.prod .opc-rod .principal{min-height:50px;font-size:16px;font-weight:800;border-radius:12px;white-space:nowrap;padding:0 10px}
+.prod .qtd{border-radius:12px}.prod .qtd button{min-height:48px;width:38px}.prod .qtd output{min-height:48px}
+.item{cursor:pointer}
 /* ===== tema 2: layout de loja (barra superior, capa, cartões) ===== */
 :root{--fundo:#F4F4F5;--borda:#E3E3E6;--raio:10px}
 body{background:var(--fundo)}
@@ -365,14 +393,20 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
 </dialog>
 
 <!-- opções do item (bebida e adicionais) -->
-<dialog id="dOpc" aria-labelledby="tOpc">
-  <div class="d-in">
-    <div class="d-topo"><h2 id="tOpc">Item</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
-    <img class="opc-foto" id="opcFoto" alt="" hidden>
-    <p class="opc-sub" id="opcDesc"></p>
-    <p class="opc-turbo" id="opcTurbo" hidden>&#9889; Turbine seu pedido: bebida, batata e adicionais com pre&ccedil;o especial para pedir junto.</p>
-    <div id="opcGrupos" style="display:flex;flex-direction:column;gap:16px"></div>
-    <p class="erro" id="opcErro" role="alert"></p>
+<dialog id="dOpc" class="prod" aria-labelledby="tOpc">
+  <div class="pd">
+    <button class="pd-x" type="button" data-fechar aria-label="Fechar">&times;</button>
+    <div class="pd-scroll">
+      <div class="pd-foto" id="opcFotoBox" hidden><img id="opcFoto" alt=""></div>
+      <div class="pd-corpo">
+        <h2 id="tOpc">Item</h2>
+        <p class="pd-preco" id="opcPreco"></p>
+        <p class="opc-sub" id="opcDesc"></p>
+        <p class="opc-turbo" id="opcTurbo" hidden>&#9889; Turbine seu pedido: bebida, batata e adicionais com pre&ccedil;o especial.</p>
+      </div>
+      <div id="opcGrupos"></div>
+      <p class="erro" id="opcErro" role="alert"></p>
+    </div>
     <div class="opc-rod">
       <div class="qtd"><button type="button" id="opcMenos" aria-label="Menos um">&minus;</button><output id="opcQtd" aria-live="polite">1</output><button type="button" id="opcMais" aria-label="Mais um">+</button></div>
       <button class="principal" type="button" id="opcAdd">Adicionar</button>
@@ -620,7 +654,7 @@ $('#menu').addEventListener('click',function(e){
   var o=e.target.closest('[data-opc]');
   if(o){ abrirOpcoes(o.getAttribute('data-opc')); return }
   var card=e.target.closest('.item');
-  if(card&&temOpc(itemDe(card.getAttribute('data-id')))&&!e.target.closest('button,a,input'))abrirOpcoes(card.getAttribute('data-id'));
+  if(card&&!e.target.closest('button,a,input,.qtd'))abrirOpcoes(card.getAttribute('data-id'));
 });
 
 /* ---------- janela de opções (bebida, adicionais...) ---------- */
@@ -648,11 +682,12 @@ function opcAtualizar(){
 }
 function abrirOpcoes(id){
   var it=itemDe(id); if(!it)return;
-  opcItem=it; opcQtd=1; $('#opcErro').textContent='';
+  it.opcoes=it.opcoes||[]; opcItem=it; opcQtd=1; $('#opcErro').textContent='';
   $('#tOpc').textContent=it.nome;
   $('#opcDesc').textContent=it.desc||''; $('#opcDesc').hidden=!it.desc;
   var foto=/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(it.foto||'')?it.foto:'';
-  var im=$('#opcFoto'); if(foto){im.src=foto;im.alt='Foto de '+it.nome;im.hidden=false}else{im.removeAttribute('src');im.hidden=true}
+  var im=$('#opcFoto'); if(foto){im.src=foto;im.alt='Foto de '+it.nome;$('#opcFotoBox').hidden=false}else{im.removeAttribute('src');$('#opcFotoBox').hidden=true}
+  $('#dOpc').classList.toggle('sem-foto',!foto); $('#opcPreco').textContent=(temOpc(it)?'A partir de ':'')+R(it.preco);
   $('#opcGrupos').innerHTML=it.opcoes.map(function(g,gi){
     var multi=(g.max||1)>1, nome='og'+gi;
     var tag=g.req?'<small class="obr">Obrigatório</small>':'<small>'+(multi?'Opcional · até '+g.max:'Opcional')+'</small>';
@@ -660,11 +695,11 @@ function abrirOpcoes(id){
       g.opts.map(function(o,oi){
         return '<label class="opc-o"><input type="'+(multi?'checkbox':'radio')+'" name="'+nome+'" value="'+oi+'"><span class="n">'+esc(o.name)+'</span>'+(Number(o.price)>0?'<span class="p">+ '+R(o.price)+'</span>':'')+'</label>';
       }).join('');
-    return '<fieldset class="opc-g" data-g="'+gi+'"><legend>'+esc(g.label||'Escolha')+' '+tag+'</legend>'+linhas+'</fieldset>';
+    return '<fieldset class="opc-g" data-g="'+gi+'"><legend><b>'+esc(g.label||'Escolha')+'</b> '+tag+'</legend>'+linhas+'</fieldset>';
   }).join('');
-  $('#opcTurbo').hidden=!it.opcoes.some(function(g){return !g.req});
+  $('#opcTurbo').hidden=!(temOpc(it)&&it.opcoes.some(function(g){return !g.req}));
   opcAtualizar(); abrir($('#dOpc'));
-  $('#dOpc').scrollTop=0;
+  $('#dOpc .pd-scroll').scrollTop=0;
 }
 $('#opcGrupos').addEventListener('change',opcAtualizar);
 $('#opcMenos').addEventListener('click',function(){ opcQtd=Math.max(1,opcQtd-1); opcAtualizar() });
@@ -673,7 +708,7 @@ $('#opcAdd').addEventListener('click',function(){
   var it=opcItem; if(!it)return;
   var sel=opcSel().sort(function(a,b){return a[0]-b[0]||a[1]-b[1]}), p=precoComOpcoes(it,sel);
   if(p==null){ $('#opcErro').textContent='Escolha as opções obrigatórias.'; return }
-  var key=it.id+'|'+sel.map(function(x){return x[0]+'.'+x[1]}).join(',');
+  var key=temOpc(it)?it.id+'|'+sel.map(function(x){return x[0]+'.'+x[1]}).join(','):it.id;
   var l=linha(key);
   if(l)l.qtd=Math.min(50,l.qtd+opcQtd);
   else carrinho.push({key:key,id:it.id,nome:it.nome,preco:p,qtd:opcQtd,obs:'',sel:sel,ops:nomesOpc(it,sel)});
