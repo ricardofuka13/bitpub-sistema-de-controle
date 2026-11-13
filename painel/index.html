@@ -181,7 +181,7 @@ async function http(path,o){
   if(o.prefer)h.Prefer=o.prefer;
   var r=await fetch(CFG.url+path,{method:o.method||'GET',headers:h,body:o.body?JSON.stringify(o.body):undefined});
   var t=await r.text(),data=null;try{data=t?JSON.parse(t):null}catch(e){}
-  if(!r.ok){var er=new Error((data&&(data.message||data.error_description||data.msg))||('http '+r.status));er.status=r.status;throw er}
+  if(!r.ok){var er=new Error((data&&(data.erro||data.message||data.error_description||data.msg))||('http '+r.status));er.status=r.status;throw er}
   return data;
 }
 async function sessaoValida(){
@@ -315,14 +315,31 @@ function desenharClientes(){
 }
 $('#busca').addEventListener('input',desenharClientes);
 $('#listaClientes').addEventListener('click',async function(e){
+  var ns=e.target.closest('[data-nsenha]');
+  if(ns){
+    var bx=ns.closest('.cli'),cid=bx.getAttribute('data-id'),cl=clientes.find(function(c){return c.id===cid}),res=bx.querySelector('.nsenha-res');
+    if(!cl)return;
+    if(!window.confirm('Gerar uma nova senha para '+cl.nome+'? A senha antiga deixa de funcionar.'))return;
+    ns.disabled=true;res.innerHTML='<p class="mini">Gerando...</p>';
+    try{
+      var tk=CFG.key,s=await sessaoValida();if(s)tk=s.access_token;
+      var r=await fetch(CFG.url+'/functions/v1/cliente-senha',{method:'POST',headers:{apikey:CFG.key,'Content-Type':'application/json',Authorization:'Bearer '+tk},body:JSON.stringify({cliente_id:cid})});
+      var j=await r.json().catch(function(){return {}});
+      if(!r.ok||!j.senha)throw new Error(j.erro||('Erro '+r.status));
+      var msg='Olá, '+cl.nome.split(' ')[0]+'! Sua nova senha para pedir no site da BitPub é: '+j.senha+' . Entre em https://bitpub.app.br com o seu WhatsApp e essa senha.';
+      res.innerHTML='<p style="margin:8px 0 6px">Nova senha: <b style="font-size:20px;letter-spacing:2px">'+esc(j.senha)+'</b></p><a class="sec" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/55'+esc(cl.whatsapp)+'?text='+encodeURIComponent(msg)+'">Enviar pelo WhatsApp do cliente</a><p class="mini" style="margin-top:6px">A senha antiga já não funciona. Anote ou envie agora: esta senha não fica salva em nenhum lugar.</p>';
+    }catch(er){res.innerHTML='<p class="erro">'+esc(er.message)+'</p>'}
+    ns.disabled=false;return;
+  }
   var b=e.target.closest('.cli>button');if(!b)return;
   var box=b.parentNode,det=box.querySelector('.det'),abrir=det.hidden;
   b.setAttribute('aria-expanded',String(abrir));det.hidden=!abrir;
   if(!abrir)return;
   det.innerHTML='<p class="mini">Carregando...</p>';
+  var NS='<div class="nsenha" style="margin:10px 0"><button type="button" class="sec" data-nsenha>Nova senha (cliente esqueceu)</button><div class="nsenha-res" role="status"></div></div>';
   try{
     var ps=await http('/rest/v1/pedidos_online?select=numero,itens,total,tipo,status,criado_em&cliente_id=eq.'+box.getAttribute('data-id')+'&order=criado_em.desc&limit=50');
-    det.innerHTML=ps.length?ps.map(function(p){return '<p style="margin:10px 0 0"><b>#'+p.numero+'</b> &middot; '+quando(p.criado_em)+' &middot; '+ROT[p.status]+' &middot; '+R(p.total)+'<br><span class="mini">'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?' (+ '+i.opcoes.map(function(o){return esc(o.nome)}).join(', ')+')':'')}).join(', ')+'</span></p>'}).join(''):'<p class="mini">Ainda sem pedidos.</p>';
+    det.innerHTML=NS+(ps.length?ps.map(function(p){return '<p style="margin:10px 0 0"><b>#'+p.numero+'</b> &middot; '+quando(p.criado_em)+' &middot; '+ROT[p.status]+' &middot; '+R(p.total)+'<br><span class="mini">'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?' (+ '+i.opcoes.map(function(o){return esc(o.nome)}).join(', ')+')':'')}).join(', ')+'</span></p>'}).join(''):'<p class="mini">Ainda sem pedidos.</p>');
   }catch(er){det.innerHTML='<p class="erro">'+esc(er.message)+'</p>'}
 });
 
