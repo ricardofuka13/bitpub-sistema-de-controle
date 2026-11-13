@@ -218,6 +218,8 @@ dialog.prod{padding:0;overflow:hidden;border-radius:20px 20px 0 0;max-height:94d
 .prod .opc-rod .principal{min-height:50px;font-size:16px;font-weight:800;border-radius:12px;white-space:nowrap;padding:0 10px}
 .prod .qtd{border-radius:12px}.prod .qtd button{min-height:48px;width:38px}.prod .qtd output{min-height:48px}
 .item{cursor:pointer}
+.fechado-b{background:#B3261E;color:#fff;padding:10px 14px;text-align:center;font-weight:700;font-size:14px;line-height:1.35}
+body.fechado .add,body.fechado .sac-btn.on,body.fechado .barra button{opacity:.55}
 /* ===== tema 2: layout de loja (barra superior, capa, cartões) ===== */
 :root{--fundo:#F4F4F5;--borda:#E3E3E6;--raio:10px}
 body{background:var(--fundo)}
@@ -316,6 +318,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
 </head>
 <body>
 
+<div class="fechado-b" id="avisoFechado" role="status" hidden></div>
 <nav class="top" aria-label="Principal"><div class="top-in">
   <a href="#topo" class="on" id="navIni"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3 2 12h3v8h5v-6h4v6h5v-8h3z"/></svg>Início</a>
   <button type="button" id="navPromo"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0zM9 15l6-6M9.5 9.5h.01M14.5 14.5h.01"/></svg>Promoções</button>
@@ -541,6 +544,7 @@ function textoErro(e){
     'opcao_invalida':'Uma opção escolhida mudou. Atualize a página e monte o pedido de novo.',
     'quantidade_invalida':'Confira as quantidades do pedido.',
     'itens_invalidos':'Seu pedido está vazio.',
+    'loja_fechada':'Estamos fechados agora. Tente de novo no horário de funcionamento.',
     'muitos_pedidos':'Você já enviou vários pedidos agora há pouco. Chame a gente no WhatsApp.'
   };
   for(var k in mapa){ if(m.indexOf(k)>-1)return mapa[k] }
@@ -578,7 +582,7 @@ function qtdTotal(){ return carrinho.reduce(function(s,i){return s+i.qtd},0) }
 async function carregarMenu(){
   try{
     var d=await http('/rest/v1/rpc/cardapio_publico',{method:'POST',auth:false,body:{}});
-    M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',rodape:d.rodape||null,frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
+    M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',rodape:d.rodape||null,horarios:d.horarios||null,modo:d.modo_loja||'auto',msgFechado:d.msg_fechado||'',frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
     BTC_ON=d.bitcoin===true; BTC_DESC=Number(d.bitcoin_desconto)||0;
     try{localStorage.setItem('bitpub_site_menu',JSON.stringify(M))}catch(e){}
   }catch(e){
@@ -646,7 +650,43 @@ function acaoItem(id){
                    : '<button class="add" type="button" data-mais="1">Adicionar</button>';
 }
 /* muda a quantidade de uma linha do pedido (key). Itens sem opções usam key = id */
+/* ---- loja aberta/fechada (horário de Brasília) ---- */
+function agoraSP(){
+  var o={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date()).forEach(function(x){o[x.type]=x.value});
+  return {dow:{Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[o.weekday],min:(+o.hour%24)*60+(+o.minute)};
+}
+function minDe(h){var a=String(h).split(':');return (+a[0])*60+(+a[1])}
+function lojaAberta(){
+  if(M.modo==='aberta')return true; if(M.modo==='fechada')return false;
+  var H=M.horarios; if(!H||!Object.keys(H).length)return true;
+  var n=agoraSP(),hj=H[n.dow],on=false;
+  if(hj){var a=minDe(hj[0]),f=minDe(hj[1]); if(a<f){if(n.min>=a&&n.min<f)on=true}else if(n.min>=a)on=true}
+  var ont=H[(n.dow+6)%7]; if(ont){var a2=minDe(ont[0]),f2=minDe(ont[1]); if(f2<a2&&n.min<f2)on=true}
+  return on;
+}
+function proximaAbertura(){
+  var H=M.horarios; if(!H||M.modo==='fechada')return '';
+  var n=agoraSP(),nomes=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+  for(var i=0;i<=7;i++){var d=(n.dow+i)%7,w=H[d]; if(!w)continue; if(i===0&&minDe(w[0])<=n.min)continue;
+    return (i===0?'hoje':i===1?'amanhã':nomes[d])+' às '+String(w[0]).slice(0,5)}
+  return '';
+}
+function fechadoMsg(){
+  if(lojaAberta())return '';
+  var p=proximaAbertura();
+  return 'Estamos fechados agora.'+(p?' Abrimos '+p+'.':'')+(M.msgFechado?' '+M.msgFechado:'');
+}
+function atualizarStatusLoja(){
+  var m=fechadoMsg(), b=$('#avisoFechado');
+  document.body.classList.toggle('fechado',!!m);
+  if(b){ b.hidden=!m; b.textContent=m?'🔴 '+m+' Você pode olhar o cardápio, mas só dá para pedir quando abrirmos.':'' }
+  var e=$('#btnEnviar'); if(e)e.disabled=!!m;
+  var er=$('#erroPedido'); if(er&&m&&$('#dCarrinho').open)er.textContent=m;
+}
+setInterval(atualizarStatusLoja,60000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)atualizarStatusLoja()});
 function mudar(key,delta){
+  if(delta>0&&fechadoMsg()){toast(fechadoMsg());return}
   var l=linha(key);
   if(!l){
     var it=String(key).indexOf('promo:')===0?(function(){var q=promoDe(key);return q&&q.preco_por!=null?{nome:q.titulo,preco:Number(q.preco_por)}:null})():itemDe(key);
@@ -715,6 +755,7 @@ $('#opcGrupos').addEventListener('change',opcAtualizar);
 $('#opcMenos').addEventListener('click',function(){ opcQtd=Math.max(1,opcQtd-1); opcAtualizar() });
 $('#opcMais').addEventListener('click',function(){ opcQtd=Math.min(50,opcQtd+1); opcAtualizar() });
 $('#opcAdd').addEventListener('click',function(){
+  if(fechadoMsg()){$('#opcErro').textContent=fechadoMsg();return}
   var it=opcItem; if(!it)return;
   var sel=opcSel().sort(function(a,b){return a[0]-b[0]||a[1]-b[1]}), p=precoComOpcoes(it,sel);
   if(p==null){ $('#opcErro').textContent='Escolha as opções obrigatórias.'; return }
@@ -735,7 +776,7 @@ function desenharSide(){
   $('#btnCarrinho2').addEventListener('click',function(){desenharCarrinho();abrir($('#dCarrinho'))});
 }
 function atualizarBarra(){
-  desenharSide(); desenharFrete();
+  desenharSide(); desenharFrete(); atualizarStatusLoja();
   var n=qtdTotal(); $('#barra').hidden=n===0;
   $('#barraN').textContent=n; $('#barraTotal').textContent=R(totalCarrinho());
 }
@@ -860,6 +901,7 @@ $('#promosLista').addEventListener('click',function(e){
   abrir($('#dPromo'));
 });
 $('#promoAdd').addEventListener('click',function(){
+  if(fechadoMsg()){toast(fechadoMsg());return}
   var key=this.getAttribute('data-key'); mudar(key,1); $('#dPromo').close();
   toast('Adicionado à sacola: '+R(totalCarrinho())+' no total');
 });
@@ -1062,6 +1104,7 @@ $('#listaPedidos').addEventListener('click',function(e){var b=e.target.closest('
 var enviando=false;
 async function enviarPedido(){
   var erro=$('#erroPedido'); erro.textContent='';
+  if(fechadoMsg()){erro.textContent=fechadoMsg();atualizarStatusLoja();return}
   if(!carrinho.length)return;
   if(!cliente){ abrirAuth(function(){ abrir($('#dCarrinho')); desenharCarrinho(); enviarPedido() }); return }
   var ent=tipoAtual()==='entrega', end=$('#endereco').value.trim();

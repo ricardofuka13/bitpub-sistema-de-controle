@@ -119,7 +119,12 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
       <form id="formLoja" style="display:flex;flex-direction:column;gap:14px;max-width:640px" novalidate>
         <h2 class="cat" style="margin-top:0">Informações do site</h2>
         <label>Endereço da loja<input type="text" id="lEnd" maxlength="160" placeholder="Rua, número, bairro, cidade"></label>
-        <label>Horário de funcionamento<textarea id="lHor" rows="3" maxlength="400" placeholder="Ex.: Seg a Sex, 18h às 23h&#10;Sáb e Dom, 17h às 00h"></textarea></label>
+        <h2 class="cat">Abrir e fechar a loja (bloqueia pedidos)</h2>
+        <label>Estado da loja<select id="lModo" style="min-height:44px;border:2px solid var(--preto);background:#fff;padding:6px"><option value="auto">Automático: segue os horários abaixo</option><option value="aberta">Forçar ABERTA agora (ignora o horário)</option><option value="fechada">Forçar FECHADA agora (não recebe pedidos)</option></select></label>
+        <div id="lHorarios" role="group" aria-label="Horário por dia da semana"></div>
+        <p class="mini" style="margin:-4px 0 0">Marque os dias em que abre e o horário. Se fechar depois da meia-noite (ex.: 18:00 até 01:00), funciona normal. Se nenhum dia estiver marcado, a loja fica sempre aberta. Fora do horário o site avisa o cliente e não deixa enviar pedido. Horário de Brasília.</p>
+        <label>Mensagem quando estiver fechada (opcional)<input type="text" id="lMsgF" maxlength="160" placeholder="Ex.: Voltamos às 18h. Faça seu pedido depois!"></label>
+        <label>Horário de funcionamento (texto que aparece no site)<textarea id="lHor" rows="3" maxlength="400" placeholder="Ex.: Seg a Sex, 18h às 23h&#10;Sáb e Dom, 17h às 00h"></textarea></label>
         <label>Outras informações<textarea id="lInfo" rows="4" maxlength="600" placeholder="Ex.: Aceitamos Pix e cartão. Entregamos em Suzano e região."></textarea></label>
         <h2 class="cat">Rodapé do site (dados da empresa)</h2>
         <label>Razão social ou nome da empresa<input type="text" id="lRazao" maxlength="120" placeholder="Ex.: BitPub Hamburgueria e Pub LTDA"></label>
@@ -436,6 +441,7 @@ function pintarCab(){var i=$('#lCab');if(cabUrl){i.src=cabUrl;i.hidden=false}els
 async function carregarLoja(){
   try{
     var c=(await http('/rest/v1/site_config?id=eq.1&select=*'))[0]||{};
+    $('#lModo').value=c.modo_loja||'auto';$('#lMsgF').value=c.msg_fechado||'';desenharHorarios(c.horarios);
     $('#lRazao').value=c.rodape_razao||'';$('#lCnpj').value=c.rodape_cnpj||'';$('#lRodExtra').value=c.rodape_extra||'';$('#lEnd').value=c.endereco||'';$('#lHor').value=c.horario||'';$('#lInfo').value=c.info||'';cabUrl=c.cabecalho_foto||'';pintarCab();
     $('#lFreteOn').checked=c.frete_ativo!==false;$('#lLn').value=c.lightning_address||'';$('#lDescBtc').value=c.desconto_btc>0?c.desconto_btc:'';$('#lLoja').value=c.loja_endereco||'';lojaOrig=c.loja_endereco||'';$('#lMax').value=c.frete_max_km!=null?c.frete_max_km:8;
     $('#lFaixas').innerHTML=(c.frete_faixas||[]).map(function(f){return linhaFaixa(f.ate_km,f.valor)}).join('');
@@ -466,7 +472,10 @@ $('#formLoja').addEventListener('submit',async function(e){
   if(!(dsc>=0&&dsc<=50)){er.textContent='O desconto em Bitcoin deve ficar entre 0 e 50%.';return}
   var cnpj=$('#lCnpj').value.trim();var dg=cnpj.replace(/\D/g,'');if(cnpj&&dg.length!==14){er.textContent='CNPJ inválido: precisa ter 14 números.';return}
   if(dg.length===14)cnpj=dg.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5');
-  var body={rodape_razao:$('#lRazao').value.trim()||null,rodape_cnpj:cnpj||null,rodape_extra:$('#lRodExtra').value.trim()||null,desconto_btc:dsc,lightning_address:ln||null,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
+  var hr={},dias=$$('#lHorarios .hrow'),hErr='';
+  dias.forEach(function(r){var d=r.getAttribute('data-d');if(!r.querySelector('input[type=checkbox]').checked)return;var a=r.querySelector('[data-a]').value,f=r.querySelector('[data-f]').value;if(!a||!f||a===f){hErr='Confira o horário de '+r.getAttribute('data-nome')+': abre e fecha precisam ser diferentes.'}else hr[d]=[a,f]});
+  if(hErr){er.textContent=hErr;return}
+  var body={horarios:Object.keys(hr).length?hr:null,modo_loja:$('#lModo').value,msg_fechado:$('#lMsgF').value.trim()||null,rodape_razao:$('#lRazao').value.trim()||null,rodape_cnpj:cnpj||null,rodape_extra:$('#lRodExtra').value.trim()||null,desconto_btc:dsc,lightning_address:ln||null,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
     frete_ativo:on,frete_max_km:max>0?max:8,frete_faixas:faixas,loja_endereco:$('#lLoja').value.trim()||null,atualizado_em:new Date().toISOString()};
   if(body.loja_endereco!==lojaOrig){body.loja_lat=null;body.loja_lng=null}
   var btn=$('#formLoja button[type=submit]');btn.disabled=true;
@@ -489,6 +498,12 @@ function desenharPromos(){
       '<div><b>'+esc(p.titulo)+'</b> <span class="sel '+(p.ativa&&!venc?'entregue':'cancelado')+'">'+(venc?'Vencida':p.ativa?'No ar':'Pausada')+'</span><br><span class="mini">'+esc(p.descricao||'')+'</span>'+(p.preco_por!=null?'<br><span class="mini">'+(p.preco_de!=null?'De R$ '+Number(p.preco_de).toFixed(2).replace('.',',')+' por ':'Por ')+'<b>R$ '+Number(p.preco_por).toFixed(2).replace('.',',')+'</b></span>':'')+((p.inclui&&p.inclui.length)?'<br><span class="mini">Inclui (baixa estoque): '+p.inclui.map(function(x){var m=menuLista.find(function(y){return y.id===x.id});return x.qtd+'x '+esc(m?m.nome:'item removido')}).join(', ')+'</span>':'')+(p.validade?'<br><span class="mini">Vale até '+p.validade.split('-').reverse().join('/')+'</span>':'')+'</div>'+
       '<div class="bt"><button class="sec" type="button" data-edit>Editar</button><button class="sec" type="button" data-tog>'+(p.ativa?'Pausar':'Pôr no ar')+'</button><button class="sec" type="button" data-del>Excluir</button></div></div>';
   }).join(''):'<p class="vazio">Nenhuma promoção cadastrada.</p>';
+}
+var DIAS_SEM=[[1,'Segunda'],[2,'Terça'],[3,'Quarta'],[4,'Quinta'],[5,'Sexta'],[6,'Sábado'],[0,'Domingo']];
+function desenharHorarios(h){
+  h=h||{};
+  $('#lHorarios').innerHTML=DIAS_SEM.map(function(x){var v=h[String(x[0])],on=Array.isArray(v);
+    return '<div class="hrow" data-d="'+x[0]+'" data-nome="'+x[1]+'" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><label style="display:flex;flex-direction:row;align-items:center;gap:6px;min-width:110px;margin:0"><input type="checkbox"'+(on?' checked':'')+'> '+x[1]+'</label><input type="time" data-a value="'+(on?v[0].slice(0,5):'18:00')+'" aria-label="Abre '+x[1]+'" style="width:120px"><span>até</span><input type="time" data-f value="'+(on?v[1].slice(0,5):'23:30')+'" aria-label="Fecha '+x[1]+'" style="width:120px"></div>'}).join('');
 }
 function incHtml(){
   var opts=function(sel){return '<option value="">Escolha um item</option>'+menuLista.map(function(m){return '<option value="'+esc(m.id)+'"'+(m.id===sel?' selected':'')+'>'+esc(m.nome)+(m.cat?' ('+esc(m.cat)+')':'')+'</option>'}).join('')};
