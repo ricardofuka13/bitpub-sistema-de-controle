@@ -434,7 +434,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
     <label>Senha<input type="password" id="aSenha" autocomplete="current-password" minlength="6" placeholder="Mínimo de 6 caracteres"></label>
     <p class="erro" id="erroAuth" role="alert"></p>
     <button class="principal" type="submit" id="btnAuth">Entrar</button>
-    <p class="vazio" style="padding:0;font-size:14px">Esqueceu a senha? Chame a gente no WhatsApp que a gente troca para você.</p>
+    <p class="vazio" style="padding:0;font-size:14px">Esqueceu a senha? <a href="https://wa.me/5511917846050?text=Ol%C3%A1!%20Esqueci%20minha%20senha%20do%20site%20de%20pedidos." target="_blank" rel="noopener">Chame a gente no WhatsApp</a> que a gente envia uma nova para você.</p>
   </form>
 </dialog>
 
@@ -444,6 +444,14 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
     <div class="d-topo"><h2 id="tConta">Meus pedidos</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
     <div id="resumoCli"></div>
     <div id="listaPedidos" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button class="secundario" type="button" id="btnTrocaSenha" aria-expanded="false">Trocar minha senha</button>
+    <form id="fSenha" hidden novalidate style="display:none;flex-direction:column;gap:10px">
+      <label>Senha atual<input type="password" id="sAtual" autocomplete="current-password"></label>
+      <label>Nova senha (mínimo 6 caracteres)<input type="password" id="sNova" autocomplete="new-password" minlength="6" maxlength="72"></label>
+      <label>Repita a nova senha<input type="password" id="sNova2" autocomplete="new-password" maxlength="72"></label>
+      <p class="erro" id="erroSenha" role="alert"></p>
+      <button class="principal" type="submit" id="btnSalvaSenha">Salvar nova senha</button>
+    </form>
     <button class="secundario" type="button" id="btnSair">Sair da conta</button>
   </div>
 </dialog>
@@ -938,6 +946,27 @@ $('#formAuth').addEventListener('submit',async function(e){
 });
 
 var STATUS={novo:'Recebido',aceito:'Aceito',pronto:'Pronto',entregue:'Entregue',cancelado:'Cancelado'};
+$('#btnTrocaSenha').addEventListener('click',function(){
+  var f=$('#fSenha'), ab=f.style.display==='none';
+  f.hidden=!ab; f.style.display=ab?'flex':'none'; this.setAttribute('aria-expanded',String(ab)); $('#erroSenha').textContent='';
+  if(ab){ $('#sAtual').focus() }
+});
+$('#fSenha').addEventListener('submit',async function(e){
+  e.preventDefault(); var er=$('#erroSenha'), at=$('#sAtual').value, n1=$('#sNova').value, n2=$('#sNova2').value;
+  er.className='erro';
+  if(!at){er.textContent='Digite a senha atual.';return}
+  if(n1.length<6){er.textContent='A nova senha precisa ter pelo menos 6 caracteres.';return}
+  if(n1!==n2){er.textContent='As duas senhas novas não são iguais.';return}
+  if(n1===at){er.textContent='A nova senha precisa ser diferente da atual.';return}
+  var b=$('#btnSalvaSenha'); b.disabled=true; b.textContent='Salvando...';
+  try{
+    await entrar(cliente.whatsapp,at);
+    await http('/auth/v1/user',{method:'PUT',body:{password:n1}});
+    this.reset(); this.hidden=true; this.style.display='none'; $('#btnTrocaSenha').setAttribute('aria-expanded','false');
+    toast('Senha trocada com sucesso');
+  }catch(x){ er.textContent=(x&&/Invalid login/i.test(x.message))?'A senha atual está incorreta.':(/same|different/i.test(String(x&&x.message))?'A nova senha precisa ser diferente da atual.':textoErro(x)) }
+  b.disabled=false; b.textContent='Salvar nova senha';
+});
 async function abrirConta(){
   abrir($('#dConta'));
   $('#resumoCli').innerHTML=''; $('#listaPedidos').innerHTML='<p class="vazio">Carregando...</p>';
