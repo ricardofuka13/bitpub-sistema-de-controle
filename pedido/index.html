@@ -314,11 +314,33 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
 .sac-btn{width:100%;min-height:46px;border:0;border-radius:8px;background:#BFE2C6;color:#fff;font-weight:800;font-size:15px;cursor:not-allowed}
 .sac-btn.on{background:var(--laranja);cursor:pointer}
 .sac-btn.on:hover{background:var(--laranja-escuro)}
+.track-b{display:block;width:100%;border:0;background:#1B7F3B;color:#fff;padding:10px 14px;text-align:center;font:700 14px/1.35 inherit;font-family:inherit;cursor:pointer}
+.barra-g{border-radius:10px;background:#FFF4E5;border:1px solid #F2C27B;padding:10px 12px;font-size:14px;font-weight:700;line-height:1.35}
+.barra-g.min{background:#FDECEA;border-color:#E8A29C;color:#8A1C14}
+.barra-g.ok{background:#E8F5EC;border-color:#9CD1AB;color:#14552A}
+.prog{height:8px;border-radius:6px;background:#EAD9BF;margin-top:7px;overflow:hidden}.prog i{display:block;height:100%;background:var(--laranja,#F60);border-radius:6px;transition:width .3s}
+.agenda{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.agenda select{width:100%;min-height:46px;font:inherit;border:1px solid var(--borda,#ccc);border-radius:8px;padding:0 10px;background:#fff}
+.totais .t.fid{color:#14552A;font-weight:700}
+.passos{display:flex;gap:4px;margin:6px 0 2px}
+.passos span{flex:1;text-align:center;font-size:11px;font-weight:700;color:#8a8a8a;border-top:4px solid #ddd;padding-top:4px;line-height:1.2}
+.passos span.on{color:#1B7F3B;border-top-color:#1B7F3B}
+.aviso-ag{background:#EAF1FF;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:#1D3E85}
+.aval{border-top:1px dashed #bbb;padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.aval .stars{display:flex;gap:4px}
+.aval .stars button{border:0;background:none;font-size:30px;line-height:1;color:#c9c9c9;cursor:pointer;padding:2px}
+.aval .stars button.on{color:#F5A400}
+.aval textarea{width:100%;min-height:54px;font:inherit;border:1px solid var(--borda,#ccc);border-radius:8px;padding:8px}
+.selos{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.selos i{width:26px;height:26px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font-style:normal;font-size:14px;opacity:.45}
+.selos i.on{background:var(--amarelo,#FFC400);color:#000;opacity:1;border-color:var(--amarelo,#FFC400)}
+.fid-t{margin:6px 0 0;font-size:13px;font-weight:700}
 </style>
 </head>
 <body>
 
 <div class="fechado-b" id="avisoFechado" role="status" hidden></div>
+<button type="button" class="track-b" id="trackBar" hidden></button>
 <nav class="top" aria-label="Principal"><div class="top-in">
   <a href="#topo" class="on" id="navIni"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3 2 12h3v8h5v-6h4v6h5v-8h3z"/></svg>Início</a>
   <button type="button" id="navPromo"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0zM9 15l6-6M9.5 9.5h.01M14.5 14.5h.01"/></svg>Promoções</button>
@@ -375,6 +397,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
   <div class="d-in">
     <div class="d-topo"><h2 id="tCarrinho">Seu pedido</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
     <div id="freteTopo" class="frete-topo" hidden></div>
+    <div id="barraGratis" class="barra-g" role="status" hidden></div>
     <div id="itensCarrinho"></div>
     <fieldset class="tipos">
       <legend>Como você quer receber?</legend>
@@ -388,6 +411,16 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
       <label>Endereço de entrega<textarea id="endereco" maxlength="200" placeholder="Rua, número, bairro, cidade"></textarea></label>
       <button class="btn-frete" type="button" id="btnFrete">Calcular frete</button>
       <p class="freteMsg" id="freteMsg" role="status"></p>
+    </div>
+    <fieldset class="tipos" id="boxQuando" hidden>
+      <legend>Quando você quer?</legend>
+      <label><input type="radio" name="quando" value="agora" checked>Agora</label>
+      <label><input type="radio" name="quando" value="agendar">Agendar</label>
+    </fieldset>
+    <div id="boxAgenda" class="agenda" hidden>
+      <label>Dia<select id="agDia"></select></label>
+      <label>Horário<select id="agHora"></select></label>
+      <p class="mini" style="grid-column:1/-1;margin:0">Seu pedido fica agendado e a gente começa a preparar perto do horário.</p>
     </div>
     <label>Observação do pedido (opcional)<input type="text" id="obsGeral" maxlength="300" placeholder="Ex.: troco para R$ 50"></label>
     <div class="totais" id="totais"></div>
@@ -479,6 +512,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
     <div class="ok-icone" aria-hidden="true">&#10003;</div>
     <h2 id="tOk" style="font:400 32px/1.05 var(--f-titulo);margin:0">Pedido registrado</h2>
     <p id="okTexto" style="margin:0"></p>
+    <button class="secundario" type="button" id="okTrack">Acompanhar meu pedido</button>
     <button class="principal" type="button" id="okPagar">Pagar agora (Pix ou cartão)</button>
     <p class="btc-promo" id="btcPromo" hidden></p>
     <button class="btc-btn" type="button" id="okBtc" aria-label="Pagar com Bitcoin" hidden><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>
@@ -544,6 +578,10 @@ function textoErro(e){
     'opcao_invalida':'Uma opção escolhida mudou. Atualize a página e monte o pedido de novo.',
     'quantidade_invalida':'Confira as quantidades do pedido.',
     'itens_invalidos':'Seu pedido está vazio.',
+    'pedido_minimo':'O valor dos itens ainda não atinge o pedido mínimo para entrega.',
+    'agendamento_invalido':'Escolha um horário a partir de 30 minutos daqui.',
+    'agendamento_fora_horario':'Esse horário está fora do nosso funcionamento. Escolha outro.',
+    'avaliacao_indisponivel':'Não foi possível registrar a avaliação deste pedido.',
     'loja_fechada':'Estamos fechados agora. Tente de novo no horário de funcionamento.',
     'muitos_pedidos':'Você já enviou vários pedidos agora há pouco. Chame a gente no WhatsApp.'
   };
@@ -553,7 +591,7 @@ function textoErro(e){
 }
 
 /* ---------- estado ---------- */
-var M={nome:'BitPub',telefone:'',endereco:'',frase:'',horario:'',info:'',cabecalho:'',frete:null,promocoes:[],cats:[],itens:[]};
+var M={regras:{},nome:'BitPub',telefone:'',endereco:'',frase:'',horario:'',info:'',cabecalho:'',frete:null,promocoes:[],cats:[],itens:[]};
 var carrinho=[]; var cliente=null; var CK='bitpub_site_carrinho';
 try{ var c0=JSON.parse(localStorage.getItem(CK)||'[]'); if(Array.isArray(c0))carrinho=c0.filter(function(i){return i&&i.id&&i.qtd>0}) }catch(e){}
 function salvarCarrinho(){ try{localStorage.setItem(CK,JSON.stringify(carrinho))}catch(e){} }
@@ -582,7 +620,7 @@ function qtdTotal(){ return carrinho.reduce(function(s,i){return s+i.qtd},0) }
 async function carregarMenu(){
   try{
     var d=await http('/rest/v1/rpc/cardapio_publico',{method:'POST',auth:false,body:{}});
-    M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',rodape:d.rodape||null,horarios:d.horarios||null,modo:d.modo_loja||'auto',msgFechado:d.msg_fechado||'',frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
+    M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',rodape:d.rodape||null,horarios:d.horarios||null,modo:d.modo_loja||'auto',msgFechado:d.msg_fechado||'',regras:d.regras||{},frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
     BTC_ON=d.bitcoin===true; BTC_DESC=Number(d.bitcoin_desconto)||0;
     try{localStorage.setItem('bitpub_site_menu',JSON.stringify(M))}catch(e){}
   }catch(e){
@@ -676,12 +714,49 @@ function fechadoMsg(){
   var p=proximaAbertura();
   return 'Estamos fechados agora.'+(p?' Abrimos '+p+'.':'')+(M.msgFechado?' '+M.msgFechado:'');
 }
+var FID=null;
+function descFid(){ return (FID&&FID.ativo&&FID.pronto)?Math.min(Number(FID.valor)||0,totalCarrinho()):0 }
+function minimoEntrega(){ return Number(M.regras&&M.regras.pedido_minimo)||0 }
+function gratisAcima(){ return Number(M.regras&&M.regras.frete_gratis_acima)||0 }
+function gratisAtivo(){ var g=gratisAcima(); return g>0&&totalCarrinho()>=g }
+function spPartes(ts){ var d=new Date(ts-3*36e5); return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate(),dow:d.getUTCDay(),hh:d.getUTCHours(),mi:d.getUTCMinutes()} }
+function slotsAgenda(){
+  var H=M.horarios; if((M.regras&&M.regras.agendamento===false)||!H||!Object.keys(H).length||M.modo==='fechada')return [];
+  var sp=new Date(Date.now()-3*36e5), base=Date.UTC(sp.getUTCFullYear(),sp.getUTCMonth(),sp.getUTCDate())+3*36e5, now=Date.now(), out=[];
+  for(var d=0;d<=3;d++){ var w=H[(sp.getUTCDay()+d)%7]; if(!w)continue;
+    var a=minDe(w[0]),f=minDe(w[1]); if(f<=a)f+=1440;
+    for(var m=a;m<=f-30;m+=30){ var ts=base+d*864e5+m*6e4; if(ts>=now+30*6e4&&ts<=now+70*36e5&&out.indexOf(ts)<0)out.push(ts) } }
+  return out.sort(function(x,y){return x-y});
+}
+var DNOMES=['dom','seg','ter','qua','qui','sex','sáb'];
+function diaRotulo(ts){ var a=spPartes(ts),h=spPartes(Date.now()),am=spPartes(Date.now()+864e5),dd=('0'+a.d).slice(-2)+'/'+('0'+a.m).slice(-2);
+  return (a.d===h.d&&a.m===h.m?'Hoje':a.d===am.d&&a.m===am.m?'Amanhã':DNOMES[a.dow])+' '+dd }
+function horaRotulo(ts){ var a=spPartes(ts); return ('0'+a.hh).slice(-2)+':'+('0'+a.mi).slice(-2) }
+function quandoRotulo(iso){ var ts=new Date(iso).getTime(); return diaRotulo(ts)+' às '+horaRotulo(ts) }
+function agendando(){ var r=$('input[name="quando"]:checked'); return !!(r&&r.value==='agendar'&&$('#agHora').value) }
+function desenharQuando(){
+  var sl=slotsAgenda(), box=$('#boxQuando'), ag=$('#boxAgenda'); if(!box)return;
+  var fechado=!lojaAberta();
+  box.hidden=!sl.length; if(!sl.length){ ag.hidden=true; return }
+  var rAgora=$('input[name="quando"][value="agora"]'), rAg=$('input[name="quando"][value="agendar"]');
+  rAgora.disabled=fechado; if(fechado)rAg.checked=true;
+  var dias=[]; sl.forEach(function(t){ var k=diaRotulo(t); if(dias.indexOf(k)<0)dias.push(k) });
+  var dsel=$('#agDia'), sig=dias.join('|')+'#'+sl.length;
+  if(dsel.getAttribute('data-sig')!==sig){ var atual=dsel.value; dsel.innerHTML=dias.map(function(k){return '<option>'+esc(k)+'</option>'}).join(''); if(dias.indexOf(atual)>-1)dsel.value=atual; dsel.setAttribute('data-sig',sig) }
+  var hs=sl.filter(function(t){return diaRotulo(t)===dsel.value}), hsel=$('#agHora'), hv=hsel.value;
+  var hsig=hs.join(',');
+  if(hsel.getAttribute('data-sig')!==hsig){ hsel.innerHTML=hs.map(function(t){return '<option value="'+new Date(t).toISOString()+'">'+horaRotulo(t)+'</option>'}).join(''); var ok=hs.some(function(t){return new Date(t).toISOString()===hv}); if(ok)hsel.value=hv; hsel.setAttribute('data-sig',hsig) }
+  ag.hidden=!rAg.checked;
+}
 function atualizarStatusLoja(){
   var m=fechadoMsg(), b=$('#avisoFechado');
   document.body.classList.toggle('fechado',!!m);
-  if(b){ b.hidden=!m; b.textContent=m?'🔴 '+m+' Você pode montar a sacola e ver o total, mas só dá para enviar o pedido quando abrirmos.':'' }
-  var e=$('#btnEnviar'); if(e)e.disabled=!!m;
-  var er=$('#erroPedido'); if(er&&m&&$('#dCarrinho').open)er.textContent=m;
+  var ag=slotsAgenda().length>0;
+  if(b){ b.hidden=!m; b.textContent=m?'🔴 '+m+(ag?' Você pode montar a sacola e agendar o pedido para mais tarde.':' Você pode montar a sacola e ver o total, mas só dá para enviar o pedido quando abrirmos.'):'' }
+  desenharQuando();
+  var bloq=!!m&&!(ag&&agendando());
+  var e=$('#btnEnviar'); if(e&&!enviando)e.disabled=!carrinho.length||bloq;
+  var er=$('#erroPedido'); if(er&&bloq&&$('#dCarrinho').open)er.textContent=m;
 }
 setInterval(atualizarStatusLoja,60000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)atualizarStatusLoja()});
@@ -769,8 +844,8 @@ function desenharSide(){
   if(!carrinho.length){ sd.innerHTML='<div class="sac-vazia"><svg viewBox="0 0 24 24" width="44" height="44" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/></svg><b>Sacola vazia</b></div><button type="button" class="sac-btn" disabled>Sacola vazia</button>'; return }
   var fv=freteValor(), it=totalCarrinho();
   sd.innerHTML='<h2 class="sac-t">Sua sacola</h2>'+carrinho.map(function(l){return '<div class="sac-l"><span>'+l.qtd+'x '+esc(l.nome)+'</span><b>'+R(l.preco*l.qtd)+'</b></div>'}).join('')+
-    '<div class="sac-l sub"><span>Subtotal</span><b>'+R(it)+'</b></div>'+(fv!=null?'<div class="sac-l sub"><span>Frete</span><b>'+R(fv)+'</b></div>':'')+
-    '<div class="sac-tot"><span>Total</span><b>'+R(it+(fv||0))+'</b></div><button type="button" class="sac-btn on" id="btnCarrinho2">Ver pedido</button>';
+    '<div class="sac-l sub"><span>Subtotal</span><b>'+R(it)+'</b></div>'+(descFid()>0?'<div class="sac-l sub"><span>🎁 Fidelidade</span><b>-'+R(descFid())+'</b></div>':'')+(fv!=null?'<div class="sac-l sub"><span>Frete</span><b>'+(gratisAtivo()?'Grátis':R(fv))+'</b></div>':'')+
+    '<div class="sac-tot"><span>Total</span><b>'+R(it-descFid()+(fv||0))+'</b></div><button type="button" class="sac-btn on" id="btnCarrinho2">Ver pedido</button>';
   $('#btnCarrinho2').addEventListener('click',function(){desenharCarrinho();abrir($('#dCarrinho'))});
 }
 function atualizarBarra(){
@@ -813,17 +888,28 @@ $('#btnCarrinho').addEventListener('click',function(){desenharCarrinho();abrir($
 function tipoAtual(){ return $('input[name="tipo"]:checked').value }
 var freteAtual=null;
 function freteOn(){ return !!(M.frete&&M.frete.ativo!==false) }
-function freteValor(){ return (tipoAtual()==='entrega'&&freteAtual&&freteAtual.valor!=null)?Number(freteAtual.valor):null }
+function freteValor(){ if(!(tipoAtual()==='entrega'&&freteAtual&&freteAtual.valor!=null))return null; return gratisAtivo()?0:Number(freteAtual.valor) }
 function desenharTotais(){
   var ent=tipoAtual()==='entrega', fv=freteValor(), it=totalCarrinho();
   $('#boxEndereco').hidden=!ent; $('#btnFrete').hidden=!freteOn();
   var linhaFrete='';
   if(ent){
-    var txt=fv!=null?R(fv)+(freteAtual.km?' ('+String(freteAtual.km).replace('.',',')+' km)':''):(freteOn()&&!freteAtual?'toque em Calcular frete':'a combinar no WhatsApp');
+    var txt=fv!=null?(gratisAtivo()?'<s>'+R(freteAtual.valor)+'</s> <b>Grátis</b>':R(fv)+(freteAtual.km?' ('+String(freteAtual.km).replace('.',',')+' km)':'')):(freteOn()&&!freteAtual?'toque em Calcular frete':'a combinar no WhatsApp');
     linhaFrete='<div class="t"><span>Frete</span><span>'+txt+'</span></div>';
   }
-  $('#totais').innerHTML='<div class="t"><span>Itens</span><span>'+R(it)+'</span></div>'+linhaFrete+
-    '<div class="t total"><span>'+(fv!=null?'Total com frete':'Total dos itens')+'</span><span>'+R(it+(fv||0))+'</span></div>';
+  var dsc=descFid(), linhaFid='';
+  if(dsc>0)linhaFid='<div class="t fid"><span>🎁 Desconto fidelidade</span><span>-'+R(dsc)+'</span></div>';
+  else if(FID&&FID.ativo&&!FID.pronto)linhaFid='<div class="t fid"><span>🎁 Faltam '+(FID.meta-FID.selos)+(FID.meta-FID.selos===1?' pedido':' pedidos')+' para ganhar '+R(FID.valor)+' de desconto</span><span></span></div>';
+  $('#totais').innerHTML='<div class="t"><span>Itens</span><span>'+R(it)+'</span></div>'+linhaFrete+linhaFid+
+    '<div class="t total"><span>'+(fv!=null?'Total com frete':'Total dos itens')+'</span><span>'+R(it-dsc+(fv||0))+'</span></div>';
+  var bg=$('#barraGratis'), mn=minimoEntrega(), gr=gratisAcima();
+  if(bg){
+    if(ent&&mn>0&&it<mn){ bg.className='barra-g min'; bg.innerHTML='Pedido mínimo para entrega: '+R(mn)+'. Faltam '+R(mn-it)+'.'; bg.hidden=false }
+    else if(ent&&gr>0){ if(it>=gr){ bg.className='barra-g ok'; bg.innerHTML='🎉 Frete grátis neste pedido!'; }
+      else { bg.className='barra-g'; bg.innerHTML='Faltam '+R(gr-it)+' para ganhar frete grátis<div class="prog"><i style="width:'+Math.round(it/gr*100)+'%"></i></div>' } bg.hidden=false }
+    else bg.hidden=true;
+  }
+  desenharQuando();
   desenharFrete(); desenharSide();
   $('#avisoPag').textContent = PAGAMENTO_ONLINE
     ? 'Depois de enviar, você escolhe: pagar agora (Pix ou cartão) ou combinar o pagamento no WhatsApp.'+(ent?(fv!=null?' O frete já está no total.':' Se o frete não for calculado aqui, a gente combina no WhatsApp.'):'')
@@ -933,6 +1019,7 @@ async function carregarCliente(){
   }catch(e){cliente=null}
   atualizarBtnConta();
   if(cliente&&cliente.endereco&&!$('#endereco').value)$('#endereco').value=cliente.endereco;
+  carregarFid(); atualizarTrack();
 }
 function atualizarBtnConta(){ $('#contaTxt').textContent = cliente ? 'Olá, '+cliente.nome.split(' ')[0] : 'Entrar/Cadastrar' }
 $('#btnConta').addEventListener('click',function(){ if(cliente){abrirConta()} else {abrirAuth()} });
@@ -1006,22 +1093,79 @@ $('#fSenha').addEventListener('submit',async function(e){
   }catch(x){ er.textContent=(x&&/Invalid login/i.test(x.message))?'A senha atual está incorreta.':(/same|different/i.test(String(x&&x.message))?'A nova senha precisa ser diferente da atual.':textoErro(x)) }
   b.disabled=false; b.textContent='Salvar nova senha';
 });
-async function abrirConta(){
-  abrir($('#dConta'));
-  $('#resumoCli').innerHTML=''; $('#listaPedidos').innerHTML='<p class="vazio">Carregando...</p>';
+var PASSOS_ENT=['Recebido','Em preparo','Saiu para entrega','Entregue'], PASSOS_RET=['Recebido','Em preparo','Pronto p/ retirar','Retirado'];
+var IDXST={novo:0,aceito:1,pronto:2,entregue:3};
+function stRotulo(p){ var P=p.tipo==='entrega'?PASSOS_ENT:PASSOS_RET; return p.status==='cancelado'?'Cancelado':P[IDXST[p.status]] }
+function passosHtml(p){
+  if(p.status==='cancelado')return '';
+  var P=p.tipo==='entrega'?PASSOS_ENT:PASSOS_RET, i=IDXST[p.status];
+  return '<div class="passos" aria-label="Andamento do pedido">'+P.map(function(n,k){return '<span class="'+(k<=i?'on':'')+'">'+n+'</span>'}).join('')+'</div>';
+}
+function estrelas(n){ var t=''; for(var i=1;i<=5;i++)t+=i<=n?'★':'☆'; return t }
+async function carregarFid(){
+  if(!cliente){FID=null;return}
+  try{ FID=await http('/rest/v1/rpc/fidelidade_status',{method:'POST',body:{}}); }catch(e){FID=null}
+  desenharTotais();
+}
+var contaBusy=false;
+async function abrirConta(silencioso){
+  if(silencioso!==true){ abrir($('#dConta')); $('#resumoCli').innerHTML=''; $('#listaPedidos').innerHTML='<p class="vazio">Carregando...</p>'; }
+  else if($('#listaPedidos .aval[data-sel]')||document.activeElement&&document.activeElement.tagName==='TEXTAREA')return;
+  if(contaBusy)return; contaBusy=true;
   try{
-    var ps=await http('/rest/v1/pedidos_online?select=id,numero,itens,total,frete,tipo,status,pago,criado_em&order=criado_em.desc&limit=30');
+    var ps=await http('/rest/v1/pedidos_online?select=id,numero,itens,total,frete,tipo,status,pago,criado_em,agendado_para,desconto_fidelidade,nota,nota_obs&order=criado_em.desc&limit=30');
+    await carregarFid();
     var validos=ps.filter(function(p){return p.status!=='cancelado'}).length;
-    $('#resumoCli').innerHTML='<div class="resumo-cli"><b>'+validos+'</b>'+(validos===1?'pedido feito no BitPub':'pedidos feitos no BitPub')+'</div>';
+    var fid='';
+    if(FID&&FID.ativo){ var sl=''; for(var q=0;q<FID.meta;q++)sl+='<i class="'+(q<FID.selos?'on':'')+'">★</i>';
+      fid='<p class="fid-t">🎁 Fidelidade: '+(FID.pronto?'seu próximo pedido tem '+R(FID.valor)+' de desconto!':'complete '+FID.meta+' pedidos e ganhe '+R(FID.valor)+' de desconto ('+FID.selos+' de '+FID.meta+')')+'</p><div class="selos">'+sl+'</div>' }
+    $('#resumoCli').innerHTML='<div class="resumo-cli"><b>'+validos+'</b>'+(validos===1?'pedido feito no BitPub':'pedidos feitos no BitPub')+fid+'</div>';
     $('#listaPedidos').innerHTML=ps.length?ps.map(function(p){
       var d=new Date(p.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-      return '<div class="ped"><div class="ped-t"><span>Pedido '+p.numero+'</span><span class="sel">'+esc(STATUS[p.status]||p.status)+(p.pago?' &middot; Pago':'')+'</span></div>'+
+      var ativo=['novo','aceito','pronto'].indexOf(p.status)>-1;
+      return '<div class="ped" data-pid="'+esc(p.id)+'"><div class="ped-t"><span>Pedido '+p.numero+'</span><span class="sel">'+esc(stRotulo(p))+(p.pago?' &middot; Pago':'')+'</span></div>'+
         '<small>'+d+' &middot; '+(p.tipo==='entrega'?'Entrega':'Retirada')+'</small>'+
-        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?' <small>+ '+esc(i.opcoes.map(function(o){return o.nome}).join(', '))+'</small>':'')}).join('<br>')+'</div><b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+R(p.frete)+' de frete = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+(PAGAMENTO_ONLINE&&!p.pago&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button>'+(BTC_ON?(BTC_DESC>0?'<p class="btc-promo" style="margin-top:8px">\u20bf <b>'+String(BTC_DESC).replace('.',',')+'% de desconto</b> com Bitcoin: <b>'+R(btcPreco(p))+'</b></p>':'')+'<button class="btc-btn" type="button" data-btc="'+esc(p.id)+'" style="margin-top:8px" aria-label="Pagar com Bitcoin"><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>':'')+'<p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+'</div>';
+        (p.agendado_para&&ativo?'<div class="aviso-ag">⏰ Agendado para '+esc(quandoRotulo(p.agendado_para))+'</div>':'')+
+        (ativo||p.status==='entregue'?passosHtml(p):'')+
+        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?' <small>+ '+esc(i.opcoes.map(function(o){return o.nome}).join(', '))+'</small>':'')}).join('<br>')+'</div>'+
+        (Number(p.desconto_fidelidade)>0?'<small>🎁 Desconto fidelidade: -'+R(p.desconto_fidelidade)+'</small>':'')+
+        '<b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+(Number(p.frete)===0?'frete grátis':R(p.frete)+' de frete')+' = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+
+        (PAGAMENTO_ONLINE&&!p.pago&&ativo?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button>'+(BTC_ON?(BTC_DESC>0?'<p class="btc-promo" style="margin-top:8px">\u20bf <b>'+String(BTC_DESC).replace('.',',')+'% de desconto</b> com Bitcoin: <b>'+R(btcPreco(p))+'</b></p>':'')+'<button class="btc-btn" type="button" data-btc="'+esc(p.id)+'" style="margin-top:8px" aria-label="Pagar com Bitcoin"><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>':'')+'<p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+
+        (p.status==='entregue'?(p.nota?'<div class="aval"><b>Sua avaliação: <span style="color:#F5A400">'+estrelas(p.nota)+'</span></b>'+(p.nota_obs?'<small>'+esc(p.nota_obs)+'</small>':'')+'</div>':
+          '<div class="aval"><b>Como foi seu pedido?</b><div class="stars" role="group" aria-label="Nota de 1 a 5">'+[1,2,3,4,5].map(function(n){return '<button type="button" data-star="'+n+'" aria-label="'+n+' estrela'+(n>1?'s':'')+'">★</button>'}).join('')+'</div><textarea maxlength="300" placeholder="Quer contar mais? (opcional)" aria-label="Comentário da avaliação" hidden></textarea><button class="principal" type="button" data-avsend hidden>Enviar avaliação</button><p class="erro erroAv" role="alert" style="margin:0"></p></div>'):'')+
+        '</div>';
     }).join(''):'<p class="vazio">Você ainda não fez nenhum pedido.</p>';
-  }catch(e){ $('#listaPedidos').innerHTML='<p class="erro">'+esc(textoErro(e))+'</p>' }
+  }catch(e){ if(silencioso!==true)$('#listaPedidos').innerHTML='<p class="erro">'+esc(textoErro(e))+'</p>' }
+  finally{ contaBusy=false }
 }
-$('#btnSair').addEventListener('click',function(){ gravarSessao(null); cliente=null; atualizarBtnConta(); $('#dConta').close(); toast('Você saiu da conta.') });
+$('#listaPedidos').addEventListener('click',async function(e){
+  var st=e.target.closest('[data-star]'), box=e.target.closest('.aval');
+  if(st&&box){ var n=Number(st.getAttribute('data-star')); box.setAttribute('data-sel',n);
+    box.querySelectorAll('[data-star]').forEach(function(b){b.classList.toggle('on',Number(b.getAttribute('data-star'))<=n)});
+    box.querySelector('textarea').hidden=false; box.querySelector('[data-avsend]').hidden=false; return }
+  var sd=e.target.closest('[data-avsend]');
+  if(sd&&box){ var ped=box.closest('.ped'), er=box.querySelector('.erroAv'); sd.disabled=true; er.textContent='';
+    try{ await http('/rest/v1/rpc/avaliar_pedido',{method:'POST',body:{p_id:ped.getAttribute('data-pid'),p_nota:Number(box.getAttribute('data-sel')),p_obs:box.querySelector('textarea').value.trim()||null}});
+      toast('Obrigado pela avaliação!'); box.removeAttribute('data-sel'); atualizarTrack(); abrirConta(true) }
+    catch(x){ er.textContent=textoErro(x); sd.disabled=false } }
+});
+/* barra de acompanhamento no topo do site */
+async function atualizarTrack(){
+  var bt=$('#trackBar'); if(!bt)return;
+  if(!cliente){bt.hidden=true;return}
+  try{
+    var ps=await http('/rest/v1/pedidos_online?select=numero,status,tipo,agendado_para,nota,atualizado_em&status=in.(novo,aceito,pronto,entregue)&order=criado_em.desc&limit=5');
+    var at=ps.filter(function(p){return ['novo','aceito','pronto'].indexOf(p.status)>-1})[0];
+    var ent=ps.filter(function(p){return p.status==='entregue'&&!p.nota&&Date.now()-new Date(p.atualizado_em).getTime()<24*36e5})[0];
+    if(at){ bt.textContent='🍔 Pedido #'+at.numero+': '+(at.agendado_para&&at.status==='novo'?'agendado para '+quandoRotulo(at.agendado_para):stRotulo(at))+'. Toque para acompanhar'; bt.hidden=false }
+    else if(ent){ bt.textContent='✅ Pedido #'+ent.numero+' entregue! Toque para avaliar'; bt.hidden=false }
+    else bt.hidden=true;
+  }catch(e){}
+}
+$('#trackBar').addEventListener('click',function(){abrirConta()});
+$('#okTrack').addEventListener('click',function(){$('#dOk').close();abrirConta()});
+setInterval(function(){ if(document.hidden||!cliente)return; atualizarTrack(); if($('#dConta').open)abrirConta(true) },20000);
+$('#btnSair').addEventListener('click',function(){ gravarSessao(null); cliente=null; FID=null; $('#trackBar').hidden=true; atualizarBtnConta(); $('#dConta').close(); toast('Você saiu da conta.') });
 
 /* ---------- enviar pedido ---------- */
 function mensagemZap(p){
@@ -1029,6 +1173,8 @@ function mensagemZap(p){
   if(p.tipo==='entrega')l.push('Endereço: '+p.endereco);
   l.push('');
   p.itens.forEach(function(i){ l.push(i.qtd+'x '+i.nome+(i.opcoes&&i.opcoes.length?' + '+i.opcoes.map(function(o){return o.nome}).join(', '):'')+' - '+R(i.preco*i.qtd)+(i.obs?' ('+i.obs+')':'')) });
+  if(Number(p.desconto)>0)l.push('','Desconto fidelidade: -'+R(p.desconto)+' (já aplicado)');
+  if(p.agendado_para)l.push('*AGENDADO PARA: '+quandoRotulo(p.agendado_para)+'*');
   l.push('','*Total dos itens: '+R(p.total)+'*');
   if(p.tipo==='entrega'){ if(p.frete!=null){ l.push('Frete: '+R(p.frete)); l.push('*Total com frete: '+R(Number(p.total)+Number(p.frete))+'*') } else l.push('Frete: a combinar') }
   if(p.observacao)l.push('Obs: '+p.observacao);
@@ -1101,10 +1247,11 @@ $('#listaPedidos').addEventListener('click',function(e){var b=e.target.closest('
 var enviando=false;
 async function enviarPedido(){
   var erro=$('#erroPedido'); erro.textContent='';
-  if(fechadoMsg()){erro.textContent=fechadoMsg();atualizarStatusLoja();return}
+  if(fechadoMsg()&&!(slotsAgenda().length&&agendando())){erro.textContent=fechadoMsg()+(slotsAgenda().length?' Escolha "Agendar" para pedir para mais tarde.':'');atualizarStatusLoja();return}
   if(!carrinho.length)return;
   if(!cliente){ abrirAuth(function(){ abrir($('#dCarrinho')); desenharCarrinho(); enviarPedido() }); return }
   var ent=tipoAtual()==='entrega', end=$('#endereco').value.trim();
+  if(ent&&minimoEntrega()>0&&totalCarrinho()<minimoEntrega()){erro.textContent='Pedido mínimo para entrega: '+R(minimoEntrega())+'. Faltam '+R(minimoEntrega()-totalCarrinho())+'.';return}
   if(ent&&cepCart.semNumero()){erro.textContent='Falta o número do endereço.';$('#numEnd').focus();return}
   if(ent&&end.length<8){erro.textContent='Informe o endereço de entrega completo.';$('#endereco').focus();return}
   if(ent&&freteOn()){
@@ -1116,12 +1263,13 @@ async function enviarPedido(){
     var p=await http('/rest/v1/rpc/criar_pedido',{method:'POST',body:{
       p_itens:carrinho.map(function(l){return {id:l.id,qtd:l.qtd,obs:l.obs||'',sel:l.sel||[]}}),
       p_tipo:ent?'entrega':'retirada', p_endereco:ent?end:null, p_obs:((ent&&$('#compEnd').value.trim()?'Complemento: '+$('#compEnd').value.trim()+'. ':'')+$('#obsGeral').value.trim())||null,
-      p_frete_id:(ent&&freteAtual&&freteAtual.id)||null
+      p_frete_id:(ent&&freteAtual&&freteAtual.id)||null, p_agendar:agendando()?$('#agHora').value:null
     }});
     freteAtual=null; $('#freteMsg').textContent=''; desenharFrete();
     carrinho=[]; salvarCarrinho(); $$('.item').forEach(function(el){acaoItem(el.getAttribute('data-id'))}); atualizarBarra();
     $('#obsGeral').value=''; $('#dCarrinho').close();
-    $('#okTexto').textContent='Seu pedido '+p.numero+' já está com a gente.'+(p.frete!=null?' Total com frete: '+R(Number(p.total)+Number(p.frete))+'.':'')+' Você pode pagar agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'&&p.frete==null?'o frete e ':'')+'o pagamento.';
+    $('#okTexto').textContent='Seu pedido '+p.numero+(p.agendado_para?' está agendado para '+quandoRotulo(p.agendado_para)+'.':' já está com a gente.')+(Number(p.desconto)>0?' Desconto fidelidade de '+R(p.desconto)+' aplicado.':'')+(p.frete!=null?' Total com frete: '+R(Number(p.total)+Number(p.frete))+'.':'')+' Você pode pagar agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'&&p.frete==null?'o frete e ':'')+'o pagamento.';
+    carregarFid(); atualizarTrack();
     pedidoPagarId=p.id; btcRotulo(p); $('#erroPagar').textContent=''; $('#okPagar').hidden=!PAGAMENTO_ONLINE; $('#okBtc').hidden=!(BTC_ON&&PAGAMENTO_ONLINE);
     $('#okZap').href='https://wa.me/'+WHATS_LOJA+'?text='+encodeURIComponent(mensagemZap(p));
     abrir($('#dOk'));
@@ -1131,6 +1279,8 @@ async function enviarPedido(){
   }finally{ enviando=false; $('#btnEnviar').textContent='Enviar pedido'; $('#btnEnviar').disabled=!carrinho.length }
 }
 $('#btnEnviar').addEventListener('click',enviarPedido);
+$$('input[name="quando"]').forEach(function(r){r.addEventListener('change',atualizarStatusLoja)});
+$('#agDia').addEventListener('change',atualizarStatusLoja);
 
 carregarMenu();
 carregarCliente().then(function(){

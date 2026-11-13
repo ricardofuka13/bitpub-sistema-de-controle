@@ -124,6 +124,13 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
         <div id="lHorarios" role="group" aria-label="Horário por dia da semana"></div>
         <p class="mini" style="margin:-4px 0 0">Marque os dias em que abre e o horário. Se fechar depois da meia-noite (ex.: 18:00 até 01:00), funciona normal. Se nenhum dia estiver marcado, a loja fica sempre aberta. Fora do horário o site avisa o cliente e não deixa enviar pedido. Horário de Brasília.</p>
         <label>Mensagem quando estiver fechada (opcional)<input type="text" id="lMsgF" maxlength="160" placeholder="Ex.: Voltamos às 18h. Faça seu pedido depois!"></label>
+        <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="lAgOn"> Permitir agendar pedido (cliente escolhe dia e horário, até 3 dias, só dentro do horário de funcionamento)</label>
+        <h2 class="cat">Pedido mínimo, frete grátis e fidelidade</h2>
+        <label>Pedido mínimo para entrega, em R$ (0 = sem mínimo)<input type="number" id="lMin" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 30"></label>
+        <label>Frete grátis acima de, em R$ (0 = desligado)<input type="number" id="lGratis" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 80"></label>
+        <label>Fidelidade: a cada quantos pedidos entregues o cliente ganha desconto (0 = desligado)<input type="number" id="lFidMeta" min="0" max="50" step="1" inputmode="numeric" placeholder="Ex.: 10"></label>
+        <label>Fidelidade: valor do desconto, em R$<input type="number" id="lFidValor" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 25"></label>
+        <p class="mini" style="margin:-4px 0 0">O desconto de fidelidade entra sozinho no pedido seguinte, sobre o valor dos itens. O pedido só conta como "selo" depois de marcado como Entregue.</p>
         <label>Horário de funcionamento (texto que aparece no site)<textarea id="lHor" rows="3" maxlength="400" placeholder="Ex.: Seg a Sex, 18h às 23h&#10;Sáb e Dom, 17h às 00h"></textarea></label>
         <label>Outras informações<textarea id="lInfo" rows="4" maxlength="600" placeholder="Ex.: Aceitamos Pix e cartão. Entregamos em Suzano e região."></textarea></label>
         <h2 class="cat">Rodapé do site (dados da empresa)</h2>
@@ -213,6 +220,9 @@ $('#btnSair').addEventListener('click',function(){gravarSessao(null);parar();$('
 var lojaEnd='',ultimaAssinatura='',pedidos=[],filtro='abertos',ultimoNumero=null,timer=null,som=null;
 var ROT={novo:'Novo',aceito:'Aceito',pronto:'Pronto',entregue:'Entregue',cancelado:'Cancelado'};
 var PROX={novo:['aceito','Aceitar pedido'],aceito:['pronto','Marcar pronto'],pronto:['entregue','Marcar entregue']};
+function proxDe(p){var x=PROX[p.status];if(!x)return x;if(p.status==='aceito')return ['pronto',p.tipo==='entrega'?'Saiu para entrega':'Pronto para retirar'];if(p.status==='pronto')return ['entregue',p.tipo==='entrega'?'Marcar entregue':'Cliente retirou'];return x}
+function estrelas(n){var t='';for(var i=1;i<=5;i++)t+=i<=n?'★':'☆';return t}
+function quandoAg(iso){return new Date(iso).toLocaleString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'})}
 var FILTROS=[['abertos','Em andamento'],['novo','Novos'],['aceito','Aceitos'],['pronto','Prontos'],['entregue','Entregues'],['cancelado','Cancelados'],['todos','Todos']];
 
 function tocarSom(get){
@@ -249,7 +259,8 @@ function desenharPedidos(){
   var novos=pedidos.filter(function(p){return p.status==='novo'}).length,b=$('#nNovos');b.hidden=!novos;b.textContent=novos;
   desenharFiltros();
   var v=visiveis();
-  $('#listaPedidos').innerHTML=v.length?v.map(cartao).join(''):'<p class="vazio">Nenhum pedido aqui.</p>';
+  var av=pedidos.filter(function(p){return p.nota}),med=av.length?av.reduce(function(m,p){return m+p.nota},0)/av.length:0;
+  $('#listaPedidos').innerHTML=(av.length?'<p class="mini" style="margin:0 0 4px"><b>Avaliações:</b> <span style="color:#F5A400">★</span> '+med.toFixed(1).replace('.',',')+' de 5 ('+av.length+(av.length===1?' avaliação':' avaliações')+')</p>':'')+(v.length?v.map(cartao).join(''):'<p class="vazio">Nenhum pedido aqui.</p>');
 }
 function msgZap(p,frete){
   var m='Olá, '+p.nome_cliente.split(' ')[0]+'! Aqui é do BitPub. Recebemos seu pedido #'+p.numero+' (itens: '+R(p.total)+').';
@@ -258,10 +269,13 @@ function msgZap(p,frete){
   return m+' Como você prefere pagar?';
 }
 function cartao(p){
-  var prox=PROX[p.status];
+  var prox=proxDe(p);
   return '<article class="card '+(p.status==='novo'?'novo':'')+'" data-id="'+p.id+'">'+
     '<div class="linha1"><h3>#'+p.numero+' '+esc(p.nome_cliente)+'</h3><span class="sel '+p.status+'">'+ROT[p.status]+'</span></div>'+
     '<div class="mini">'+quando(p.criado_em)+' &middot; '+(p.tipo==='entrega'?'Entrega':'Retirada')+' &middot; '+esc(mascara(p.whatsapp_cliente))+'</div>'+
+    (p.agendado_para&&['novo','aceito','pronto'].indexOf(p.status)>-1?'<div style="background:#EAF1FF;color:#1D3E85;font-weight:800;padding:6px 10px">⏰ AGENDADO para '+esc(quandoAg(p.agendado_para))+'</div>':'')+
+    (Number(p.desconto_fidelidade)>0?'<div style="color:#14552A;font-weight:700">🎁 Desconto fidelidade aplicado: -'+R(p.desconto_fidelidade)+'</div>':'')+
+    (p.nota?'<div style="font-weight:700"><span style="color:#F5A400">'+estrelas(p.nota)+'</span> avaliação do cliente'+(p.nota_obs?': “'+esc(p.nota_obs)+'”':'')+'</div>':'')+
     (p.tipo==='entrega'?'<div><b>Endereço:</b> '+esc(p.endereco)+'</div>':'')+
     '<div class="itens">'+p.itens.map(function(i){return '<div><span>'+i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?'<em>+ '+i.opcoes.map(function(o){return esc(o.nome)}).join(', ')+'</em>':'')+(i.obs?'<em>'+esc(i.obs)+'</em>':'')+'</span><span>'+R(i.preco*i.qtd)+'</span></div>'}).join('')+'</div>'+
     (p.observacao?'<div><b>Obs:</b> '+esc(p.observacao)+'</div>':'')+
@@ -441,7 +455,7 @@ function pintarCab(){var i=$('#lCab');if(cabUrl){i.src=cabUrl;i.hidden=false}els
 async function carregarLoja(){
   try{
     var c=(await http('/rest/v1/site_config?id=eq.1&select=*'))[0]||{};
-    $('#lModo').value=c.modo_loja||'auto';$('#lMsgF').value=c.msg_fechado||'';desenharHorarios(c.horarios);
+    $('#lAgOn').checked=c.agendamento_ativo!==false;$('#lMin').value=c.pedido_minimo>0?c.pedido_minimo:'';$('#lGratis').value=c.frete_gratis_acima>0?c.frete_gratis_acima:'';$('#lFidMeta').value=c.fidelidade_meta>0?c.fidelidade_meta:'';$('#lFidValor').value=c.fidelidade_valor>0?c.fidelidade_valor:'';$('#lModo').value=c.modo_loja||'auto';$('#lMsgF').value=c.msg_fechado||'';desenharHorarios(c.horarios);
     $('#lRazao').value=c.rodape_razao||'';$('#lCnpj').value=c.rodape_cnpj||'';$('#lRodExtra').value=c.rodape_extra||'';$('#lEnd').value=c.endereco||'';$('#lHor').value=c.horario||'';$('#lInfo').value=c.info||'';cabUrl=c.cabecalho_foto||'';pintarCab();
     $('#lFreteOn').checked=c.frete_ativo!==false;$('#lLn').value=c.lightning_address||'';$('#lDescBtc').value=c.desconto_btc>0?c.desconto_btc:'';$('#lLoja').value=c.loja_endereco||'';lojaOrig=c.loja_endereco||'';$('#lMax').value=c.frete_max_km!=null?c.frete_max_km:8;
     $('#lFaixas').innerHTML=(c.frete_faixas||[]).map(function(f){return linhaFaixa(f.ate_km,f.valor)}).join('');
@@ -475,7 +489,10 @@ $('#formLoja').addEventListener('submit',async function(e){
   var hr={},dias=$$('#lHorarios .hrow'),hErr='';
   dias.forEach(function(r){var d=r.getAttribute('data-d');if(!r.querySelector('input[type=checkbox]').checked)return;var a=r.querySelector('[data-a]').value,f=r.querySelector('[data-f]').value;if(!a||!f||a===f){hErr='Confira o horário de '+r.getAttribute('data-nome')+': abre e fecha precisam ser diferentes.'}else hr[d]=[a,f]});
   if(hErr){er.textContent=hErr;return}
-  var body={horarios:Object.keys(hr).length?hr:null,modo_loja:$('#lModo').value,msg_fechado:$('#lMsgF').value.trim()||null,rodape_razao:$('#lRazao').value.trim()||null,rodape_cnpj:cnpj||null,rodape_extra:$('#lRodExtra').value.trim()||null,desconto_btc:dsc,lightning_address:ln||null,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
+  var vmin=Number($('#lMin').value||0),vgr=Number($('#lGratis').value||0),fmeta=Math.round(Number($('#lFidMeta').value||0)),fval=Number($('#lFidValor').value||0);
+  if(!(vmin>=0&&vgr>=0&&fval>=0&&fmeta>=0&&fmeta<=50)){er.textContent='Confira o pedido mínimo, o frete grátis e a fidelidade: use números positivos (fidelidade até 50 pedidos).';return}
+  if(fmeta>0&&!(fval>0)){er.textContent='Fidelidade: informe também o valor do desconto em R$.';return}
+  var body={agendamento_ativo:$('#lAgOn').checked,pedido_minimo:vmin,frete_gratis_acima:vgr,fidelidade_meta:fmeta,fidelidade_valor:fmeta>0?fval:0,horarios:Object.keys(hr).length?hr:null,modo_loja:$('#lModo').value,msg_fechado:$('#lMsgF').value.trim()||null,rodape_razao:$('#lRazao').value.trim()||null,rodape_cnpj:cnpj||null,rodape_extra:$('#lRodExtra').value.trim()||null,desconto_btc:dsc,lightning_address:ln||null,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
     frete_ativo:on,frete_max_km:max>0?max:8,frete_faixas:faixas,loja_endereco:$('#lLoja').value.trim()||null,atualizado_em:new Date().toISOString()};
   if(body.loja_endereco!==lojaOrig){body.loja_lat=null;body.loja_lng=null}
   var btn=$('#formLoja button[type=submit]');btn.disabled=true;

@@ -2450,9 +2450,11 @@ async function importOnline(p,claimed){
     });
     var fv=r2(Number(p.frete)||0);
     if(fv>0)items.push({lid:lid(),k:'__frete',name:'Frete',price:fv,cost:0,qty:1,note:'',rec:[],sig:'',isFrete:true});
+    var dv=r2(Number(p.desconto_fidelidade)||0);
+    if(dv>0)items.push({lid:lid(),k:'__desc',name:'Desconto fidelidade',price:-dv,cost:0,qty:1,note:'',rec:[],sig:'',isDesc:true});
     var ref=db.collection('orders').doc();
     var doc={freteVal:fv,num:max+1,type:type,name:'',label:mkLabel(base,cname),base:base,status:'open',items:items,openedAt:Date.now(),day:day,cid:cid,cname:cname,
-      online:true,pedidoId:p.id,pedidoNum:p.numero,whats:whats,addr:p.endereco||'',obsOnline:p.observacao||'',onlinePrinted:false};
+      online:true,descFid:dv,freteGratis:(p.tipo==='entrega'&&p.frete!=null&&Number(p.frete)===0),agendado:p.agendado_para||'',pedidoId:p.id,pedidoNum:p.numero,whats:whats,addr:p.endereco||'',obsOnline:p.observacao||'',onlinePrinted:false};
     await ref.set(doc);
     S.open[ref.id]=doc;
     await applyStock(total);
@@ -2486,16 +2488,18 @@ function onlineText(o){
   if(o.whats)N('Tel: '+fmtPhone(o.whats));
   L.push('Comanda #'+pad(o.num)+'  Pedido site #'+o.pedidoNum);
   L.push('Hora '+hhmm(o.openedAt));
+  if(o.agendado){L.push(dash);B('AGENDADO PARA');B(new Date(o.agendado).toLocaleString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}))}
   if(o.type==='delivery'&&o.addr){L.push(dash);N('Endereco:');N(o.addr)}
   L.push(dash);
   (o.items||[]).forEach(function(x){
-    if(x.isFrete)return;
+    if(x.isFrete||x.isDesc)return;
     B(x.qty+'x '+x.name);
     if(x.note)wrapTxt('>> '+plain(x.note),hw).forEach(function(t){L.push('\x02'+t)});
     L.push(dash);
   });
+  if(o.descFid>0)N('Desconto fidelidade: -'+brl(o.descFid)+' (ja aplicado)');
   L.push(lr('Itens',plain(brl(subOf(o)-(o.freteVal||0)))));
-  if(o.type==='delivery'){if(o.freteVal>0){L.push(lr('Frete',plain(brl(o.freteVal))));L.push(lr('TOTAL',plain(brl(subOf(o)))))}else N('Frete: a combinar no WhatsApp')}
+  if(o.type==='delivery'){if(o.freteVal>0){L.push(lr('Frete',plain(brl(o.freteVal))));L.push(lr('TOTAL',plain(brl(subOf(o)))))}else N(o.freteGratis?'Frete: GRATIS':'Frete: a combinar no WhatsApp')}
   N(o.onlinePaid?'Pagamento: PAGO ONLINE':'Pagamento: a combinar no WhatsApp');
   if(o.obsOnline){L.push(dash);N('Obs: '+o.obsOnline)}
   L.push(eq);L.push('');
@@ -2527,7 +2531,8 @@ async function onlineTick(){
   if(ON.busy||!h||!ready()||!canWrite)return;
   ON.busy=true;
   try{
-    var rows=await h('GET','/rest/v1/pedidos_online?select=*&status=in.(novo,aceito)&or=(comanda_id.is.null,comanda_id.like.claim:*)&order=numero.asc&limit=10');
+    var lim=new Date(Date.now()+45*60000).toISOString();
+    var rows=await h('GET','/rest/v1/pedidos_online?select=*&status=in.(novo,aceito)&and=(or(agendado_para.is.null,agendado_para.lte.'+lim+'),or(comanda_id.is.null,comanda_id.like.claim:*))&order=numero.asc&limit=10');
     for(var i=0;i<(rows||[]).length;i++){await claimAndImport(rows[i])}
     var nopaid=Object.keys(S.open).filter(function(k){return S.open[k].online&&S.open[k].pedidoId&&!S.open[k].onlinePaid});
     if(nopaid.length){
