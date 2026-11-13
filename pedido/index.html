@@ -679,14 +679,13 @@ function fechadoMsg(){
 function atualizarStatusLoja(){
   var m=fechadoMsg(), b=$('#avisoFechado');
   document.body.classList.toggle('fechado',!!m);
-  if(b){ b.hidden=!m; b.textContent=m?'🔴 '+m+' Você pode olhar o cardápio, mas só dá para pedir quando abrirmos.':'' }
+  if(b){ b.hidden=!m; b.textContent=m?'🔴 '+m+' Você pode montar a sacola e ver o total, mas só dá para enviar o pedido quando abrirmos.':'' }
   var e=$('#btnEnviar'); if(e)e.disabled=!!m;
   var er=$('#erroPedido'); if(er&&m&&$('#dCarrinho').open)er.textContent=m;
 }
 setInterval(atualizarStatusLoja,60000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)atualizarStatusLoja()});
 function mudar(key,delta){
-  if(delta>0&&fechadoMsg()){toast(fechadoMsg());return}
   var l=linha(key);
   if(!l){
     var it=String(key).indexOf('promo:')===0?(function(){var q=promoDe(key);return q&&q.preco_por!=null?{nome:q.titulo,preco:Number(q.preco_por)}:null})():itemDe(key);
@@ -755,7 +754,6 @@ $('#opcGrupos').addEventListener('change',opcAtualizar);
 $('#opcMenos').addEventListener('click',function(){ opcQtd=Math.max(1,opcQtd-1); opcAtualizar() });
 $('#opcMais').addEventListener('click',function(){ opcQtd=Math.min(50,opcQtd+1); opcAtualizar() });
 $('#opcAdd').addEventListener('click',function(){
-  if(fechadoMsg()){$('#opcErro').textContent=fechadoMsg();return}
   var it=opcItem; if(!it)return;
   var sel=opcSel().sort(function(a,b){return a[0]-b[0]||a[1]-b[1]}), p=precoComOpcoes(it,sel);
   if(p==null){ $('#opcErro').textContent='Escolha as opções obrigatórias.'; return }
@@ -901,7 +899,6 @@ $('#promosLista').addEventListener('click',function(e){
   abrir($('#dPromo'));
 });
 $('#promoAdd').addEventListener('click',function(){
-  if(fechadoMsg()){toast(fechadoMsg());return}
   var key=this.getAttribute('data-key'); mudar(key,1); $('#dPromo').close();
   toast('Adicionado à sacola: '+R(totalCarrinho())+' no total');
 });
