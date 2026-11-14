@@ -2102,7 +2102,7 @@ function custPicker(host,onPick){
   host.innerHTML='<div class="cp"><input type="search" class="cp-q" placeholder="Digite o nome ou telefone do cliente" autocomplete="off" autocapitalize="words" spellcheck="false" aria-label="Buscar cliente"><div class="cp-res"></div></div>';
   var q=host.querySelector('.cp-q'),res=host.querySelector('.cp-res');
   function found(){var t=q.value.trim(),l=custList();
-    return t?l.filter(function(x){return matchCust(x[1],t)}):l.sort(function(a,b){return (b[1].last||0)-(a[1].last||0)}).slice(0,4)}
+    return t?l.filter(function(x){return matchCust(x[1],t)}).sort(function(a,b){return String(a[1].name||'').trim().localeCompare(String(b[1].name||'').trim(),'pt-BR',{sensitivity:'base'})}):l.sort(function(a,b){return (b[1].last||0)-(a[1].last||0)}).slice(0,4)}
   function paint(){
     var t=q.value.trim(),m=found().slice(0,6);
     var h=m.map(function(x){return '<button type="button" class="cres" data-id="'+x[0]+'">'+custMini(x[1])+'</button>'}).join('');
@@ -2190,7 +2190,7 @@ function clFilter(c){var f=S.cfil||'todos',now=Date.now();
   if(f==='sumidos')return (c.visits||0)>0&&c.last&&now-c.last>30*864e5;
   return true}
 function clListHtml(){
-  var l=custList().filter(function(x){return clFilter(x[1])&&matchCust(x[1],S.cq||'')}).sort(function(a,b){return (b[1].last||b[1].created||0)-(a[1].last||a[1].created||0)});
+  var l=custList().filter(function(x){return clFilter(x[1])&&matchCust(x[1],S.cq||'')}).sort(function(a,b){return String(a[1].name||'').trim().localeCompare(String(b[1].name||'').trim(),'pt-BR',{sensitivity:'base'})});
   if(!l.length)return '<div class="empty"><b>'+(custList().length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado')+'</b>'+(custList().length?'Tente outra busca ou outro filtro.':'Toque em Novo cliente ou cadastre direto ao abrir uma comanda.')+'</div>';
   return '<div class="cl">'+l.map(function(x){return '<button type="button" class="cres" data-act="cprof" data-id="'+x[0]+'">'+custMini(x[1])+'</button>'}).join('')+'</div>'}
 function vClientes(){
