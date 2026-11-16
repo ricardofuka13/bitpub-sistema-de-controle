@@ -14,6 +14,10 @@
 body{margin:0;background:#141414}
 a{color:#FFF4E8}a:hover{color:#F7B500}
 a:focus-visible{outline:3px solid #F7B500;outline-offset:3px;border-radius:6px}
+[id]{scroll-margin-top:84px}
+.only-mobile{display:none}
+@media (max-width:760px){.hide-mobile{display:none!important}.only-mobile{display:flex!important;flex-wrap:wrap;gap:4px 24px}}
+@media (max-width:520px){.hide-xs{display:none!important}}
 html{-webkit-text-size-adjust:100%}
 @media (prefers-reduced-motion: no-preference){html{scroll-behavior:smooth}}
 img{max-width:100%}
@@ -23,18 +27,27 @@ img{max-width:100%}
 <div style="background: #141414; color: #FFF4E8; font-family: 'Figtree', system-ui, sans-serif; font-size: 17px; line-height: 1.55;">
 
 <!-- Topo -->
-<header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px">
-<div style="display: flex; align-items: center; gap: 14px">
-<img src="img/logo.png" alt="Logo BitPub" style="width: 84px; height: 56px; object-fit: contain">
-<div style="font-family: 'Anton', Impact, sans-serif; font-size: clamp(18px, 4.6vw, 24px); letter-spacing: 0.04em; text-transform: uppercase; color: #F7B500">BitPub Hamburgueria e Pub</div>
+<header style="position: sticky; top: 0; z-index: 50; background: #141414; border-bottom: 1px solid #3A322C">
+<div style="max-width: 1200px; margin: 0 auto; padding: 8px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px 24px">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0">
+<img src="img/logo.png" alt="Logo BitPub" style="width: 66px; height: 44px; object-fit: contain; flex: none">
+<div class="hide-xs" style="font-family: 'Anton', Impact, sans-serif; font-size: 22px; letter-spacing: 0.04em; text-transform: uppercase; color: #F7B500">BitPub Hamburgueria e Pub</div>
 </div>
-<nav style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 24px; font-weight: 500">
+<nav class="hide-mobile" style="display: flex; align-items: center; gap: 4px 24px; font-weight: 500">
 <a href="https://bitpub.app.br/pedido/" style="text-decoration: none; padding: 12px 0">Cardápio</a>
 <a href="#bitcoin" style="text-decoration: none; padding: 12px 0">Bitcoin</a>
+<a href="#noticias" style="text-decoration: none; padding: 12px 0">Notícias</a>
 <a href="#local" style="text-decoration: none; padding: 12px 0">Onde estamos</a>
-<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; background: #F7B500; color: #141414; font-weight: 700; padding: 12px 22px; border-radius: 999px">Peça agora</a>
 </nav>
+<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; background: #F7B500; color: #141414; font-weight: 700; padding: 12px 22px; border-radius: 999px; white-space: nowrap; flex: none">Fazer pedido</a>
+</div>
 </header>
+<nav class="only-mobile" style="max-width: 1200px; margin: 0 auto; padding: 4px 24px 0; font-weight: 500">
+<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; padding: 12px 0">Cardápio</a>
+<a href="#bitcoin" style="text-decoration: none; padding: 12px 0">Bitcoin</a>
+<a href="#noticias" style="text-decoration: none; padding: 12px 0">Notícias</a>
+<a href="#local" style="text-decoration: none; padding: 12px 0">Onde estamos</a>
+</nav>
 
 <!-- Hero -->
 <section style="max-width: 1200px; margin: 0 auto; padding: clamp(24px, 5vw, 40px) 24px clamp(48px, 8vw, 80px); display: flex; flex-wrap: wrap; align-items: center; gap: 40px">
