@@ -13,7 +13,9 @@
 <style>
 body{margin:0;background:#141414}
 a{color:#FFF4E8}a:hover{color:#F7B500}
-html{scroll-behavior:smooth}
+a:focus-visible{outline:3px solid #F7B500;outline-offset:3px;border-radius:6px}
+html{-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: no-preference){html{scroll-behavior:smooth}}
 img{max-width:100%}
 </style>
 </head>
@@ -24,9 +26,9 @@ img{max-width:100%}
 <header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px">
 <div style="display: flex; align-items: center; gap: 14px">
 <img src="img/logo.png" alt="Logo BitPub" style="width: 84px; height: 56px; object-fit: contain">
-<div style="font-family: 'Anton', Impact, sans-serif; font-size: 24px; letter-spacing: 0.04em; text-transform: uppercase; color: #F7B500">BitPub Hamburgueria e Pub</div>
+<div style="font-family: 'Anton', Impact, sans-serif; font-size: clamp(18px, 4.6vw, 24px); letter-spacing: 0.04em; text-transform: uppercase; color: #F7B500">BitPub Hamburgueria e Pub</div>
 </div>
-<nav style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; font-weight: 500">
+<nav style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 24px; font-weight: 500">
 <a href="https://bitpub.app.br/pedido/" style="text-decoration: none; padding: 12px 0">Cardápio</a>
 <a href="#bitcoin" style="text-decoration: none; padding: 12px 0">Bitcoin</a>
 <a href="#local" style="text-decoration: none; padding: 12px 0">Onde estamos</a>
@@ -35,16 +37,14 @@ img{max-width:100%}
 </header>
 
 <!-- Hero -->
-<section style="max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; display: flex; flex-wrap: wrap; align-items: center; gap: 40px">
+<section style="max-width: 1200px; margin: 0 auto; padding: clamp(24px, 5vw, 40px) 24px clamp(48px, 8vw, 80px); display: flex; flex-wrap: wrap; align-items: center; gap: 40px">
 <div style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 28px">
 <div style="font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; font-size: 14px; color: #F7B500">Hamburgueria artesanal · Suzano</div>
-<h1 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(52px, 8.5vw, 108px); line-height: 0.98; text-transform: uppercase; text-wrap: balance">Lugar onde o futuro encontra o sabor!.</h1>
+<h1 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(42px, 9vw, 108px); line-height: 0.98; text-transform: uppercase; text-wrap: balance">Lugar onde o futuro encontra o sabor!.</h1>
 <p style="margin: 0; font-size: 20px; max-width: 540px; color: #E6D6C4; text-wrap: pretty">Hambúrguer artesanal, pub e Bitcoin no mesmo lugar. Faça seu pedido pelo site e pague em Bitcoin com 10% de desconto.</p>
 <div style="display: flex; flex-wrap: wrap; gap: 16px">
-<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; background: #F7B500; color: #141414; font-weight: 700; font-size: 18px; padding: 16px 32px; border-radius: 999px">Ver cardápio e pedir</a>
-<a href="https://wa.me/5511917846050" style="text-decoration: none; border: 2px solid #FFF4E8; font-weight: 700; font-size: 18px; padding: 14px 30px; border-radius: 999px; display: inline-flex; align-items: center; gap: 10px"><span style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #FFFFFF; border-radius: 10px; flex: none"><img src="img/whatsapp.png" alt="" style="width: 26px; height: 26px; object-fit: contain"></span>Chamar no WhatsApp</a>
-<a href="https://www.ifood.com.br/delivery/suzano-sp/bitpub/d6976590-16e8-4f08-a8e0-d535f85986ca" style="text-decoration: none; border: 2px solid #FFF4E8; font-weight: 700; font-size: 18px; padding: 14px 30px; border-radius: 999px; display: inline-flex; align-items: center; gap: 10px"><span style="display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 36px; background: #FFFFFF; border-radius: 10px; flex: none"><img src="img/ifood.png" alt="" style="width: 36px; height: 24px; object-fit: contain"></span>Pedir no iFood</a>
-<a href="https://oia.99app.com/dlp9/5eKWDM" style="text-decoration: none; border: 2px solid #FFF4E8; font-weight: 700; font-size: 18px; padding: 14px 30px; border-radius: 999px; display: inline-flex; align-items: center; gap: 10px"><img src="img/99food.png" alt="" style="width: 36px; height: 36px; border-radius: 10px; flex: none">Pedir na 99Food</a>
+<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; background: #F7B500; color: #141414; font-weight: 700; font-size: 18px; padding: 16px 32px; border-radius: 999px; flex: 1 1 240px; text-align: center; min-height: 20px">Ver cardápio e pedir</a>
+<a href="https://wa.me/5511917846050" style="text-decoration: none; border: 2px solid #FFF4E8; font-weight: 700; font-size: 18px; padding: 14px 30px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; flex: 1 1 240px"><span style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #FFFFFF; border-radius: 10px; flex: none"><img src="img/whatsapp.png" alt="" style="width: 26px; height: 26px; object-fit: contain"></span>Chamar no WhatsApp</a>
 </div>
 </div>
 <div style="flex: 1 1 360px; min-width: 0; display: flex; align-items: center; justify-content: center">
@@ -53,24 +53,24 @@ img{max-width:100%}
 </section>
 
 <!-- Faixa -->
-<div style="background: #F7B500; color: #141414; font-family: 'Anton', Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.06em; font-size: 24px">
-<div style="max-width: 1200px; margin: 0 auto; padding: 18px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 32px">
+<div style="background: #F7B500; color: #141414; font-family: 'Anton', Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.06em; font-size: clamp(17px, 4.4vw, 24px)">
+<div style="max-width: 1200px; margin: 0 auto; padding: 18px 24px; display: flex; flex-wrap: wrap; justify-content: center; text-align: center; gap: 6px 28px">
 <span>Prova de sabor</span><span>HODL na fome</span><span>Aceitamos Bitcoin</span><span>10% off em BTC</span>
 </div>
 </div>
 
 <!-- Cardápio -->
-<section id="cardapio" style="max-width: 1200px; margin: 0 auto; padding: 96px 24px 24px">
+<section id="cardapio" style="max-width: 1200px; margin: 0 auto; padding: clamp(56px, 10vw, 96px) 24px 24px">
 <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 48px">
 <div style="font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; font-size: 14px; color: #F7B500">Hambúrguer artesanal</div>
-<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 6vw, 72px); line-height: 1; text-transform: uppercase">Cada burger, um bloco.</h2>
+<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(34px, 7vw, 72px); line-height: 1; text-transform: uppercase">Cada burger, um bloco.</h2>
 </div>
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 24px">
 
 <a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
 <img src="img/bitcoin.jpg" alt="Bitcoin Burguer" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
 <h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Bitcoin Burguer</h3>
 <span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 29,90</span>
 </div>
@@ -78,7 +78,7 @@ img{max-width:100%}
 
 <a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
 <img src="img/satoshi.jpg" alt="Satoshi Burguer" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
 <h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Satoshi Burguer</h3>
 <span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 24,90</span>
 </div>
@@ -86,7 +86,7 @@ img{max-width:100%}
 
 <a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
 <img src="img/ethereum.jpg" alt="Ethereum Smash" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
 <h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Ethereum Smash</h3>
 <span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 34,90</span>
 </div>
@@ -94,7 +94,7 @@ img{max-width:100%}
 
 <a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
 <img src="img/fullnode.jpg" alt="Full Node" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
 <h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Full Node</h3>
 <span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 49,90</span>
 </div>
@@ -102,7 +102,7 @@ img{max-width:100%}
 
 <a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
 <img src="img/stable.jpg" alt="Stable" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
 <h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Stable</h3>
 <span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 36,90</span>
 </div>
@@ -110,7 +110,7 @@ img{max-width:100%}
 
 <a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
 <img src="img/diamonds.jpg" alt="Diamonds Hand" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
 <h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Diamonds Hand</h3>
 <span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 32,90</span>
 </div>
@@ -125,14 +125,14 @@ img{max-width:100%}
 </section>
 
 <!-- Bitcoin -->
-<section id="bitcoin" style="max-width: 1200px; margin: 0 auto; padding: 96px 24px 24px">
-<div style="background: #1F1B19; border: 2px solid #F7B500; border-radius: 28px; padding: 56px 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 40px">
+<section id="bitcoin" style="max-width: 1200px; margin: 0 auto; padding: clamp(56px, 10vw, 96px) 24px 24px">
+<div style="background: #1F1B19; border: 2px solid #F7B500; border-radius: 28px; padding: clamp(32px, 7vw, 56px) clamp(22px, 5vw, 40px); display: flex; flex-wrap: wrap; align-items: center; gap: 40px">
 <div style="flex: 1 1 280px; min-width: 0; display: flex; justify-content: center">
 <img src="img/bitcoin-accepted.png" alt="Bitcoin accepted here" style="width: 100%; max-width: 360px; height: auto; border-radius: 16px">
 </div>
 <div style="flex: 2 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
 <div style="font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; font-size: 14px; color: #F7B500">Aceitamos Bitcoin</div>
-<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(36px, 5vw, 60px); line-height: 1.02; text-transform: uppercase; text-wrap: balance">Pague com Bitcoin e ganhe 10% de desconto.</h2>
+<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(32px, 6vw, 60px); line-height: 1.02; text-transform: uppercase; text-wrap: balance">Pague com Bitcoin e ganhe 10% de desconto.</h2>
 <p style="margin: 0; font-size: 20px; color: #E6D6C4; max-width: 560px; text-wrap: pretty">Aqui o sat vale sabor. Na hora de pagar o pedido, é só escolher Bitcoin.</p>
 </div>
 </div>
@@ -145,23 +145,26 @@ img{max-width:100%}
 </section>
 
 <!-- Notícias -->
-<section id="noticias" style="max-width: 1200px; margin: 0 auto; padding: 96px 24px 24px">
+<section id="noticias" style="max-width: 1200px; margin: 0 auto; padding: clamp(56px, 10vw, 96px) 24px 24px">
 <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px">
 <div style="font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; font-size: 14px; color: #F7B500">Notícias</div>
-<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 6vw, 72px); line-height: 1; text-transform: uppercase">Fique por dentro do mundo Bitcoin</h2>
+<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(34px, 7vw, 72px); line-height: 1; text-transform: uppercase">Fique por dentro do mundo Bitcoin</h2>
 </div>
 <div id="noticias-lista" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 24px">
-<a href="https://livecoins.com.br/mercado-bitcoin-retoma-operacoes-com-pix-em-reais-a-partir-de-terca-feira-17/" target="_blank" rel="noopener" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 14px"><div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #F7B500">Livecoins · 15 nov</div><div style="font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty">Mercado Bitcoin retoma operações com Pix em reais a partir de terça-feira (17)</div><div style="margin-top: auto; font-weight: 700; color: #F7B500">Ler matéria</div></a>
-<a href="https://livecoins.com.br/peter-schiff-compartilha-grafico-do-ethereum-e-alerta-para-queda-abaixo-de-us-1-000/" target="_blank" rel="noopener" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 14px"><div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #F7B500">Livecoins · 14 nov</div><div style="font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty">Peter Schiff compartilha gráfico do Ethereum e alerta para queda abaixo de US$ 1.000</div><div style="margin-top: auto; font-weight: 700; color: #F7B500">Ler matéria</div></a>
-<a href="https://livecoins.com.br/plano-de-contratacoes-do-ministerio-da-justica-reserva-r-112-milhao-para-rastrear-criptomoedas-em-2027/" target="_blank" rel="noopener" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 14px"><div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #F7B500">Livecoins · 14 nov</div><div style="font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty">Plano de contratações do Ministério da Justiça reserva R$ 1,12 milhão para rastrear criptomoedas em 2027</div><div style="margin-top: auto; font-weight: 700; color: #F7B500">Ler matéria</div></a>
+<a href="https://livecoins.com.br/luxor-sofre-ataque-que-redirecionou-o-poder-de-mineracao-de-bitcon-para-outra-pool/" target="_blank" rel="noopener" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column"><div style="padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1"><div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #F7B500">Livecoins · 16 nov</div><div style="font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty">Luxor sofre ataque que redirecionou o poder de mineração de Bitcon para outra pool</div><div style="margin-top: auto; font-weight: 700; color: #F7B500">Ler matéria</div></div></a>
+<a href="https://livecoins.com.br/fundador-da-binance-afirma-que-nao-esta-vendendo-bitcoin-e-explica-possiveis-motivos-da-queda/" target="_blank" rel="noopener" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column"><div style="padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1"><div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #F7B500">Livecoins · 16 nov</div><div style="font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty">Fundador da Binance afirma que não está vendendo Bitcoin e explica possíveis motivos da queda</div><div style="margin-top: auto; font-weight: 700; color: #F7B500">Ler matéria</div></div></a>
+<a href="https://livecoins.com.br/michael-saylor-confirma-compra-de-485-bitcoins-pela-strategy/" target="_blank" rel="noopener" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column"><div style="padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1"><div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #F7B500">Livecoins · 16 nov</div><div style="font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty">Michael Saylor confirma compra de 485 bitcoins pela Strategy</div><div style="margin-top: auto; font-weight: 700; color: #F7B500">Ler matéria</div></div></a>
+<a href="https://livecoins.com.br/ministerio-da-justica-capacita-policiais-de-todo-o-pais-no-rastreamento-de-criptomoedas/" target="_blank" rel="noopener" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column"><div style="padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1"><div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #F7B500">Livecoins · 16 nov</div><div style="font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty">Ministério da Justiça capacita policiais de todo o país no rastreamento de criptomoedas</div><div style="margin-top: auto; font-weight: 700; color: #F7B500">Ler matéria</div></div></a>
+<a href="https://livecoins.com.br/cupula-do-g7-em-paris-condena-roubos-de-criptomoedas-da-coreia-do-norte-e-golpes-na-internet/" target="_blank" rel="noopener" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column"><div style="padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1"><div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #F7B500">Livecoins · 16 nov</div><div style="font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty">Cúpula do G7 em Paris condena roubos de criptomoedas da Coreia do Norte e golpes na internet</div><div style="margin-top: auto; font-weight: 700; color: #F7B500">Ler matéria</div></div></a>
+<a href="https://livecoins.com.br/mercado-bitcoin-retoma-operacoes-com-pix-em-reais-a-partir-de-terca-feira-17/" target="_blank" rel="noopener" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column"><div style="padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1"><div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #F7B500">Livecoins · 15 nov</div><div style="font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty">Mercado Bitcoin retoma operações com Pix em reais a partir de terça-feira (17)</div><div style="margin-top: auto; font-weight: 700; color: #F7B500">Ler matéria</div></div></a>
 </div>
 <p style="margin: 24px 0 0; color: #D9C9B8; font-size: 15px">Manchetes de sites externos, sem relação com a BitPub. Não é recomendação de investimento.</p>
 </section>
 
 <!-- Como pedir -->
-<section id="pedir" style="max-width: 1200px; margin: 0 auto; padding: 72px 24px 24px">
-<div style="background: #F96A05; color: #141414; border-radius: 28px; padding: 56px 40px; display: flex; flex-direction: column; gap: 40px">
-<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 6vw, 72px); line-height: 1; text-transform: uppercase">Bateu a fome? Peça agora.</h2>
+<section id="pedir" style="max-width: 1200px; margin: 0 auto; padding: clamp(48px, 8vw, 72px) 24px 24px">
+<div style="background: #F96A05; color: #141414; border-radius: 28px; padding: clamp(32px, 7vw, 56px) clamp(22px, 5vw, 40px); display: flex; flex-direction: column; gap: 40px">
+<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(34px, 7vw, 72px); line-height: 1; text-transform: uppercase">Bateu a fome? Peça agora.</h2>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 32px">
 <div style="display: flex; flex-direction: column; gap: 6px">
 <div style="font-family: 'Anton', Impact, sans-serif; font-size: 36px; line-height: 1">1</div>
@@ -180,17 +183,15 @@ img{max-width:100%}
 </div>
 </div>
 <div style="display: flex; flex-wrap: wrap; gap: 16px">
-<a href="https://bitpub.app.br/pedido/" style="display: inline-block; text-decoration: none; background: #141414; color: #FFF4E8; font-weight: 700; font-size: 18px; padding: 16px 32px; border-radius: 999px">Ir para o cardápio</a>
-<a href="https://wa.me/5511917846050" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none; border: 2px solid #141414; color: #141414; font-weight: 700; font-size: 18px; padding: 14px 30px; border-radius: 999px"><span style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #FFFFFF; border-radius: 10px; flex: none"><img src="img/whatsapp.png" alt="" style="width: 26px; height: 26px; object-fit: contain"></span>WhatsApp (11) 91784-6050</a>
-<a href="https://www.ifood.com.br/delivery/suzano-sp/bitpub/d6976590-16e8-4f08-a8e0-d535f85986ca" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none; border: 2px solid #141414; color: #141414; font-weight: 700; font-size: 18px; padding: 14px 30px; border-radius: 999px"><span style="display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 36px; background: #FFFFFF; border-radius: 10px; flex: none"><img src="img/ifood.png" alt="" style="width: 36px; height: 24px; object-fit: contain"></span>Pedir no iFood</a>
-<a href="https://oia.99app.com/dlp9/5eKWDM" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none; border: 2px solid #141414; color: #141414; font-weight: 700; font-size: 18px; padding: 14px 30px; border-radius: 999px"><img src="img/99food.png" alt="" style="width: 36px; height: 36px; border-radius: 10px; flex: none">Pedir na 99Food</a>
+<a href="https://bitpub.app.br/pedido/" style="display: inline-block; text-decoration: none; background: #141414; color: #FFF4E8; font-weight: 700; font-size: 18px; padding: 16px 32px; border-radius: 999px; flex: 1 1 240px; text-align: center">Ir para o cardápio</a>
+<a href="https://wa.me/5511917846050" style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; flex: 1 1 240px; text-decoration: none; border: 2px solid #141414; color: #141414; font-weight: 700; font-size: 18px; padding: 14px 30px; border-radius: 999px"><span style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #FFFFFF; border-radius: 10px; flex: none"><img src="img/whatsapp.png" alt="" style="width: 26px; height: 26px; object-fit: contain"></span>WhatsApp (11) 91784-6050</a>
 </div>
 </div>
 </section>
 
 <!-- Onde estamos -->
-<section id="local" style="max-width: 1200px; margin: 0 auto; padding: 96px 24px 96px; display: flex; flex-direction: column; gap: 36px">
-<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 6vw, 72px); line-height: 1; text-transform: uppercase">Onde estamos</h2>
+<section id="local" style="max-width: 1200px; margin: 0 auto; padding: clamp(56px, 10vw, 96px) 24px clamp(56px, 10vw, 96px); display: flex; flex-direction: column; gap: 36px">
+<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(34px, 7vw, 72px); line-height: 1; text-transform: uppercase">Onde estamos</h2>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 32px">
 <div><div style="font-weight: 700; color: #F7B500">Cidade</div><div>Suzano - SP</div></div>
 <div><div style="font-weight: 700; color: #F7B500">Endereço</div><div>Rua Baruel, 859, Suzano - SP</div></div>
@@ -215,7 +216,7 @@ img{max-width:100%}
 (function () {
   var lista = document.getElementById('noticias-lista');
   if (!lista || !window.fetch) return;
-  var CARD = "text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 14px";
+  var CARD = "text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column";
   var ACC = '#F7B500';
   var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   function el(tag, css, texto) {
@@ -230,9 +231,18 @@ img{max-width:100%}
         if (!/^https?:\/\//.test(n.link || '')) return;
         var dt = new Date(n.data), quando = isNaN(dt) ? '' : ' · ' + dt.getDate() + ' ' + MESES[dt.getMonth()];
         var a = el('a', CARD); a.href = n.link; a.target = '_blank'; a.rel = 'noopener';
-        a.appendChild(el('div', 'font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ' + ACC, (n.fonte || '') + quando));
-        a.appendChild(el('div', 'font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty', n.titulo || ''));
-        a.appendChild(el('div', 'margin-top: auto; font-weight: 700; color: ' + ACC, 'Ler matéria'));
+        if (/^https:\/\//.test(n.imagem || '')) {
+          var cx = el('div', 'aspect-ratio: 16 / 9; background: #2A2420; overflow: hidden');
+          var im = el('img', 'width: 100%; height: 100%; object-fit: cover; display: block');
+          im.alt = ''; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; im.src = n.imagem;
+          im.onerror = function () { cx.style.display = 'none'; };
+          cx.appendChild(im); a.appendChild(cx);
+        }
+        var corpo = el('div', 'padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1');
+        corpo.appendChild(el('div', 'font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ' + ACC, (n.fonte || '') + quando));
+        corpo.appendChild(el('div', 'font-size: 21px; font-weight: 700; line-height: 1.25; text-wrap: pretty', n.titulo || ''));
+        corpo.appendChild(el('div', 'margin-top: auto; font-weight: 700; color: ' + ACC, 'Ler matéria'));
+        a.appendChild(corpo);
         frag.appendChild(a);
       });
       if (frag.childNodes.length) { lista.textContent = ''; lista.appendChild(frag); }

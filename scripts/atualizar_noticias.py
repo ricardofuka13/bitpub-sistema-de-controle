@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Atualiza site/noticias.json com manchetes recentes sobre Bitcoin.
 
-Lê feeds RSS públicos, guarda só título, fonte, data e link da matéria
+Lê feeds RSS públicos, guarda só título, fonte, data, link e imagem de capa da matéria
 original (nada do texto das matérias) e escolhe as mais recentes.
 Se nenhum feed responder, mantém o arquivo atual sem mexer.
 """
@@ -21,6 +21,8 @@ FEEDS = [
 ]
 MAXIMO = 6
 SAIDA = Path(__file__).resolve().parent.parent / "site" / "noticias.json"
+MEDIA = "{http://search.yahoo.com/mrss/}"
+CONTENT = "{http://purl.org/rss/1.0/modules/content/}"
 BITCOIN = re.compile(r"bitcoin|btc|satoshi|lightning|halving", re.I)
 
 
@@ -28,6 +30,24 @@ def baixar(url):
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (BitPub noticias)"})
     with urllib.request.urlopen(req, timeout=20) as r:
         return r.read()
+
+
+def achar_imagem(it):
+    """Endereço (https) da imagem de capa da matéria, ou "" se o feed não trouxer."""
+    for e in it.iter(MEDIA + "thumbnail"):
+        if e.get("url", "").startswith("https://"):
+            return e.get("url")
+    for e in it.iter(MEDIA + "content"):
+        if e.get("url", "").startswith("https://") and e.get("medium", "image") == "image":
+            return e.get("url")
+    for e in it.findall("enclosure"):
+        if e.get("url", "").startswith("https://") and e.get("type", "").startswith("image"):
+            return e.get("url")
+    corpo = it.findtext(CONTENT + "encoded") or it.findtext("description") or ""
+    m = re.search(r'<img[^>]+src=["\']([^"\']+)', corpo)
+    if m and m.group(1).startswith("https://"):
+        return m.group(1)
+    return ""
 
 
 def ler_feed(fonte, url):
@@ -44,7 +64,7 @@ def ler_feed(fonte, url):
         cats = " ".join((c.text or "") for c in it.findall("category"))
         itens.append({
             "fonte": fonte, "titulo": titulo, "link": link,
-            "data": data.isoformat(), "_bitcoin": bool(BITCOIN.search(titulo + " " + cats)),
+            "imagem": achar_imagem(it), "data": data.isoformat(), "_bitcoin": bool(BITCOIN.search(titulo + " " + cats)),
         })
     return itens
 
