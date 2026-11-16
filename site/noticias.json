@@ -1,41 +1,47 @@
 {
-  "atualizado": "2026-11-16T16:50:32+00:00",
+  "atualizado": "2026-11-16T22:04:25+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "Deputado propõe ensino de criptomoedas e blockchain nas escolas públicas de MS",
+      "link": "https://livecoins.com.br/deputado-propoe-ensino-de-criptomoedas-e-blockchain-nas-escolas-publicas-de-ms/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Fundo-azul-com-bitcoin-em-contexto-educacional.jpg",
+      "data": "2026-11-16T21:17:33+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "Peter Brandt sugere que o Bitcoin pode nunca mais superar o seu topo histórico",
+      "link": "https://livecoins.com.br/peter-brandt-sugere-que-o-bitcoin-pode-nunca-mais-superar-o-seu-topo-historico/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/bitcoin-analise.jpg",
+      "data": "2026-11-16T19:13:28+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Luxor sofre ataque que redirecionou o poder de mineração de Bitcon para outra pool",
       "link": "https://livecoins.com.br/luxor-sofre-ataque-que-redirecionou-o-poder-de-mineracao-de-bitcon-para-outra-pool/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/luxor.jpg",
       "data": "2026-11-16T16:04:25+00:00"
     },
     {
       "fonte": "Livecoins",
       "titulo": "Fundador da Binance afirma que não está vendendo Bitcoin e explica possíveis motivos da queda",
       "link": "https://livecoins.com.br/fundador-da-binance-afirma-que-nao-esta-vendendo-bitcoin-e-explica-possiveis-motivos-da-queda/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/livro-cz.jpg",
       "data": "2026-11-16T14:25:35+00:00"
     },
     {
       "fonte": "Livecoins",
       "titulo": "Michael Saylor confirma compra de 485 bitcoins pela Strategy",
       "link": "https://livecoins.com.br/michael-saylor-confirma-compra-de-485-bitcoins-pela-strategy/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/michael-saylor-strategy.jpg",
       "data": "2026-11-16T13:42:38+00:00"
     },
     {
       "fonte": "Livecoins",
       "titulo": "Ministério da Justiça capacita policiais de todo o país no rastreamento de criptomoedas",
       "link": "https://livecoins.com.br/ministerio-da-justica-capacita-policiais-de-todo-o-pais-no-rastreamento-de-criptomoedas/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Bitcoin-entre-as-algemas.jpg",
       "data": "2026-11-16T10:50:15+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Cúpula do G7 em Paris condena roubos de criptomoedas da Coreia do Norte e golpes na internet",
-      "link": "https://livecoins.com.br/cupula-do-g7-em-paris-condena-roubos-de-criptomoedas-da-coreia-do-norte-e-golpes-na-internet/",
-      "data": "2026-11-16T09:39:21+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Mercado Bitcoin retoma operações com Pix em reais a partir de terça-feira (17)",
-      "link": "https://livecoins.com.br/mercado-bitcoin-retoma-operacoes-com-pix-em-reais-a-partir-de-terca-feira-17/",
-      "data": "2026-11-15T12:47:58+00:00"
     }
   ]
 }
