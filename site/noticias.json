@@ -1,47 +1,47 @@
 {
-  "atualizado": "2026-11-16T22:04:25+00:00",
+  "atualizado": "2026-11-17T17:57:03+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "Quadrilha invade escritório com armas para roubar bitcoin e STJ mantém prisão de empresário",
+      "link": "https://livecoins.com.br/quadrilha-invade-escritorio-com-armas-para-roubar-bitcoin-e-stj-mantem-prisao-de-empresario/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Homem-invadindo-escritorio-para-roubar-bitcoin.jpg",
+      "data": "2026-11-17T16:58:00+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "ETF de Bitcoin da BlackRock interrompe sequência de 11 dias consecutivos de vendas",
+      "link": "https://livecoins.com.br/etf-de-bitcoin-da-blackrock-interrompe-sequencia-de-11-dias-consecutivos-de-vendas/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/bitcoin-dolar-2.jpg",
+      "data": "2026-11-17T15:35:45+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "178 sites são afetados por malware que substitui endereços de Bitcoin, incluindo Ledger, BBC, HSBC e Zoom",
+      "link": "https://livecoins.com.br/178-sites-sao-afetados-por-malware-que-substitui-enderecos-de-bitcoin-incluindo-ledger-bbc-hsbc-e-zoom/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/perigo-teclado.jpg",
+      "data": "2026-11-17T14:42:41+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "Tether investe US$ 15 milhões na fintech brasileira Nomad para expandir uso de USDT",
+      "link": "https://livecoins.com.br/tether-investe-us-15-milhoes-na-fintech-brasileira-nomad-para-expandir-uso-de-usdt/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Cartao-da-Nomad-com-fundo.jpg",
+      "data": "2026-11-17T13:31:30+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "MP de São Paulo denuncia homem que exigiu R$ 6 milhões em bitcoin com ameaças de bombas por drones",
+      "link": "https://livecoins.com.br/mp-de-sao-paulo-denuncia-homem-que-exigiu-r-6-milhoes-em-bitcoin-com-ameacas-de-bombas-por-drones/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Homem-segurando-bomba-em-uma-mao-e-bitcoin-na-outra.jpg",
+      "data": "2026-11-17T11:56:34+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Deputado propõe ensino de criptomoedas e blockchain nas escolas públicas de MS",
       "link": "https://livecoins.com.br/deputado-propoe-ensino-de-criptomoedas-e-blockchain-nas-escolas-publicas-de-ms/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Fundo-azul-com-bitcoin-em-contexto-educacional.jpg",
       "data": "2026-11-16T21:17:33+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Peter Brandt sugere que o Bitcoin pode nunca mais superar o seu topo histórico",
-      "link": "https://livecoins.com.br/peter-brandt-sugere-que-o-bitcoin-pode-nunca-mais-superar-o-seu-topo-historico/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/bitcoin-analise.jpg",
-      "data": "2026-11-16T19:13:28+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Luxor sofre ataque que redirecionou o poder de mineração de Bitcon para outra pool",
-      "link": "https://livecoins.com.br/luxor-sofre-ataque-que-redirecionou-o-poder-de-mineracao-de-bitcon-para-outra-pool/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/luxor.jpg",
-      "data": "2026-11-16T16:04:25+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Fundador da Binance afirma que não está vendendo Bitcoin e explica possíveis motivos da queda",
-      "link": "https://livecoins.com.br/fundador-da-binance-afirma-que-nao-esta-vendendo-bitcoin-e-explica-possiveis-motivos-da-queda/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/livro-cz.jpg",
-      "data": "2026-11-16T14:25:35+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Michael Saylor confirma compra de 485 bitcoins pela Strategy",
-      "link": "https://livecoins.com.br/michael-saylor-confirma-compra-de-485-bitcoins-pela-strategy/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/michael-saylor-strategy.jpg",
-      "data": "2026-11-16T13:42:38+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Ministério da Justiça capacita policiais de todo o país no rastreamento de criptomoedas",
-      "link": "https://livecoins.com.br/ministerio-da-justica-capacita-policiais-de-todo-o-pais-no-rastreamento-de-criptomoedas/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Bitcoin-entre-as-algemas.jpg",
-      "data": "2026-11-16T10:50:15+00:00"
     }
   ]
 }
