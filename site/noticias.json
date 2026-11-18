@@ -1,6 +1,20 @@
 {
-  "atualizado": "2026-11-17T17:57:03+00:00",
+  "atualizado": "2026-11-18T02:38:36+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "Falha em novo recurso do Telegram permite roubo de carteiras de criptomoedas, alerta Kaspersky",
+      "link": "https://livecoins.com.br/falha-em-novo-recurso-do-telegram-permite-roubo-de-carteiras-de-criptomoedas-alerta-kaspersky/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Pessoa-segurando-celular-com-Telegram-aberto.jpg",
+      "data": "2026-11-17T22:02:46+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "Glassnode aponta fraqueza na demanda por Bitcoin enquanto mercado de ativos tokenizados cresce",
+      "link": "https://livecoins.com.br/glassnode-aponta-fraqueza-na-demanda-por-bitcoin-enquanto-mercado-de-ativos-tokenizados-cresce/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/bitcoin-criptomoedas.jpg",
+      "data": "2026-11-17T19:16:30+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Quadrilha invade escritório com armas para roubar bitcoin e STJ mantém prisão de empresário",
@@ -28,20 +42,6 @@
       "link": "https://livecoins.com.br/tether-investe-us-15-milhoes-na-fintech-brasileira-nomad-para-expandir-uso-de-usdt/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Cartao-da-Nomad-com-fundo.jpg",
       "data": "2026-11-17T13:31:30+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "MP de São Paulo denuncia homem que exigiu R$ 6 milhões em bitcoin com ameaças de bombas por drones",
-      "link": "https://livecoins.com.br/mp-de-sao-paulo-denuncia-homem-que-exigiu-r-6-milhoes-em-bitcoin-com-ameacas-de-bombas-por-drones/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Homem-segurando-bomba-em-uma-mao-e-bitcoin-na-outra.jpg",
-      "data": "2026-11-17T11:56:34+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Deputado propõe ensino de criptomoedas e blockchain nas escolas públicas de MS",
-      "link": "https://livecoins.com.br/deputado-propoe-ensino-de-criptomoedas-e-blockchain-nas-escolas-publicas-de-ms/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Fundo-azul-com-bitcoin-em-contexto-educacional.jpg",
-      "data": "2026-11-16T21:17:33+00:00"
     }
   ]
 }
