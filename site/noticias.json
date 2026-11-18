@@ -1,47 +1,47 @@
 {
-  "atualizado": "2026-11-18T02:38:36+00:00",
+  "atualizado": "2026-11-18T17:39:46+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "TokenNation busca negócios inovadores em batalha de pitches com prêmios e banca de especialistas",
+      "link": "https://livecoins.com.br/tokennation-busca-negocios-inovadores-em-batalha-de-pitches-com-premios-e-banca-de-especialistas/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/TokenNation-novembro-2026.jpg",
+      "data": "2026-11-18T17:28:42+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "NFTalks-Noun Fungible Talks reúne lideranças da Web3 nesta quinta (19) em São Paulo, em edição especial que conecta cultura, inovação e negócios",
+      "link": "https://livecoins.com.br/nftalks-noun-fungible-talks-reune-liderancas-da-web3-nesta-quinta-19-em-sao-paulo-em-edicao-especial-que-conecta-cultura-inovacao-e-negocios/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Evento.jpg",
+      "data": "2026-11-18T17:23:18+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "Binance revela como agiu após ataque de US$ 6,3 bilhões e faz recomendações de segurança para investidores",
+      "link": "https://livecoins.com.br/binance-revela-como-agiu-apos-ataque-de-us-63-bilhoes-e-faz-recomendacoes-de-seguranca-para-investidores/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/binance.jpg",
+      "data": "2026-11-18T17:05:22+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "Dona do ChatGPT fecha parceria com a OTAN para usar inteligência artificial na defesa cibernética",
+      "link": "https://livecoins.com.br/dona-do-chatgpt-fecha-parceria-com-a-otan-para-usar-inteligencia-artificial-na-defesa-cibernetica/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Seguranca-com-inteligencia-artificial.jpg",
+      "data": "2026-11-18T12:39:05+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "Ripple amplia parceria com ONG de Matt Damon para levar acesso à água potável e saneamento a mais famílias no Brasil",
+      "link": "https://livecoins.com.br/ripple-amplia-parceria-com-ong-de-matt-damon-para-levar-acesso-a-agua-potavel-e-saneamento-a-mais-familias-no-brasil/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Moeda-dentro-da-agua.jpg",
+      "data": "2026-11-18T09:58:22+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Falha em novo recurso do Telegram permite roubo de carteiras de criptomoedas, alerta Kaspersky",
       "link": "https://livecoins.com.br/falha-em-novo-recurso-do-telegram-permite-roubo-de-carteiras-de-criptomoedas-alerta-kaspersky/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Pessoa-segurando-celular-com-Telegram-aberto.jpg",
       "data": "2026-11-17T22:02:46+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Glassnode aponta fraqueza na demanda por Bitcoin enquanto mercado de ativos tokenizados cresce",
-      "link": "https://livecoins.com.br/glassnode-aponta-fraqueza-na-demanda-por-bitcoin-enquanto-mercado-de-ativos-tokenizados-cresce/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/bitcoin-criptomoedas.jpg",
-      "data": "2026-11-17T19:16:30+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Quadrilha invade escritório com armas para roubar bitcoin e STJ mantém prisão de empresário",
-      "link": "https://livecoins.com.br/quadrilha-invade-escritorio-com-armas-para-roubar-bitcoin-e-stj-mantem-prisao-de-empresario/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Homem-invadindo-escritorio-para-roubar-bitcoin.jpg",
-      "data": "2026-11-17T16:58:00+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "ETF de Bitcoin da BlackRock interrompe sequência de 11 dias consecutivos de vendas",
-      "link": "https://livecoins.com.br/etf-de-bitcoin-da-blackrock-interrompe-sequencia-de-11-dias-consecutivos-de-vendas/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/bitcoin-dolar-2.jpg",
-      "data": "2026-11-17T15:35:45+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "178 sites são afetados por malware que substitui endereços de Bitcoin, incluindo Ledger, BBC, HSBC e Zoom",
-      "link": "https://livecoins.com.br/178-sites-sao-afetados-por-malware-que-substitui-enderecos-de-bitcoin-incluindo-ledger-bbc-hsbc-e-zoom/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/perigo-teclado.jpg",
-      "data": "2026-11-17T14:42:41+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Tether investe US$ 15 milhões na fintech brasileira Nomad para expandir uso de USDT",
-      "link": "https://livecoins.com.br/tether-investe-us-15-milhoes-na-fintech-brasileira-nomad-para-expandir-uso-de-usdt/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Cartao-da-Nomad-com-fundo.jpg",
-      "data": "2026-11-17T13:31:30+00:00"
     }
   ]
 }
