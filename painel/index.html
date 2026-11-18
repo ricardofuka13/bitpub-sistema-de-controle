@@ -164,8 +164,10 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
         <label>Frete grátis acima de, em R$ (0 = desligado)<input type="number" id="lGratis" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 80"></label>
         <label>Fidelidade: a cada quantos pedidos entregues o cliente ganha desconto (0 = desligado)<input type="number" id="lFidMeta" min="0" max="50" step="1" inputmode="numeric" placeholder="Ex.: 10"></label>
         <label>Desconto de aniversário, em R$ (0 = desligado). Vale uma vez por ano, na semana do aniversário do cliente<input type="number" id="lAniv" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 10"></label>
-        <label>Fidelidade: valor do desconto, em R$<input type="number" id="lFidValor" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 25"></label>
-        <p class="mini" style="margin:-4px 0 0">O desconto de fidelidade entra sozinho no pedido seguinte, sobre o valor dos itens. O pedido só conta como "selo" depois de marcado como Entregue.</p>
+        <label>Fidelidade: o que o cliente ganha<select id="lFidTipo"><option value="valor">Desconto em R$</option><option value="item">Brinde: um item do cardápio</option></select></label>
+        <label id="lFidValorBox">Fidelidade: valor do desconto, em R$<input type="number" id="lFidValor" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 25"></label>
+        <label id="lFidItemBox" hidden>Fidelidade: item de brinde (sai de graça no próximo pedido e baixa o estoque dele)<select id="lFidItem"><option value="">Escolha o item</option></select></label>
+        <p class="mini" style="margin:-4px 0 0">O desconto (ou o brinde) de fidelidade entra sozinho no pedido seguinte. O brinde sai de graça e baixa o estoque do item quando o pedido entra no sistema de comandas. O pedido só conta como "selo" depois de marcado como Entregue.</p>
         <label>Horário de funcionamento (texto que aparece no site)<textarea id="lHor" rows="3" maxlength="400" placeholder="Ex.: Seg a Sex, 18h às 23h&#10;Sáb e Dom, 17h às 00h"></textarea></label>
         <label>Outras informações<textarea id="lInfo" rows="4" maxlength="600" placeholder="Ex.: Aceitamos Pix e cartão. Entregamos em Suzano e região."></textarea></label>
         <h2 class="cat">Rodapé do site (dados da empresa)</h2>
@@ -497,9 +499,19 @@ function escolherArquivo(input){return new Promise(function(ok){input.value='';i
 var cabUrl='',lojaOrig='';
 function linhaFaixa(a,v){return '<div class="fx" style="display:flex;gap:8px;align-items:center"><span>até</span><input type="number" class="fx-a" min="0.5" step="0.5" inputmode="decimal" style="max-width:100px" value="'+esc(a)+'" aria-label="Até quantos km"><span>km: R$</span><input type="number" class="fx-v" min="0" step="0.5" inputmode="decimal" style="max-width:110px" value="'+esc(v)+'" aria-label="Valor do frete"><button class="sec" type="button" data-rmfx aria-label="Remover faixa">&times;</button></div>'}
 function pintarCab(){var i=$('#lCab');if(cabUrl){i.src=cabUrl;i.hidden=false}else{i.hidden=true}$('#btnCabTirar').hidden=!cabUrl;$('#btnCab').textContent=cabUrl?'Trocar foto':'Colocar foto'}
+async function carregarBrindes(sel){
+  try{ var ms=await http('/rest/v1/docs?coll=eq.menu&select=id,data&limit=1000');
+    var l=ms.filter(function(d){return d.data&&d.data.name&&d.data.active!==false}).map(function(d){return {id:d.id,nome:d.data.name,cat:d.data.cat||''}}).sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR')});
+    $('#lFidItem').innerHTML='<option value="">Escolha o item</option>'+l.map(function(i){return '<option value="'+esc(i.id)+'">'+esc(i.nome)+(i.cat?' ('+esc(i.cat)+')':'')+'</option>'}).join('');
+    if(sel)$('#lFidItem').value=sel;
+  }catch(e){}
+}
+function ajustarFidTipo(){ var it=$('#lFidTipo').value==='item'; $('#lFidItemBox').hidden=!it; $('#lFidValorBox').hidden=it }
+$('#lFidTipo').addEventListener('change',ajustarFidTipo);
 async function carregarLoja(){
   try{
     var c=(await http('/rest/v1/site_config?id=eq.1&select=*'))[0]||{};
+    await carregarBrindes(c.fidelidade_item);$('#lFidTipo').value=c.fidelidade_tipo==='item'?'item':'valor';ajustarFidTipo();
     $('#lAgOn').checked=c.agendamento_ativo!==false;$('#lAniv').value=c.aniversario_valor>0?c.aniversario_valor:'';$('#lMin').value=c.pedido_minimo>0?c.pedido_minimo:'';$('#lGratis').value=c.frete_gratis_acima>0?c.frete_gratis_acima:'';$('#lFidMeta').value=c.fidelidade_meta>0?c.fidelidade_meta:'';$('#lFidValor').value=c.fidelidade_valor>0?c.fidelidade_valor:'';$('#lModo').value=c.modo_loja||'auto';$('#lMsgF').value=c.msg_fechado||'';desenharHorarios(c.horarios);
     $('#lRazao').value=c.rodape_razao||'';$('#lCnpj').value=c.rodape_cnpj||'';$('#lRodExtra').value=c.rodape_extra||'';$('#lEnd').value=c.endereco||'';$('#lHor').value=c.horario||'';$('#lInfo').value=c.info||'';cabUrl=c.cabecalho_foto||'';pintarCab();
     $('#lFreteOn').checked=c.frete_ativo!==false;$('#lLn').value=c.lightning_address||'';$('#lDescBtc').value=c.desconto_btc>0?c.desconto_btc:'';$('#lLoja').value=c.loja_endereco||'';lojaOrig=c.loja_endereco||'';$('#lMax').value=c.frete_max_km!=null?c.frete_max_km:8;
@@ -536,9 +548,11 @@ $('#formLoja').addEventListener('submit',async function(e){
   if(hErr){er.textContent=hErr;return}
   var vmin=Number($('#lMin').value||0),vgr=Number($('#lGratis').value||0),fmeta=Math.round(Number($('#lFidMeta').value||0)),fval=Number($('#lFidValor').value||0);
   if(!(vmin>=0&&vgr>=0&&fval>=0&&fmeta>=0&&fmeta<=50)){er.textContent='Confira o pedido mínimo, o frete grátis e a fidelidade: use números positivos (fidelidade até 50 pedidos).';return}
-  if(fmeta>0&&!(fval>0)){er.textContent='Fidelidade: informe também o valor do desconto em R$.';return}
+  var ftipo=$('#lFidTipo').value==='item'?'item':'valor', fitem=$('#lFidItem').value||null;
+  if(fmeta>0&&ftipo==='valor'&&!(fval>0)){er.textContent='Fidelidade: informe também o valor do desconto em R$.';return}
+  if(fmeta>0&&ftipo==='item'&&!fitem){er.textContent='Fidelidade: escolha o item de brinde.';return}
   var vaniv=Number($('#lAniv').value||0); if(!(vaniv>=0)){er.textContent='Desconto de aniversário: use um número positivo.';return}
-  var body={aniversario_valor:vaniv,agendamento_ativo:$('#lAgOn').checked,pedido_minimo:vmin,frete_gratis_acima:vgr,fidelidade_meta:fmeta,fidelidade_valor:fmeta>0?fval:0,horarios:Object.keys(hr).length?hr:null,modo_loja:$('#lModo').value,msg_fechado:$('#lMsgF').value.trim()||null,rodape_razao:$('#lRazao').value.trim()||null,rodape_cnpj:cnpj||null,rodape_extra:$('#lRodExtra').value.trim()||null,desconto_btc:dsc,lightning_address:ln||null,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
+  var body={aniversario_valor:vaniv,agendamento_ativo:$('#lAgOn').checked,pedido_minimo:vmin,frete_gratis_acima:vgr,fidelidade_meta:fmeta,fidelidade_valor:fmeta>0&&ftipo==='valor'?fval:0,fidelidade_tipo:ftipo,fidelidade_item:ftipo==='item'?fitem:null,horarios:Object.keys(hr).length?hr:null,modo_loja:$('#lModo').value,msg_fechado:$('#lMsgF').value.trim()||null,rodape_razao:$('#lRazao').value.trim()||null,rodape_cnpj:cnpj||null,rodape_extra:$('#lRodExtra').value.trim()||null,desconto_btc:dsc,lightning_address:ln||null,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
     frete_ativo:on,frete_max_km:max>0?max:8,frete_faixas:faixas,loja_endereco:$('#lLoja').value.trim()||null,atualizado_em:new Date().toISOString()};
   if(body.loja_endereco!==lojaOrig){body.loja_lat=null;body.loja_lng=null}
   var btn=$('#formLoja button[type=submit]');btn.disabled=true;

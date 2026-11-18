@@ -767,7 +767,9 @@ function descCupom(){
 }
 function descExtra(){ return descAniv()+descCupom() }
 function cupomFrete(){ return !!(CUPOM&&CUPOM.tipo==='frete'&&tipoAtual()==='entrega') }
-function descFid(){ return (FID&&FID.ativo&&FID.pronto)?Math.min(Number(FID.valor)||0,totalCarrinho()):0 }
+function fidItem(){ return !!(FID&&FID.ativo&&FID.tipo==='item') }
+function fidPremio(){ return fidItem()?(FID.item||'um brinde'):R(FID.valor) }
+function descFid(){ return (FID&&FID.ativo&&FID.pronto&&!fidItem())?Math.min(Number(FID.valor)||0,totalCarrinho()):0 }
 function minimoEntrega(){ return Number(M.regras&&M.regras.pedido_minimo)||0 }
 function gratisAcima(){ return Number(M.regras&&M.regras.frete_gratis_acima)||0 }
 function gratisAtivo(){ var g=gratisAcima(); return (g>0&&totalCarrinho()>=g)||cupomFrete() }
@@ -955,7 +957,8 @@ function desenharTotais(){
   if(da>0)linhaFid+='<div class="t fid"><span>🎂 Desconto de aniversário</span><span>-'+R(da)+'</span></div>';
   if(dc>0)linhaFid+='<div class="t fid"><span>🏷️ Cupom '+esc(CUPOM.codigo)+'</span><span>-'+R(dc)+'</span></div>';
   if(dsc>0){}
-  else if(FID&&FID.ativo&&!FID.pronto)linhaFid+='<div class="t fid"><span>🎁 Faltam '+(FID.meta-FID.selos)+(FID.meta-FID.selos===1?' pedido':' pedidos')+' para ganhar '+R(FID.valor)+' de desconto</span><span></span></div>';
+  else if(FID&&FID.ativo&&FID.pronto&&fidItem())linhaFid+='<div class="t fid"><span>🎁 Brinde: '+esc(FID.item)+'</span><span>Grátis</span></div>';
+  else if(FID&&FID.ativo&&!FID.pronto)linhaFid+='<div class="t fid"><span>🎁 Faltam '+(FID.meta-FID.selos)+(FID.meta-FID.selos===1?' pedido':' pedidos')+' para ganhar '+(fidItem()?esc(FID.item)+' de brinde':R(FID.valor)+' de desconto')+'</span><span></span></div>';
   $('#totais').innerHTML='<div class="t"><span>Itens</span><span>'+R(it)+'</span></div>'+linhaFrete+linhaFid+
     '<div class="t total"><span>'+(fv!=null?'Total com frete':'Total dos itens')+'</span><span>'+R(it-dsc-descExtra()+(fv||0))+'</span></div>';
   var bg=$('#barraGratis'), mn=minimoEntrega(), gr=gratisAcima();
@@ -1212,7 +1215,7 @@ async function abrirConta(silencioso){
     var validos=ps.filter(function(p){return p.status!=='cancelado'}).length;
     var fid='';
     if(FID&&FID.ativo){ var sl=''; for(var q=0;q<FID.meta;q++)sl+='<i class="'+(q<FID.selos?'on':'')+'">★</i>';
-      fid='<p class="fid-t">🎁 Fidelidade: '+(FID.pronto?'seu próximo pedido tem '+R(FID.valor)+' de desconto!':'complete '+FID.meta+' pedidos e ganhe '+R(FID.valor)+' de desconto ('+FID.selos+' de '+FID.meta+')')+'</p><div class="selos">'+sl+'</div>' }
+      fid='<p class="fid-t">🎁 Fidelidade: '+(FID.pronto?(fidItem()?'seu próximo pedido leva '+esc(FID.item)+' de brinde!':'seu próximo pedido tem '+R(FID.valor)+' de desconto!'):'complete '+FID.meta+' pedidos e ganhe '+(fidItem()?esc(FID.item)+' de brinde':R(FID.valor)+' de desconto')+' ('+FID.selos+' de '+FID.meta+')')+'</p><div class="selos">'+sl+'</div>' }
     $('#resumoCli').innerHTML='<div class="resumo-cli"><b>'+validos+'</b>'+(validos===1?'pedido feito no BitPub':'pedidos feitos no BitPub')+fid+'</div>';
     $('#listaPedidos').innerHTML=ps.length?ps.map(function(p){
       var d=new Date(p.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -1221,7 +1224,7 @@ async function abrirConta(silencioso){
         '<small>'+d+' &middot; '+(p.tipo==='entrega'?'Entrega':'Retirada')+'</small>'+
         (p.agendado_para&&ativo?'<div class="aviso-ag">⏰ Agendado para '+esc(quandoRotulo(p.agendado_para))+'</div>':'')+
         (ativo||p.status==='entregue'?passosHtml(p):'')+
-        '<div>'+p.itens.map(function(i){return i.qtd+'x '+esc(i.nome)+(i.opcoes&&i.opcoes.length?' <small>+ '+esc(i.opcoes.map(function(o){return o.nome}).join(', '))+'</small>':'')}).join('<br>')+'</div>'+
+        '<div>'+p.itens.map(function(i){return (i.brinde?'🎁 ':'')+i.qtd+'x '+esc(i.nome)+(i.brinde?' <small>(brinde)</small>':'')+(i.opcoes&&i.opcoes.length?' <small>+ '+esc(i.opcoes.map(function(o){return o.nome}).join(', '))+'</small>':'')}).join('<br>')+'</div>'+
         (Number(p.desconto_fidelidade)>0?'<small>🎁 Desconto fidelidade: -'+R(p.desconto_fidelidade)+'</small>':'')+
         '<b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+(Number(p.frete)===0?'frete grátis':R(p.frete)+' de frete')+' = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+
         (p.itens&&p.itens.length?'<button class="repetir" type="button" data-repetir="'+esc(p.id)+'">Pedir de novo</button>':'')+
@@ -1285,7 +1288,7 @@ function mensagemZap(p){
   var l=['*Pedido #'+p.numero+' - BitPub*','','Cliente: '+p.nome,'WhatsApp: '+mascara(p.whatsapp),'Tipo: '+(p.tipo==='entrega'?'Entrega':'Retirada na loja')];
   if(p.tipo==='entrega')l.push('Endereço: '+p.endereco);
   l.push('');
-  p.itens.forEach(function(i){ l.push(i.qtd+'x '+i.nome+(i.opcoes&&i.opcoes.length?' + '+i.opcoes.map(function(o){return o.nome}).join(', '):'')+' - '+R(i.preco*i.qtd)+(i.obs?' ('+i.obs+')':'')) });
+  p.itens.forEach(function(i){ if(i.brinde){ l.push('1x '+i.nome+' - BRINDE DE FIDELIDADE (grátis)'); return } l.push(i.qtd+'x '+i.nome+(i.opcoes&&i.opcoes.length?' + '+i.opcoes.map(function(o){return o.nome}).join(', '):'')+' - '+R(i.preco*i.qtd)+(i.obs?' ('+i.obs+')':'')) });
   if(Number(p.desconto)>0)l.push('','Desconto fidelidade: -'+R(p.desconto)+' (já aplicado)');
   if(Number(p.desconto_aniversario)>0)l.push('Desconto de aniversário: -'+R(p.desconto_aniversario)+' (já aplicado)');
   if(p.cupom)l.push('Cupom '+p.cupom+(Number(p.desconto_cupom)>0?': -'+R(p.desconto_cupom):' (frete grátis)')+' (já aplicado)');
@@ -1407,7 +1410,7 @@ async function enviarPedido(){
     freteAtual=null; $('#freteMsg').textContent=''; desenharFrete();
     carrinho=[]; salvarCarrinho(); $$('.item').forEach(function(el){acaoItem(el.getAttribute('data-id'))}); atualizarBarra();
     $('#obsGeral').value=''; $('#dCarrinho').close();
-    $('#okTexto').textContent='Seu pedido '+p.numero+(p.agendado_para?' está agendado para '+quandoRotulo(p.agendado_para)+'.':' já está com a gente.')+(Number(p.desconto)>0?' Desconto fidelidade de '+R(p.desconto)+' aplicado.':'')+(Number(p.desconto_aniversario)>0?' Desconto de aniversário de '+R(p.desconto_aniversario)+' aplicado.':'')+(p.cupom?' Cupom '+p.cupom+' aplicado.':'')+(p.frete!=null?' Total com frete: '+R(Number(p.total)+Number(p.frete))+'.':'')+' Você pode pagar agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'&&p.frete==null?'o frete e ':'')+'o pagamento.';
+    $('#okTexto').textContent='Seu pedido '+p.numero+(p.agendado_para?' está agendado para '+quandoRotulo(p.agendado_para)+'.':' já está com a gente.')+(Number(p.desconto)>0?' Desconto fidelidade de '+R(p.desconto)+' aplicado.':'')+(p.brinde?' Brinde de fidelidade incluso.':'')+(Number(p.desconto_aniversario)>0?' Desconto de aniversário de '+R(p.desconto_aniversario)+' aplicado.':'')+(p.cupom?' Cupom '+p.cupom+' aplicado.':'')+(p.frete!=null?' Total com frete: '+R(Number(p.total)+Number(p.frete))+'.':'')+' Você pode pagar agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'&&p.frete==null?'o frete e ':'')+'o pagamento.';
     CUPOM=null; desenharCupom(); carregarFid(); atualizarTrack();
     pedidoPagarId=p.id; btcRotulo(p); $('#erroPagar').textContent=''; $('#okPagar').hidden=!PAGAMENTO_ONLINE; $('#okBtc').hidden=!(BTC_ON&&PAGAMENTO_ONLINE);
     $('#okZap').href='https://wa.me/'+WHATS_LOJA+'?text='+encodeURIComponent(mensagemZap(p));
