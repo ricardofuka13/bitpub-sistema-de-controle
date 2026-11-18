@@ -62,6 +62,15 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
 .cli .det{padding:0 14px 14px;border-top:1px solid var(--linha)}
 .vazio{text-align:center;color:var(--suave);padding:30px 0}
 .busca{margin-bottom:12px}
+.rel-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:6px}
+.rel-t{background:#fff;border:2px solid var(--preto);padding:10px;display:flex;flex-direction:column;gap:2px}
+.rel-t span{font-size:12px;font-weight:700;color:var(--suave)}.rel-t b{font:400 26px/1.1 var(--f-titulo)}.rel-t small{font-size:12px;color:var(--suave)}
+.rel-bars{display:flex;align-items:flex-end;gap:2px;height:130px;background:#fff;border:2px solid var(--preto);padding:8px 6px 4px;overflow-x:auto}
+.rel-b{flex:1;min-width:14px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px}
+.rel-b i{display:block;width:100%;background:var(--laranja,#F96A05);min-height:0}
+.rel-b span{font-size:9px;color:var(--suave);line-height:1}
+.rel-top{background:#fff;border:2px solid var(--preto)}.rel-top div{display:flex;justify-content:space-between;gap:8px;padding:9px 10px;border-bottom:1px solid #ddd;font-size:14px}.rel-top div:last-child{border-bottom:0}
+@media(min-width:700px){.rel-tiles{grid-template-columns:repeat(3,1fr)}}
 .cat{font:400 26px/1 var(--f-titulo);margin:18px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--preto)}
 .fi{background:#fff;border:2px solid var(--preto);margin-bottom:8px;padding:10px;display:grid;grid-template-columns:84px 1fr;gap:6px 12px;align-items:center}
 .fi .th{width:84px;height:84px;object-fit:cover;border:2px solid var(--preto);background:var(--cinza);display:grid;place-items:center;color:var(--suave);font-size:12px;text-align:center}
@@ -94,6 +103,8 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
       <button class="aba" role="tab" id="abaClientes" aria-selected="false">Clientes</button>
       <button class="aba" role="tab" id="abaFotos" aria-selected="false">Fotos</button>
       <button class="aba" role="tab" id="abaPromos" aria-selected="false">Promoções</button>
+      <button class="aba" role="tab" id="abaCupons" aria-selected="false">Cupons</button>
+      <button class="aba" role="tab" id="abaRelat" aria-selected="false">Relatório</button>
       <button class="aba" role="tab" id="abaLoja" aria-selected="false">Loja</button>
     </div>
     <button class="sair" id="btnSair" type="button">Sair</button>
@@ -115,6 +126,29 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
       <input type="file" id="arqPromo" accept="image/*" hidden>
       <div id="listaPromos"></div>
     </section>
+    <section id="vCupons" hidden>
+      <p class="mini" style="margin:0 0 10px">Crie códigos de desconto para divulgar no Instagram e no WhatsApp. O cliente digita o código na sacola. O desconto de cupom vale sobre o valor dos itens, depois dos descontos de fidelidade e de aniversário.</p>
+      <div class="form" style="display:grid;gap:10px;background:#fff;border:2px solid var(--preto);padding:12px;margin-bottom:12px">
+        <label>Código (letras e números, sem espaço)<input type="text" id="cpCod" maxlength="20" autocapitalize="characters" autocomplete="off" placeholder="Ex.: BEMVINDO10"></label>
+        <label>Tipo de desconto<select id="cpTipo"><option value="percent">Percentual (%)</option><option value="valor">Valor em R$</option><option value="frete">Frete grátis</option></select></label>
+        <label id="cpValBox"><span id="cpValLb">Percentual de desconto (1 a 100)</span><input type="number" id="cpVal" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 10"></label>
+        <label>Pedido mínimo, em R$ (0 = sem mínimo)<input type="number" id="cpMin" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 40"></label>
+        <label>Válido até (opcional)<input type="date" id="cpVal2"></label>
+        <label>Limite total de usos (opcional)<input type="number" id="cpLim" min="1" step="1" inputmode="numeric" placeholder="Ex.: 100"></label>
+        <label>Quantas vezes cada cliente pode usar<input type="number" id="cpLimC" min="1" step="1" inputmode="numeric" value="1"></label>
+        <label>Anotação interna (opcional)<input type="text" id="cpDesc" maxlength="120" placeholder="Ex.: campanha do Instagram"></label>
+        <p class="erro" id="cpErro" role="alert" style="margin:0"></p>
+        <button class="principal" type="button" id="cpSalvar">Criar cupom</button>
+      </div>
+      <div id="listaCupons"></div>
+    </section>
+    <section id="vRelat" hidden>
+      <div class="filtros" role="group" aria-label="Período do relatório" id="relPer">
+        <button type="button" data-d="7" aria-pressed="false">7 dias</button><button type="button" data-d="30" aria-pressed="true">30 dias</button><button type="button" data-d="90" aria-pressed="false">90 dias</button>
+      </div>
+      <p class="mini" style="margin:6px 0 10px">Números dos pedidos feitos pelo site (cancelados não entram na venda). Vendas de balcão e mesas ficam no sistema de comandas.</p>
+      <div id="relCorpo"><p class="vazio">Carregando...</p></div>
+    </section>
     <section id="vLoja" hidden>
       <form id="formLoja" style="display:flex;flex-direction:column;gap:14px;max-width:640px" novalidate>
         <h2 class="cat" style="margin-top:0">Informações do site</h2>
@@ -129,6 +163,7 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
         <label>Pedido mínimo para entrega, em R$ (0 = sem mínimo)<input type="number" id="lMin" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 30"></label>
         <label>Frete grátis acima de, em R$ (0 = desligado)<input type="number" id="lGratis" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 80"></label>
         <label>Fidelidade: a cada quantos pedidos entregues o cliente ganha desconto (0 = desligado)<input type="number" id="lFidMeta" min="0" max="50" step="1" inputmode="numeric" placeholder="Ex.: 10"></label>
+        <label>Desconto de aniversário, em R$ (0 = desligado). Vale uma vez por ano, na semana do aniversário do cliente<input type="number" id="lAniv" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 10"></label>
         <label>Fidelidade: valor do desconto, em R$<input type="number" id="lFidValor" min="0" step="0.5" inputmode="decimal" placeholder="Ex.: 25"></label>
         <p class="mini" style="margin:-4px 0 0">O desconto de fidelidade entra sozinho no pedido seguinte, sobre o valor dos itens. O pedido só conta como "selo" depois de marcado como Entregue.</p>
         <label>Horário de funcionamento (texto que aparece no site)<textarea id="lHor" rows="3" maxlength="400" placeholder="Ex.: Seg a Sex, 18h às 23h&#10;Sáb e Dom, 17h às 00h"></textarea></label>
@@ -366,10 +401,11 @@ $('#listaClientes').addEventListener('click',async function(e){
 /* ---------- fotos do cardápio ---------- */
 var itensFoto=[],descFoto={},descTxt={},itemAlvo=null,BUCKET='cardapio-fotos';
 function urlFoto(f){if(!f)return '';if(/^https:\/\//.test(f))return f;if(/^fotos\/[\w.-]+$/.test(f))return '../pedido/'+f;return ''}
+var descTag={},descSug={};
 async function carregarFotos(){
   try{
-    var r=await Promise.all([http('/rest/v1/docs?coll=eq.menu&select=id,data&limit=1000'),http('/rest/v1/cardapio_desc?select=item_id,foto,descricao&limit=1000')]);
-    descFoto={};descTxt={};r[1].forEach(function(d){descFoto[d.item_id]=d.foto||'';descTxt[d.item_id]=d.descricao||''});
+    var r=await Promise.all([http('/rest/v1/docs?coll=eq.menu&select=id,data&limit=1000'),http('/rest/v1/cardapio_desc?select=item_id,foto,descricao,tag,sugerir&limit=1000')]);
+    descFoto={};descTxt={};descTag={};descSug={};r[1].forEach(function(d){descFoto[d.item_id]=d.foto||'';descTxt[d.item_id]=d.descricao||'';descTag[d.item_id]=d.tag||'';descSug[d.item_id]=!!d.sugerir});
     itensFoto=r[0].filter(function(d){return d.data&&d.data.active!==false}).map(function(d){return {id:d.id,nome:d.data.name||d.id,cat:d.data.cat||'Outros'}})
       .sort(function(a,b){return a.cat.localeCompare(b.cat,'pt-BR')||a.nome.localeCompare(b.nome,'pt-BR')});
     desenharFotos();
@@ -383,7 +419,8 @@ function desenharFotos(){
     if(i.cat!==cat){cat=i.cat;h+='<h2 class="cat">'+esc(cat)+'</h2>'}
     var u=urlFoto(descFoto[i.id]);
     h+='<div class="fi" data-id="'+esc(i.id)+'">'+(u?'<img class="th" src="'+esc(u)+'" alt="Foto de '+esc(i.nome)+'" loading="lazy">':'<div class="th">sem foto</div>')+
-      '<div><b>'+esc(i.nome)+'</b><br><span class="mini">'+(descTxt[i.id]?esc(descTxt[i.id]):'<i>sem descrição</i>')+'</span><br><span class="mini erroFi"></span></div><div class="bt"><button class="sec" type="button" data-desc>Editar descrição</button><button class="sec" type="button" data-trocar>'+(u?'Trocar foto':'Colocar foto')+'</button>'+(u?'<button class="sec" type="button" data-tirar>Tirar foto</button>':'')+'</div></div>';
+      '<div><b>'+esc(i.nome)+'</b><br><span class="mini">'+(descTxt[i.id]?esc(descTxt[i.id]):'<i>sem descrição</i>')+'</span><br><span class="mini erroFi"></span></div><div class="bt"><button class="sec" type="button" data-desc>Editar descrição</button><button class="sec" type="button" data-trocar>'+(u?'Trocar foto':'Colocar foto')+'</button>'+(u?'<button class="sec" type="button" data-tirar>Tirar foto</button>':'')+'</div>'+
+      '<div class="bt" style="align-items:center"><label class="mini" style="display:flex;gap:6px;align-items:center">Etiqueta <select data-tag><option value=""'+(descTag[i.id]?'':' selected')+'>Nenhuma</option><option value="novo"'+(descTag[i.id]==='novo'?' selected':'')+'>Novo</option><option value="favorito"'+(descTag[i.id]==='favorito'?' selected':'')+'>Favorito da casa</option></select></label><label class="mini" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-sug'+(descSug[i.id]?' checked':'')+'> Sugerir na sacola</label></div></div>';
   });
   $('#listaFotos').innerHTML=h||'<p class="vazio">Nenhum item no cardápio.</p>';
 }
@@ -403,6 +440,14 @@ async function gravarFoto(id,valor){
   await http('/rest/v1/cardapio_desc?on_conflict=item_id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{item_id:id,foto:valor}});
   descFoto[id]=valor||'';
 }
+$('#listaFotos').addEventListener('change',async function(e){
+  var box=e.target.closest('.fi');if(!box)return;var id=box.getAttribute('data-id'),er=box.querySelector('.erroFi');
+  try{
+    if(e.target.matches('[data-tag]')){ await http('/rest/v1/cardapio_desc?on_conflict=item_id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{item_id:id,tag:e.target.value||null}}); descTag[id]=e.target.value||'' }
+    else if(e.target.matches('[data-sug]')){ await http('/rest/v1/cardapio_desc?on_conflict=item_id',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{item_id:id,sugerir:e.target.checked}}); descSug[id]=e.target.checked }
+    if(er)er.textContent='';
+  }catch(x){ if(er)er.textContent='Não foi possível salvar: '+x.message }
+});
 $('#listaFotos').addEventListener('click',async function(e){
   var box=e.target.closest('.fi');if(!box)return;var id=box.getAttribute('data-id');
   if(e.target.closest('[data-desc]')){
@@ -455,7 +500,7 @@ function pintarCab(){var i=$('#lCab');if(cabUrl){i.src=cabUrl;i.hidden=false}els
 async function carregarLoja(){
   try{
     var c=(await http('/rest/v1/site_config?id=eq.1&select=*'))[0]||{};
-    $('#lAgOn').checked=c.agendamento_ativo!==false;$('#lMin').value=c.pedido_minimo>0?c.pedido_minimo:'';$('#lGratis').value=c.frete_gratis_acima>0?c.frete_gratis_acima:'';$('#lFidMeta').value=c.fidelidade_meta>0?c.fidelidade_meta:'';$('#lFidValor').value=c.fidelidade_valor>0?c.fidelidade_valor:'';$('#lModo').value=c.modo_loja||'auto';$('#lMsgF').value=c.msg_fechado||'';desenharHorarios(c.horarios);
+    $('#lAgOn').checked=c.agendamento_ativo!==false;$('#lAniv').value=c.aniversario_valor>0?c.aniversario_valor:'';$('#lMin').value=c.pedido_minimo>0?c.pedido_minimo:'';$('#lGratis').value=c.frete_gratis_acima>0?c.frete_gratis_acima:'';$('#lFidMeta').value=c.fidelidade_meta>0?c.fidelidade_meta:'';$('#lFidValor').value=c.fidelidade_valor>0?c.fidelidade_valor:'';$('#lModo').value=c.modo_loja||'auto';$('#lMsgF').value=c.msg_fechado||'';desenharHorarios(c.horarios);
     $('#lRazao').value=c.rodape_razao||'';$('#lCnpj').value=c.rodape_cnpj||'';$('#lRodExtra').value=c.rodape_extra||'';$('#lEnd').value=c.endereco||'';$('#lHor').value=c.horario||'';$('#lInfo').value=c.info||'';cabUrl=c.cabecalho_foto||'';pintarCab();
     $('#lFreteOn').checked=c.frete_ativo!==false;$('#lLn').value=c.lightning_address||'';$('#lDescBtc').value=c.desconto_btc>0?c.desconto_btc:'';$('#lLoja').value=c.loja_endereco||'';lojaOrig=c.loja_endereco||'';$('#lMax').value=c.frete_max_km!=null?c.frete_max_km:8;
     $('#lFaixas').innerHTML=(c.frete_faixas||[]).map(function(f){return linhaFaixa(f.ate_km,f.valor)}).join('');
@@ -492,7 +537,8 @@ $('#formLoja').addEventListener('submit',async function(e){
   var vmin=Number($('#lMin').value||0),vgr=Number($('#lGratis').value||0),fmeta=Math.round(Number($('#lFidMeta').value||0)),fval=Number($('#lFidValor').value||0);
   if(!(vmin>=0&&vgr>=0&&fval>=0&&fmeta>=0&&fmeta<=50)){er.textContent='Confira o pedido mínimo, o frete grátis e a fidelidade: use números positivos (fidelidade até 50 pedidos).';return}
   if(fmeta>0&&!(fval>0)){er.textContent='Fidelidade: informe também o valor do desconto em R$.';return}
-  var body={agendamento_ativo:$('#lAgOn').checked,pedido_minimo:vmin,frete_gratis_acima:vgr,fidelidade_meta:fmeta,fidelidade_valor:fmeta>0?fval:0,horarios:Object.keys(hr).length?hr:null,modo_loja:$('#lModo').value,msg_fechado:$('#lMsgF').value.trim()||null,rodape_razao:$('#lRazao').value.trim()||null,rodape_cnpj:cnpj||null,rodape_extra:$('#lRodExtra').value.trim()||null,desconto_btc:dsc,lightning_address:ln||null,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
+  var vaniv=Number($('#lAniv').value||0); if(!(vaniv>=0)){er.textContent='Desconto de aniversário: use um número positivo.';return}
+  var body={aniversario_valor:vaniv,agendamento_ativo:$('#lAgOn').checked,pedido_minimo:vmin,frete_gratis_acima:vgr,fidelidade_meta:fmeta,fidelidade_valor:fmeta>0?fval:0,horarios:Object.keys(hr).length?hr:null,modo_loja:$('#lModo').value,msg_fechado:$('#lMsgF').value.trim()||null,rodape_razao:$('#lRazao').value.trim()||null,rodape_cnpj:cnpj||null,rodape_extra:$('#lRodExtra').value.trim()||null,desconto_btc:dsc,lightning_address:ln||null,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
     frete_ativo:on,frete_max_km:max>0?max:8,frete_faixas:faixas,loja_endereco:$('#lLoja').value.trim()||null,atualizado_em:new Date().toISOString()};
   if(body.loja_endereco!==lojaOrig){body.loja_lat=null;body.loja_lng=null}
   var btn=$('#formLoja button[type=submit]');btn.disabled=true;
@@ -580,13 +626,107 @@ $('#listaPromos').addEventListener('click',async function(e){
 var $$=function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s))};
 
 /* ---------- abas e ciclo ---------- */
+/* ---------- cupons ---------- */
+var cupons=[];
+function ajustarCpTipo(){ var t=$('#cpTipo').value; $('#cpValBox').hidden=t==='frete'; $('#cpValLb').textContent=t==='percent'?'Percentual de desconto (1 a 100)':'Valor do desconto, em R$' }
+$('#cpTipo').addEventListener('change',ajustarCpTipo);
+async function carregarCupons(){
+  ajustarCpTipo();
+  try{ cupons=await http('/rest/v1/cupons?select=*&order=criado_em.desc&limit=200'); desenharCupons() }
+  catch(e){ $('#listaCupons').innerHTML='<p class="erro">'+esc(e.message)+'</p>' }
+}
+function descCupomTxt(c){ return c.tipo==='percent'?String(c.valor).replace('.',',')+'% de desconto':c.tipo==='valor'?R(c.valor)+' de desconto':'Frete grátis' }
+function desenharCupons(){
+  var hoje=new Date().toLocaleDateString('en-CA');
+  $('#listaCupons').innerHTML=cupons.length?cupons.map(function(c){
+    var venc=c.validade&&c.validade<hoje, esg=c.limite_total!=null&&c.usos>=c.limite_total, on=c.ativo&&!venc&&!esg;
+    return '<div class="fi" data-id="'+esc(c.id)+'" style="grid-template-columns:1fr"><div><b style="font-size:18px;letter-spacing:.5px">'+esc(c.codigo)+'</b> <span class="sel '+(on?'entregue':'cancelado')+'">'+(venc?'Vencido':esg?'Esgotado':c.ativo?'No ar':'Pausado')+'</span><br>'+
+      '<span class="mini">'+descCupomTxt(c)+(c.minimo>0?' &middot; pedido mínimo '+R(c.minimo):'')+(c.validade?' &middot; até '+c.validade.split('-').reverse().join('/'):'')+'<br>Usado '+c.usos+(c.limite_total!=null?' de '+c.limite_total:'')+(c.usos===1?' vez':' vezes')+' &middot; '+c.limite_cliente+(c.limite_cliente===1?' uso':' usos')+' por cliente'+(c.descricao?'<br><i>'+esc(c.descricao)+'</i>':'')+'</span></div>'+
+      '<div class="bt"><button class="sec" type="button" data-ctog>'+(c.ativo?'Pausar':'Pôr no ar')+'</button><button class="sec" type="button" data-cdel>Excluir</button></div></div>';
+  }).join(''):'<p class="vazio">Nenhum cupom criado ainda.</p>';
+}
+$('#cpSalvar').addEventListener('click',async function(){
+  var er=$('#cpErro'); er.textContent='';
+  var cod=($('#cpCod').value||'').toUpperCase().replace(/[^A-Z0-9]/g,''), tipo=$('#cpTipo').value, val=Number($('#cpVal').value||0), min=Number($('#cpMin').value||0),
+      lt=$('#cpLim').value?Math.round(Number($('#cpLim').value)):null, lc=Math.round(Number($('#cpLimC').value||1));
+  if(cod.length<3||cod.length>20){er.textContent='O código precisa ter de 3 a 20 letras ou números.';return}
+  if(tipo!=='frete'&&!(val>0)){er.textContent='Informe o valor do desconto.';return}
+  if(tipo==='percent'&&val>100){er.textContent='O percentual não pode passar de 100.';return}
+  if(!(min>=0)||(lt!=null&&!(lt>0))||!(lc>=1)){er.textContent='Confira o pedido mínimo e os limites de uso.';return}
+  var b=this; b.disabled=true;
+  try{
+    await http('/rest/v1/cupons',{method:'POST',prefer:'return=minimal',body:{codigo:cod,tipo:tipo,valor:tipo==='frete'?0:val,minimo:min,validade:$('#cpVal2').value||null,limite_total:lt,limite_cliente:lc,descricao:$('#cpDesc').value.trim()||null,ativo:true}});
+    ['#cpCod','#cpVal','#cpMin','#cpVal2','#cpLim','#cpDesc'].forEach(function(q){$(q).value=''}); $('#cpLimC').value='1';
+    await carregarCupons();
+  }catch(e){ er.textContent=/duplicate|unique|23505|409/i.test(e.message+e.status)?'Já existe um cupom com esse código.':'Não foi possível criar: '+e.message }
+  finally{ b.disabled=false }
+});
+$('#listaCupons').addEventListener('click',async function(e){
+  var box=e.target.closest('.fi'); if(!box)return; var id=box.getAttribute('data-id'), c=cupons.find(function(x){return x.id===id}); if(!c)return;
+  try{
+    if(e.target.closest('[data-ctog]')){ await http('/rest/v1/cupons?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:{ativo:!c.ativo}}); c.ativo=!c.ativo; desenharCupons() }
+    else if(e.target.closest('[data-cdel]')){ var bt=e.target.closest('[data-cdel]'); if(bt.getAttribute('data-ok')!=='1'){ bt.setAttribute('data-ok','1'); bt.textContent='Confirmar exclusão'; return }
+      await http('/rest/v1/cupons?id=eq.'+id,{method:'DELETE',prefer:'return=minimal'}); cupons=cupons.filter(function(x){return x.id!==id}); desenharCupons() }
+  }catch(x){ alert('Não foi possível: '+x.message) }
+});
+
+/* ---------- relatório ---------- */
+var relDias=30;
+$('#relPer').addEventListener('click',function(e){ var b=e.target.closest('[data-d]'); if(!b)return; relDias=Number(b.getAttribute('data-d')); $$('#relPer button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))}); carregarRelat() });
+function spData(iso){ return new Date(new Date(iso).getTime()-3*36e5) }
+function chaveDia(d){ return d.toISOString().slice(0,10) }
+async function carregarRelat(){
+  var corpo=$('#relCorpo'); corpo.innerHTML='<p class="vazio">Carregando...</p>';
+  try{
+    var desde=new Date(Date.now()-relDias*864e5).toISOString(), all=[], off=0;
+    for(var pg=0;pg<10;pg++){
+      var r=await http('/rest/v1/pedidos_online?select=criado_em,total,frete,tipo,status,itens,nota,cupom,desconto_cupom,desconto_fidelidade,desconto_aniversario&criado_em=gte.'+desde+'&order=criado_em.asc&limit=1000&offset='+off);
+      all=all.concat(r); if(r.length<1000)break; off+=1000;
+    }
+    desenharRelat(all);
+  }catch(e){ corpo.innerHTML='<p class="erro">'+esc(e.message)+'</p>' }
+}
+function barras(lista,fmt){
+  var mx=Math.max.apply(null,lista.map(function(x){return x.v}).concat([1]));
+  return '<div class="rel-bars">'+lista.map(function(x){return '<div class="rel-b" title="'+esc(x.t)+': '+esc(fmt(x.v))+'"><i style="height:'+Math.max(x.v>0?4:0,Math.round(x.v/mx*100))+'%"></i><span>'+esc(x.l)+'</span></div>'}).join('')+'</div>';
+}
+function desenharRelat(all){
+  var ok=all.filter(function(p){return p.status!=='cancelado'}), canc=all.length-ok.length;
+  var fat=0,desc=0,ent=0,ret=0,notas=[],cupN=0,porDia={},porHora=[],prod={};
+  for(var h=0;h<24;h++)porHora.push(0);
+  ok.forEach(function(p){
+    var v=Number(p.total||0)+Number(p.frete||0); fat+=v;
+    desc+=Number(p.desconto_fidelidade||0)+Number(p.desconto_cupom||0)+Number(p.desconto_aniversario||0);
+    if(p.tipo==='entrega')ent++; else ret++;
+    if(p.nota)notas.push(p.nota); if(p.cupom)cupN++;
+    var d=spData(p.criado_em); var k=chaveDia(d); porDia[k]=(porDia[k]||0)+v; porHora[d.getUTCHours()]++;
+    (p.itens||[]).forEach(function(i){ var n=i.nome||'Item'; var x=prod[n]||(prod[n]={n:n,q:0,v:0}); x.q+=Number(i.qtd)||0; x.v+=(Number(i.preco)||0)*(Number(i.qtd)||0) });
+  });
+  var n=ok.length, tk=n?fat/n:0, med=notas.length?notas.reduce(function(a,b){return a+b},0)/notas.length:0;
+  var dias=[],hj=spData(new Date().toISOString());
+  for(var i=relDias-1;i>=0;i--){ var d=new Date(Date.UTC(hj.getUTCFullYear(),hj.getUTCMonth(),hj.getUTCDate()-i)); var k=chaveDia(d); dias.push({k:k,v:porDia[k]||0,l:('0'+d.getUTCDate()).slice(-2),t:k.split('-').reverse().join('/')}) }
+  if(relDias>30){ var sem=[]; for(var j=0;j<dias.length;j+=7){ var ch=dias.slice(j,j+7); sem.push({v:ch.reduce(function(a,b){return a+b.v},0),l:ch[0].l+'/'+ch[0].k.slice(5,7),t:'Semana de '+ch[0].t}) } dias=sem }
+  var pico=0; porHora.forEach(function(v,h){ if(v>porHora[pico])pico=h });
+  var tops=Object.keys(prod).map(function(k){return prod[k]}).sort(function(a,b){return b.q-a.q||b.v-a.v}).slice(0,10);
+  var hrs=porHora.map(function(v,h){return {v:v,l:String(h),t:h+'h'}});
+  var tile=function(t,v,s){return '<div class="rel-t"><span>'+t+'</span><b>'+v+'</b>'+(s?'<small>'+s+'</small>':'')+'</div>'};
+  $('#relCorpo').innerHTML=!all.length?'<p class="vazio">Nenhum pedido nesse período.</p>':
+    '<div class="rel-tiles">'+tile('Faturamento',R(fat),'itens + frete, já com descontos')+tile('Pedidos',n,canc?canc+(canc===1?' cancelado':' cancelados'):'nenhum cancelado')+tile('Ticket médio',R(tk),'por pedido')+
+      tile('Entrega x retirada',ent+' / '+ret,n?Math.round(ent/n*100)+'% entrega':'')+tile('Descontos dados',R(desc),cupN+(cupN===1?' pedido com cupom':' pedidos com cupom'))+tile('Nota média',notas.length?med.toFixed(1).replace('.',',')+' ★':'—',notas.length+(notas.length===1?' avaliação':' avaliações'))+'</div>'+
+    '<h2 class="cat">Vendas por '+(relDias>30?'semana':'dia')+'</h2>'+barras(dias,R)+
+    '<h2 class="cat">Horários de pico</h2><p class="mini" style="margin:0 0 6px">'+(n?'Mais pedidos às <b>'+pico+'h</b> ('+porHora[pico]+(porHora[pico]===1?' pedido':' pedidos')+').':'')+'</p>'+barras(hrs,function(v){return v+(v===1?' pedido':' pedidos')})+
+    '<h2 class="cat">Mais vendidos</h2>'+(tops.length?'<div class="rel-top">'+tops.map(function(t,i){return '<div><span>'+(i+1)+'. '+esc(t.n)+'</span><b>'+t.q+' un &middot; '+R(t.v)+'</b></div>'}).join('')+'</div>':'<p class="vazio">Sem vendas.</p>');
+}
+
 function aba(qual){
-  ['pedidos','clientes','fotos','promos','loja'].forEach(function(n){
+  ['pedidos','clientes','fotos','promos','cupons','relat','loja'].forEach(function(n){
     var N=n.charAt(0).toUpperCase()+n.slice(1);$('#aba'+N).setAttribute('aria-selected',String(n===qual));$('#v'+N).hidden=n!==qual;
   });
-  if(qual==='pedidos'){document.title='BitPub | Painel de pedidos'}else if(qual==='clientes')carregarClientes();else if(qual==='promos')carregarPromos();else if(qual==='loja')carregarLoja();else carregarFotos();
+  if(qual==='pedidos'){document.title='BitPub | Painel de pedidos'}else if(qual==='clientes')carregarClientes();else if(qual==='promos')carregarPromos();else if(qual==='cupons')carregarCupons();else if(qual==='relat')carregarRelat();else if(qual==='loja')carregarLoja();else carregarFotos();
 }
 $('#abaPedidos').addEventListener('click',function(){aba('pedidos')});
+$('#abaCupons').addEventListener('click',function(){aba('cupons')});
+$('#abaRelat').addEventListener('click',function(){aba('relat')});
 $('#abaClientes').addEventListener('click',function(){aba('clientes')});
 $('#abaFotos').addEventListener('click',function(){aba('fotos')});
 $('#abaPromos').addEventListener('click',function(){aba('promos')});

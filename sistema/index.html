@@ -2452,9 +2452,12 @@ async function importOnline(p,claimed){
     if(fv>0)items.push({lid:lid(),k:'__frete',name:'Frete',price:fv,cost:0,qty:1,note:'',rec:[],sig:'',isFrete:true});
     var dv=r2(Number(p.desconto_fidelidade)||0);
     if(dv>0)items.push({lid:lid(),k:'__desc',name:'Desconto fidelidade',price:-dv,cost:0,qty:1,note:'',rec:[],sig:'',isDesc:true});
+    var da=r2(Number(p.desconto_aniversario)||0), dcp=r2(Number(p.desconto_cupom)||0);
+    if(da>0)items.push({lid:lid(),k:'__desca',name:'Desconto aniversario',price:-da,cost:0,qty:1,note:'',rec:[],sig:'',isDesc:true});
+    if(dcp>0)items.push({lid:lid(),k:'__descc',name:'Cupom '+(p.cupom||''),price:-dcp,cost:0,qty:1,note:'',rec:[],sig:'',isDesc:true});
     var ref=db.collection('orders').doc();
     var doc={freteVal:fv,num:max+1,type:type,name:'',label:mkLabel(base,cname),base:base,status:'open',items:items,openedAt:Date.now(),day:day,cid:cid,cname:cname,
-      online:true,descFid:dv,freteGratis:(p.tipo==='entrega'&&p.frete!=null&&Number(p.frete)===0),agendado:p.agendado_para||'',pedidoId:p.id,pedidoNum:p.numero,whats:whats,addr:p.endereco||'',obsOnline:p.observacao||'',onlinePrinted:false};
+      online:true,descFid:dv,descAniv:da,descCupom:dcp,cupomCod:p.cupom||'',freteGratis:(p.tipo==='entrega'&&p.frete!=null&&Number(p.frete)===0),agendado:p.agendado_para||'',pedidoId:p.id,pedidoNum:p.numero,whats:whats,addr:p.endereco||'',obsOnline:p.observacao||'',onlinePrinted:false};
     await ref.set(doc);
     S.open[ref.id]=doc;
     await applyStock(total);
@@ -2498,6 +2501,8 @@ function onlineText(o){
     L.push(dash);
   });
   if(o.descFid>0)N('Desconto fidelidade: -'+brl(o.descFid)+' (ja aplicado)');
+  if(o.descAniv>0)N('Desconto aniversario: -'+brl(o.descAniv)+' (ja aplicado)');
+  if(o.cupomCod)N('Cupom '+o.cupomCod+(o.descCupom>0?': -'+brl(o.descCupom):' (frete gratis)')+' (ja aplicado)');
   L.push(lr('Itens',plain(brl(subOf(o)-(o.freteVal||0)))));
   if(o.type==='delivery'){if(o.freteVal>0){L.push(lr('Frete',plain(brl(o.freteVal))));L.push(lr('TOTAL',plain(brl(subOf(o)))))}else N(o.freteGratis?'Frete: GRATIS':'Frete: a combinar no WhatsApp')}
   N(o.onlinePaid?'Pagamento: PAGO ONLINE':'Pagamento: a combinar no WhatsApp');
