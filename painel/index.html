@@ -104,6 +104,7 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
       <button class="aba" role="tab" id="abaFotos" aria-selected="false">Fotos</button>
       <button class="aba" role="tab" id="abaPromos" aria-selected="false">Promoções</button>
       <button class="aba" role="tab" id="abaCupons" aria-selected="false">Cupons</button>
+      <button class="aba" role="tab" id="abaNovidades" aria-selected="false">Novidades</button>
       <button class="aba" role="tab" id="abaRelat" aria-selected="false">Relatório</button>
       <button class="aba" role="tab" id="abaLoja" aria-selected="false">Loja</button>
     </div>
@@ -141,6 +142,12 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
         <button class="principal" type="button" id="cpSalvar">Criar cupom</button>
       </div>
       <div id="listaCupons"></div>
+    </section>
+    <section id="vNovidades" hidden>
+      <p class="mini" style="margin:0 0 10px">Pessoas que se cadastraram no site para receber promoções no WhatsApp. Todas aceitaram receber mensagens. Quem pedir para sair deve ser excluído da lista.</p>
+      <div class="bt" style="margin-bottom:10px"><button class="sec" type="button" id="nvCopiar">Copiar números</button><button class="sec" type="button" id="nvCsv">Baixar planilha (CSV)</button></div>
+      <p class="mini" id="nvTotal" style="margin:0 0 8px"></p>
+      <div id="listaNov"><p class="vazio">Carregando...</p></div>
     </section>
     <section id="vRelat" hidden>
       <div class="filtros" role="group" aria-label="Período do relatório" id="relPer">
@@ -733,14 +740,45 @@ function desenharRelat(all){
 }
 
 function aba(qual){
-  ['pedidos','clientes','fotos','promos','cupons','relat','loja'].forEach(function(n){
+  ['pedidos','clientes','fotos','promos','cupons','novidades','relat','loja'].forEach(function(n){
     var N=n.charAt(0).toUpperCase()+n.slice(1);$('#aba'+N).setAttribute('aria-selected',String(n===qual));$('#v'+N).hidden=n!==qual;
   });
-  if(qual==='pedidos'){document.title='BitPub | Painel de pedidos'}else if(qual==='clientes')carregarClientes();else if(qual==='promos')carregarPromos();else if(qual==='cupons')carregarCupons();else if(qual==='relat')carregarRelat();else if(qual==='loja')carregarLoja();else carregarFotos();
+  if(qual==='pedidos'){document.title='BitPub | Painel de pedidos'}else if(qual==='clientes')carregarClientes();else if(qual==='promos')carregarPromos();else if(qual==='cupons')carregarCupons();else if(qual==='novidades')carregarNovidades();else if(qual==='relat')carregarRelat();else if(qual==='loja')carregarLoja();else carregarFotos();
 }
 $('#abaPedidos').addEventListener('click',function(){aba('pedidos')});
 $('#abaCupons').addEventListener('click',function(){aba('cupons')});
 $('#abaRelat').addEventListener('click',function(){aba('relat')});
+$('#abaNovidades').addEventListener('click',function(){aba('novidades')});
+/* ---------- novidades (inscritos do site) ---------- */
+var inscritos=[];
+function zapFmt(w){w=String(w||'');return w.length===11?'('+w.slice(0,2)+') '+w.slice(2,7)+'-'+w.slice(7):w.length===10?'('+w.slice(0,2)+') '+w.slice(2,6)+'-'+w.slice(6):w}
+async function carregarNovidades(){
+  try{ inscritos=await http('/rest/v1/inscritos?select=*&order=criado_em.desc&limit=2000'); desenharNovidades() }
+  catch(e){ $('#listaNov').innerHTML='<p class="erro">'+esc(e.message)+'</p>' }
+}
+function desenharNovidades(){
+  $('#nvTotal').textContent=inscritos.length+(inscritos.length===1?' inscrito':' inscritos');
+  $('#listaNov').innerHTML=inscritos.length?inscritos.map(function(c){
+    var d=new Date(c.criado_em).toLocaleDateString('pt-BR');
+    return '<div class="fi" data-id="'+esc(c.id)+'" style="grid-template-columns:1fr"><div><b>'+esc(c.nome)+'</b><br><span class="mini">'+esc(zapFmt(c.whatsapp))+' &middot; desde '+d+'</span></div>'+
+      '<div class="bt"><a class="sec" style="text-decoration:none;display:inline-block" target="_blank" rel="noopener" href="https://wa.me/55'+esc(c.whatsapp)+'">Chamar no WhatsApp</a><button class="sec" type="button" data-ndel>Excluir</button></div></div>';
+  }).join(''):'<p class="vazio">Ninguém se cadastrou ainda.</p>';
+}
+$('#listaNov').addEventListener('click',async function(e){
+  var b=e.target.closest('[data-ndel]'); if(!b)return;
+  var id=b.closest('.fi').getAttribute('data-id'); if(!confirm('Excluir este contato da lista?'))return;
+  try{ await http('/rest/v1/inscritos?id=eq.'+encodeURIComponent(id),{method:'DELETE',prefer:'return=minimal'}); inscritos=inscritos.filter(function(x){return x.id!==id}); desenharNovidades() }
+  catch(er){ alert(er.message) }
+});
+$('#nvCopiar').addEventListener('click',function(){
+  var t=inscritos.map(function(c){return '55'+c.whatsapp}).join('\n');
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){alert('Números copiados.')},function(){prompt('Copie os números:',t)});
+});
+$('#nvCsv').addEventListener('click',function(){
+  var q=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""').replace(/^([=+\-@])/,"'$1")+'"'};
+  var csv='\ufeffnome;whatsapp;cadastro\n'+inscritos.map(function(c){return [q(c.nome),q('55'+c.whatsapp),q(c.criado_em.slice(0,10))].join(';')}).join('\n');
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download='inscritos-bitpub.csv'; document.body.appendChild(a); a.click(); a.remove();
+});
 $('#abaClientes').addEventListener('click',function(){aba('clientes')});
 $('#abaFotos').addEventListener('click',function(){aba('fotos')});
 $('#abaPromos').addEventListener('click',function(){aba('promos')});

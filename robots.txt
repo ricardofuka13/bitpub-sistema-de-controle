@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /painel/
+Disallow: /sistema/
+Sitemap: https://bitpub.app.br/sitemap.xml
