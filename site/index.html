@@ -48,6 +48,33 @@ img{max-width:100%}
 .frm input:focus{outline:3px solid #F7B500;border-color:#F7B500}
 .hr-t{width:100%;max-width:360px;border-collapse:collapse}.hr-t td{padding:5px 0;border-bottom:1px solid #3A322C}.hr-t tr.hoje td{color:#F7B500;font-weight:700}.hr-t td:last-child{text-align:right}
 #barra{display:none}
+.cd{background:#FFF4E8;color:#141414;margin-top:clamp(48px,8vw,80px)}
+.cd-in{max-width:1200px;margin:0 auto;padding:clamp(48px,8vw,88px) 24px}
+.cd-k{font-family:'Courier New',ui-monospace,monospace;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6B5A4A}
+.cd-h{margin:10px 0 0;font-family:'Anton',Impact,sans-serif;font-weight:400;font-size:clamp(40px,9vw,104px);line-height:.95;text-transform:uppercase;max-width:900px;text-wrap:balance}
+.cd-l{display:inline-block;margin:18px 0 0;color:#141414;font-weight:700;text-decoration:underline;text-underline-offset:4px}
+.cd-l:hover{color:#F96A05}
+.bg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:clamp(28px,4vw,48px) 32px;margin-top:clamp(32px,6vw,56px)}
+.bg{display:flex;flex-direction:column;gap:10px;color:#141414;text-decoration:none}
+.bg:hover{color:#141414}
+.bg-img{display:block;aspect-ratio:1;border-radius:20px;overflow:hidden;background:#E6D6C4;margin-bottom:10px}
+.bg-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}
+.bg:hover .bg-img img{transform:scale(1.05)}
+.bg-top{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid #141414;padding-bottom:10px}
+.bg-n{font-family:'Anton',Impact,sans-serif;font-size:clamp(24px,3vw,30px);text-transform:uppercase;letter-spacing:.02em}
+.bg-ar{font-size:24px;font-weight:700;transition:transform .2s}
+.bg:hover .bg-ar{transform:translate(3px,-3px);color:#F96A05}
+.bg-t{font-size:18px;font-weight:500}
+.bg-d{font-family:'Courier New',ui-monospace,monospace;font-size:14px;line-height:1.55;color:#4A3E34}
+.bg-p{font-weight:700;color:#C24F00}
+.cd-cat{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:clamp(32px,6vw,56px);padding-top:20px;border-top:2px solid #141414;font-weight:700}
+.cd-cat a{color:#141414;text-decoration:none;padding:10px 0}.cd-cat a:hover{color:#F96A05}
+.loc{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.loc figure{margin:0;position:relative;border-radius:20px;overflow:hidden;background:#1F1B19;min-height:320px}
+.loc figure img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.loc figcaption{position:absolute;left:0;right:0;bottom:0;padding:40px 18px 16px;background:linear-gradient(transparent,rgba(0,0,0,.85));font-weight:700}
+.loc iframe{width:100%;height:100%;min-height:320px;border:0;border-radius:20px;background:#1F1B19}
+@media (max-width:760px){.loc{grid-template-columns:1fr}.loc figure{min-height:0;aspect-ratio:4/3}.loc iframe{min-height:300px}}
 @media (max-width:760px){
  #barra{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:60;background:#141414;border-top:1px solid #3A322C;padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
  #barra a{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;font-weight:700;text-decoration:none;font-size:15px;background:#1F1B19;color:#FFF4E8;border:1px solid #3A322C}
@@ -94,7 +121,7 @@ img{max-width:100%}
 </div>
 </div>
 <div style="flex: 1 1 360px; min-width: 0; display: flex; align-items: center; justify-content: center">
-<img loading="lazy" decoding="async" src="img/logo.png" alt="BitPub: logo com letra B de Bitcoin, caneca de chope e hambúrguer" style="width: 100%; max-width: 540px; height: auto">
+<video id="heroVid" src="img/hero.mp4" poster="img/hero-poster.jpg" autoplay muted loop playsinline preload="metadata" width="960" height="540" aria-label="Vídeo da BitPub: hambúrguer, chope e Bitcoin" style="width: 100%; max-width: 600px; height: auto; aspect-ratio: 16/9; object-fit: cover; border-radius: 24px; border: 2px solid #F7B500; background: #1F1B19"></video>
 </div>
 </section>
 
@@ -106,67 +133,58 @@ img{max-width:100%}
 </div>
 
 <!-- Cardápio -->
-<section id="cardapio" style="max-width: 1200px; margin: 0 auto; padding: clamp(56px, 10vw, 96px) 24px 24px">
-<div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 48px">
-<div style="font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; font-size: 14px; color: #F7B500">Hambúrguer artesanal</div>
-<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(34px, 7vw, 72px); line-height: 1; text-transform: uppercase">Burgers que só valorizam.</h2>
-</div>
-
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 24px">
-
-<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
-<img loading="lazy" decoding="async" src="img/bitcoin.jpg" alt="Bitcoin Burguer" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
-<h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Bitcoin Burguer</h3>
-<span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 29,90</span>
-</div>
+<section id="cardapio" class="cd">
+<div class="cd-in">
+<div class="cd-k">01 / Nossos hambúrgueres</div>
+<h2 class="cd-h">Qual é o seu favorito?</h2>
+<a class="cd-l" href="https://bitpub.app.br/pedido/">Ver o cardápio completo ↗</a>
+<div class="bg-grid" id="bgGrid">
+<a class="bg" href="https://bitpub.app.br/pedido/" data-nome="Bitcoin Burguer">
+<span class="bg-img"><img loading="lazy" decoding="async" src="img/bitcoin.jpg" alt="Bitcoin Burguer" width="400" height="400"></span>
+<span class="bg-top"><span class="bg-n">Bitcoin Burguer</span><span class="bg-ar" aria-hidden="true">↗</span></span>
+<span class="bg-t">Clássico e robusto, como o BTC.</span>
+<span class="bg-d">Pão brioche, hambúrguer artesanal 150g, queijo muçarela, alface, tomate, cebola roxa e maionese da casa.</span>
+<span class="bg-p">R$ 29,90</span>
 </a>
-
-<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
-<img loading="lazy" decoding="async" src="img/satoshi.jpg" alt="Satoshi Burguer" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
-<h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Satoshi Burguer</h3>
-<span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 24,90</span>
-</div>
+<a class="bg" href="https://bitpub.app.br/pedido/" data-nome="Satoshi Burguer">
+<span class="bg-img"><img loading="lazy" decoding="async" src="img/satoshi.jpg" alt="Satoshi Burguer" width="400" height="400"></span>
+<span class="bg-top"><span class="bg-n">Satoshi Burguer</span><span class="bg-ar" aria-hidden="true">↗</span></span>
+<span class="bg-t">Aprovado pelo criador.</span>
+<span class="bg-d">Pão brioche, smash burger 100g, queijo muçarela e maionese da casa.</span>
+<span class="bg-p">R$ 24,90</span>
 </a>
-
-<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
-<img loading="lazy" decoding="async" src="img/ethereum.jpg" alt="Ethereum Smash" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
-<h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Ethereum Smash</h3>
-<span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 34,90</span>
-</div>
+<a class="bg" href="https://bitpub.app.br/pedido/" data-nome="Ethereum Smash">
+<span class="bg-img"><img loading="lazy" decoding="async" src="img/ethereum.jpg" alt="Ethereum Smash" width="400" height="400"></span>
+<span class="bg-top"><span class="bg-n">Ethereum Smash</span><span class="bg-ar" aria-hidden="true">↗</span></span>
+<span class="bg-t">Cheio de camadas, como os smart contracts.</span>
+<span class="bg-d">Pão brioche, smash burger duplo, cheddar cremoso, cebola caramelizada e molho barbecue especial.</span>
+<span class="bg-p">R$ 34,90</span>
 </a>
-
-<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
-<img loading="lazy" decoding="async" src="img/fullnode.jpg" alt="Full Node" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
-<h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Full Node</h3>
-<span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 49,90</span>
-</div>
+<a class="bg" href="https://bitpub.app.br/pedido/" data-nome="Full Node">
+<span class="bg-img"><img loading="lazy" decoding="async" src="img/fullnode.jpg" alt="Full Node" width="400" height="400"></span>
+<span class="bg-top"><span class="bg-n">Full Node</span><span class="bg-ar" aria-hidden="true">↗</span></span>
+<span class="bg-t">Tudo junto e misturado, sem deixar nada de fora.</span>
+<span class="bg-d">Pão brioche, hambúrguer artesanal 150g duplo, queijo muçarela, ovo, bacon, alface, tomate, cebola roxa e molho especial.</span>
+<span class="bg-p">R$ 49,90</span>
 </a>
-
-<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
-<img loading="lazy" decoding="async" src="img/stable.jpg" alt="Stable" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
-<h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Stable</h3>
-<span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 36,90</span>
-</div>
+<a class="bg" href="https://bitpub.app.br/pedido/" data-nome="Stable">
+<span class="bg-img"><img loading="lazy" decoding="async" src="img/stable.jpg" alt="Stable" width="400" height="400"></span>
+<span class="bg-top"><span class="bg-n">Stable</span><span class="bg-ar" aria-hidden="true">↗</span></span>
+<span class="bg-t">O mais equilibrado do cardápio, não oscila nunca.</span>
+<span class="bg-d">Pão brioche, hambúrguer artesanal 150g, queijo cheddar, bacon crocante, pickles e molho especial.</span>
+<span class="bg-p">R$ 36,90</span>
 </a>
-
-<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; color: #FFF4E8; background: #1F1B19; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column">
-<img loading="lazy" decoding="async" src="img/diamonds.jpg" alt="Diamonds Hand" style="width: 100%; height: 230px; object-fit: cover; display: block">
-<div style="padding: 20px 24px 24px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px">
-<h3 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Diamonds Hand</h3>
-<span style="font-weight: 700; color: #F7B500; white-space: nowrap">R$ 32,90</span>
-</div>
+<a class="bg" href="https://bitpub.app.br/pedido/" data-nome="Diamonds Hand">
+<span class="bg-img"><img loading="lazy" decoding="async" src="img/diamonds.jpg" alt="Diamonds Hand" width="400" height="400"></span>
+<span class="bg-top"><span class="bg-n">Diamonds Hand</span><span class="bg-ar" aria-hidden="true">↗</span></span>
+<span class="bg-t">Resistência máxima, só para quem aguenta o tranco.</span>
+<span class="bg-d">Pão brioche, hambúrguer 150g, cheddar cremoso, anéis de cebola crocantes e maionese temperada.</span>
+<span class="bg-p">R$ 32,90</span>
 </a>
-
 </div>
-
-<div style="margin-top: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px">
-<a href="https://bitpub.app.br/pedido/" style="text-decoration: none; background: #F7B500; color: #141414; font-weight: 700; font-size: 18px; padding: 16px 32px; border-radius: 999px">Ver cardápio completo</a>
-<span style="color: #E6D6C4">Combos, porções, bebidas, cervejas e mais, direto no site de pedidos.</span>
+<div class="cd-cat">
+<a href="https://bitpub.app.br/pedido/">Combos</a><a href="https://bitpub.app.br/pedido/">Porções</a><a href="https://bitpub.app.br/pedido/">Bebidas</a><a href="https://bitpub.app.br/pedido/">Cervejas</a>
+</div>
 </div>
 </section>
 
@@ -290,7 +308,10 @@ img{max-width:100%}
 <a class="btn" href="https://waze.com/ul?q=Rua%20Baruel%20859%20Suzano%20SP&navigate=yes" target="_blank" rel="noopener">Abrir no Waze</a>
 <a class="btn" href="tel:+5511917846050">Ligar</a>
 </div>
-<iframe title="Mapa: BitPub, Rua Baruel 859, Suzano" src="https://www.google.com/maps?q=Rua+Baruel+859+Suzano+SP&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:380px;border:0;border-radius:20px;background:#1F1B19"></iframe>
+<div class="loc">
+<figure><img loading="lazy" decoding="async" src="img/fachada.jpg" alt="Fachada da BitPub, Rua Baruel 859, Suzano" width="1400" height="1050"><figcaption>Rua Baruel, 859 · Suzano - SP</figcaption></figure>
+<iframe title="Mapa: BitPub, Rua Baruel 859, Suzano" src="https://www.google.com/maps?q=Rua+Baruel+859+Suzano+SP&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+</div>
 </section>
 
 <!-- Rodapé -->

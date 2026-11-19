@@ -50,10 +50,20 @@
       var p=document.querySelector('.btc-desc2'); if(p)p.textContent='Pagando em Bitcoin você ganha '+v+' de desconto no pedido.';
     }
   }
+  /* lanches: atualiza com o cardápio real */
+  function burgers(d){
+    var m={}; (d.itens||[]).forEach(function(i){ if(/hamb/i.test(i.cat||''))m[(i.nome||'').toLowerCase()]=i });
+    Array.prototype.forEach.call(document.querySelectorAll('.bg'),function(a){
+      var i=m[(a.getAttribute('data-nome')||'').toLowerCase()]; if(!i)return;
+      var t=String(i.desc||'').replace(/\s+/g,' ').trim(), k=t.search(/\bPão\b/);
+      if(t){ a.querySelector('.bg-t').textContent=k>0?t.slice(0,k).trim():''; a.querySelector('.bg-d').textContent=k>=0?t.slice(k):t; }
+      if(Number(i.preco)>0)a.querySelector('.bg-p').textContent='R$ '+Number(i.preco).toFixed(2).replace('.',',');
+    });
+  }
   /* dados da loja */
   if(C.url&&C.key){
     rpc('cardapio_publico',{}).then(function(d){
-      if(!d)return; status(d); tabela(d.horarios); btc(d);
+      if(!d)return; status(d); tabela(d.horarios); btc(d); burgers(d);
       setInterval(function(){status(d)},60000);
     }).catch(function(){var c=$('status'); if(c)c.style.display='none'});
   }else{var c=$('status'); if(c)c.style.display='none'}
