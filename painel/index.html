@@ -382,7 +382,7 @@ $('#listaClientes').addEventListener('click',async function(e){
       var r=await fetch(CFG.url+'/functions/v1/cliente-senha',{method:'POST',headers:{apikey:CFG.key,'Content-Type':'application/json',Authorization:'Bearer '+tk},body:JSON.stringify({cliente_id:cid})});
       var j=await r.json().catch(function(){return {}});
       if(!r.ok||!j.senha)throw new Error(j.erro||('Erro '+r.status));
-      var msg='Olá, '+cl.nome.split(' ')[0]+'! Sua nova senha para pedir no site da BitPub é: '+j.senha+' . Entre em https://bitpub.app.br com o seu WhatsApp e essa senha.';
+      var msg='Olá, '+cl.nome.split(' ')[0]+'! Sua nova senha para pedir no site da BitPub é: '+j.senha+' . Entre em https://bitpub.app.br/pedido/ com o seu WhatsApp e essa senha.';
       res.innerHTML='<p style="margin:8px 0 6px">Nova senha: <b style="font-size:20px;letter-spacing:2px">'+esc(j.senha)+'</b></p><a class="sec" style="display:inline-block;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/55'+esc(cl.whatsapp)+'?text='+encodeURIComponent(msg)+'">Enviar pelo WhatsApp do cliente</a><p class="mini" style="margin-top:6px">A senha antiga já não funciona. Anote ou envie agora: esta senha não fica salva em nenhum lugar.</p>';
     }catch(er){res.innerHTML='<p class="erro">'+esc(er.message)+'</p>'}
     ns.disabled=false;return;
