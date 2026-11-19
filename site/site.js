@@ -50,32 +50,10 @@
       var p=document.querySelector('.btc-desc2'); if(p)p.textContent='Pagando em Bitcoin você ganha '+v+' de desconto no pedido.';
     }
   }
-  /* galeria */
-  var FIXAS=['img/bitcoin.jpg','img/satoshi.jpg','img/ethereum.jpg','img/fullnode.jpg','img/stable.jpg','img/diamonds.jpg'];
-  var lb=$('lb');
-  function galeria(fotos){
-    var g=$('gal'); if(!g)return; g.innerHTML='';
-    fotos.slice(0,12).forEach(function(f){
-      var b=document.createElement('button'); b.type='button'; b.setAttribute('aria-label','Ampliar foto: '+f.alt);
-      var im=document.createElement('img'); im.src=f.src; im.alt=f.alt; im.loading='lazy'; im.decoding='async'; im.width=300; im.height=300;
-      b.appendChild(im); b.onclick=function(){lb.querySelector('img').src=f.src;lb.querySelector('img').alt=f.alt;lb.className='on'}; g.appendChild(b);
-    });
-  }
-  if(lb){lb.onclick=function(e){if(e.target===lb||e.target.tagName==='BUTTON')lb.className=''}; document.addEventListener('keydown',function(e){if(e.key==='Escape')lb.className=''})}
-  var padrao=FIXAS.map(function(s){return {src:s,alt:'Hambúrguer BitPub'}});
-  galeria(padrao);
-  function fotosMenu(d){
-    var r=[]; (d.itens||[]).forEach(function(i){
-      var f=i.foto||''; if(/^fotos\/[\w.-]+$/.test(f))r.push({src:'../pedido/'+f,alt:i.nome||'Hambúrguer BitPub'});
-      else if(/^https:\/\/[^\s"'<>]+$/.test(f))r.push({src:f,alt:i.nome||'Hambúrguer BitPub'});
-    });
-    return r;
-  }
   /* dados da loja */
   if(C.url&&C.key){
     rpc('cardapio_publico',{}).then(function(d){
       if(!d)return; status(d); tabela(d.horarios); btc(d);
-      var f=fotosMenu(d); if(f.length>=3)galeria(f.concat(padrao));
       setInterval(function(){status(d)},60000);
     }).catch(function(){var c=$('status'); if(c)c.style.display='none'});
   }else{var c=$('status'); if(c)c.style.display='none'}
