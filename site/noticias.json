@@ -1,6 +1,13 @@
 {
-  "atualizado": "2026-11-19T17:47:10+00:00",
+  "atualizado": "2026-11-20T01:55:45+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "Encontro mundial de economias circulares com bitcoin começa em El Salvador para mostrar função de dinheiro da moeda digital",
+      "link": "https://livecoins.com.br/encontro-mundial-de-economias-circulares-com-bitcoin-comeca-em-el-salvador-para-mostrar-funcao-de-dinheiro-da-moeda-digital/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Evento-em-praia-do-Bitcoin.jpg",
+      "data": "2026-11-19T21:07:18+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Kit de golpe do GTA 6 vendido na dark web dias antes do lançamento aceitava Bitcoin ou Tether",
@@ -35,13 +42,6 @@
       "link": "https://livecoins.com.br/pf-participa-de-operacao-internacional-que-rastreou-576-carteiras-de-criptomoedas/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Homem-com-lupa-olhando-criptomoedas-simbolicas-bitcoin-monero-litecoin-ethereum.jpg",
       "data": "2026-11-19T10:01:55+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Bradesco Asset é a única gestora da América Latina selecionada para o Projeto Harmonia, iniciativa global de tokenização de fundos",
-      "link": "https://livecoins.com.br/bradesco-asset-e-a-unica-gestora-da-america-latina-selecionada-para-o-projeto-harmonia-iniciativa-global-de-tokenizacao-de-fundos/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Blocos-de.jpg",
-      "data": "2026-11-18T22:37:03+00:00"
     }
   ]
 }
