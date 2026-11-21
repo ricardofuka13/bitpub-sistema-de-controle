@@ -1,6 +1,27 @@
 {
-  "atualizado": "2026-11-21T01:50:57+00:00",
+  "atualizado": "2026-11-21T16:27:38+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "Flash crash derruba Bitcoin para US$ 17.000 na Kraken em par contra o dólar canadense",
+      "link": "https://livecoins.com.br/flash-crash-derruba-bitcoin-para-us-17-000-na-kraken-em-par-contra-o-dolar-canadense/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/flash-crash-bitcoin.jpg",
+      "data": "2026-11-21T14:54:58+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "Mercado Pago troca Paxos pela Ripio, muda endereços de bitcoin e alerta para risco de perda",
+      "link": "https://livecoins.com.br/mercado-pago-troca-paxos-pela-ripio-muda-enderecos-de-bitcoin-e-alerta-para-risco-de-perda/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Mao-segurando-bitcoin-com-computador-ao-lado.jpg",
+      "data": "2026-11-21T12:01:22+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "Rodrigo Valadares cobra Fazenda após associação entre compra de stablecoins e lavagem de dinheiro",
+      "link": "https://livecoins.com.br/rodrigo-valadares-cobra-fazenda-apos-associacao-entre-compra-de-stablecoins-e-lavagem-de-dinheiro/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Rodrigo-Valadares-deputado-federal.jpg",
+      "data": "2026-11-21T10:00:16+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Robert Kiyosaki se diz animado com bitcoin, ouro e prata caindo, mas recomenda esperar fim da queda: “não pegue a faca caindo”",
@@ -21,27 +42,6 @@
       "link": "https://livecoins.com.br/etf-da-blackrock-registra-a-sua-maior-venda-da-historia-e-adiciona-pressao-ao-bitcoin/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/blackrock-bitcoin.jpg",
       "data": "2026-11-20T15:45:49+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Espanha e França unem forças policiais para combater criptosequestros na Europa",
-      "link": "https://livecoins.com.br/espanha-e-franca-unem-forcas-policiais-para-combater-criptosequestros-na-europa/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Bandeiras-da-Espanha-e-Franca-proximas-em-mao-de-pessoa.jpg",
-      "data": "2026-11-20T15:27:39+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Operação Criptoassalto mira suspeitos de ocultar R$ 61 mil em criptomoedas após roubo em São Paulo",
-      "link": "https://livecoins.com.br/operacao-criptoassalto-mira-suspeitos-de-ocultar-r-61-mil-em-criptomoedas-apos-roubo-em-sao-paulo/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Policia-Civil-de-Sao-Paulo.jpg",
-      "data": "2026-11-20T12:39:59+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Encontro mundial de economias circulares com bitcoin começa em El Salvador para mostrar função de dinheiro da moeda digital",
-      "link": "https://livecoins.com.br/encontro-mundial-de-economias-circulares-com-bitcoin-comeca-em-el-salvador-para-mostrar-funcao-de-dinheiro-da-moeda-digital/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Evento-em-praia-do-Bitcoin.jpg",
-      "data": "2026-11-19T21:07:18+00:00"
     }
   ]
 }
