@@ -47,6 +47,7 @@
     if(d.bitcoin===true&&Number(d.bitcoin_desconto)>0){
       var v=Number(d.bitcoin_desconto)+'%';
       Array.prototype.forEach.call(document.querySelectorAll('.btc-desc'),function(e){e.textContent='de '+v+' já é aplicado'});
+      Array.prototype.forEach.call(document.querySelectorAll('.btc-pct'),function(e){e.textContent=v});
       var p=document.querySelector('.btc-desc2'); if(p)p.textContent='Pagando em Bitcoin você ganha '+v+' de desconto no pedido.';
     }
   }
@@ -64,7 +65,7 @@
   if(C.url&&C.key){
     rpc('cardapio_publico',{}).then(function(d){
       if(!d)return; status(d); tabela(d.horarios); btc(d); burgers(d);
-      var fc=$('faqCripto'); if(fc&&d.cripto===true)fc.hidden=false;
+      Array.prototype.forEach.call(document.querySelectorAll('.js-cripto'),function(e){e.hidden=d.cripto!==true});
       setInterval(function(){status(d)},60000);
     }).catch(function(){var c=$('status'); if(c)c.style.display='none'});
   }else{var c=$('status'); if(c)c.style.display='none'}

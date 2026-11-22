@@ -4,21 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BitPub Hamburgueria e Pub | Suzano - SP</title>
-<meta name="description" content="Hambúrguer artesanal, pub e Bitcoin em Suzano - SP. Peça pelo site, WhatsApp, iFood ou 99Food. Pague em Bitcoin e ganhe 10% de desconto.">
+<meta name="description" content="Hambúrguer artesanal, pub e Bitcoin em Suzano - SP. Peça pelo site, WhatsApp, iFood ou 99Food. Pague em Bitcoin com 10% de desconto ou em dólar digital (USDT e USDC).">
 <meta name="theme-color" content="#141414">
 <link rel="canonical" href="https://bitpub.app.br/site/">
 <meta property="og:type" content="restaurant">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="BitPub Hamburgueria e Pub">
 <meta property="og:title" content="BitPub Hamburgueria e Pub | Suzano - SP">
-<meta property="og:description" content="Hambúrguer artesanal, pub e Bitcoin em Suzano - SP. Peça online e pague em Bitcoin com desconto.">
+<meta property="og:description" content="Hambúrguer artesanal, pub e cripto em Suzano - SP. Peça online e pague em Bitcoin, USDT ou USDC.">
 <meta property="og:url" content="https://bitpub.app.br/site/">
 <meta property="og:image" content="https://bitpub.app.br/site/img/bitcoin.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="BitPub Hamburgueria e Pub | Suzano - SP">
 <meta name="twitter:description" content="Hambúrguer artesanal, pub e Bitcoin em Suzano - SP.">
 <meta name="twitter:image" content="https://bitpub.app.br/site/img/bitcoin.jpg">
-<script type="application/ld+json" id="ld">{"@context":"https://schema.org","@type":"Restaurant","name":"BitPub Hamburgueria e Pub","url":"https://bitpub.app.br/site/","image":"https://bitpub.app.br/site/img/bitcoin.jpg","logo":"https://bitpub.app.br/site/img/logo.png","telephone":"+5511917846050","servesCuisine":["Hambúrguer","Pub"],"priceRange":"$$","paymentAccepted":"Dinheiro, Pix, Cartão, Bitcoin","acceptsReservations":false,"hasMenu":"https://bitpub.app.br/pedido/","sameAs":["https://www.instagram.com/bit_pub/"],"address":{"@type":"PostalAddress","streetAddress":"Rua Baruel, 859","addressLocality":"Suzano","addressRegion":"SP","addressCountry":"BR"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Tuesday","Wednesday","Thursday","Friday","Saturday"],"opens":"17:00","closes":"23:00"}]}</script>
+<script type="application/ld+json" id="ld">{"@context":"https://schema.org","@type":"Restaurant","name":"BitPub Hamburgueria e Pub","url":"https://bitpub.app.br/site/","image":"https://bitpub.app.br/site/img/bitcoin.jpg","logo":"https://bitpub.app.br/site/img/logo.png","telephone":"+5511917846050","servesCuisine":["Hambúrguer","Pub"],"priceRange":"$$","paymentAccepted":"Dinheiro, Pix, Cartão, Bitcoin, USDT, USDC","acceptsReservations":false,"hasMenu":"https://bitpub.app.br/pedido/","sameAs":["https://www.instagram.com/bit_pub/"],"address":{"@type":"PostalAddress","streetAddress":"Rua Baruel, 859","addressLocality":"Suzano","addressRegion":"SP","addressCountry":"BR"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Tuesday","Wednesday","Thursday","Friday","Saturday"],"opens":"17:00","closes":"23:00"}]}</script>
 <link rel="icon" href="img/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,6 +48,19 @@ img{max-width:100%}
 .frm input:focus{outline:3px solid #F7B500;border-color:#F7B500}
 .hr-t{width:100%;max-width:360px;border-collapse:collapse}.hr-t td{padding:5px 0;border-bottom:1px solid #3A322C}.hr-t tr.hoje td{color:#F7B500;font-weight:700}.hr-t td:last-child{text-align:right}
 #barra{display:none}
+[hidden]{display:none!important}
+.moedas{display:flex;justify-content:center;align-items:center}
+.moeda{width:clamp(88px,24vw,140px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 clamp(46px,13vw,80px)/1 Arial,sans-serif;border:4px solid #1F1B19;box-shadow:0 0 0 3px rgba(255,255,255,.18),0 14px 40px rgba(0,0,0,.5)}
+.moeda+.moeda{margin-left:-24px}
+.m-btc{background:#F7931A}.m-usdt{background:#26A17B}.m-usdc{background:#2775CA}
+.mtxt{display:flex;justify-content:center;gap:clamp(16px,6vw,48px);margin-top:14px;font-weight:700;text-align:center}
+.mtxt small{display:block;font-weight:500;color:#D9C9B8}
+.dg{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px;margin-top:28px}
+.dc{background:#1F1B19;border:1px solid #3A322C;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:8px}
+.dc .em{font-size:30px;line-height:1}
+.dc b{font-size:19px}.dc span{color:#E6D6C4}
+.alerta{margin-top:20px;background:#2A1F14;border-left:6px solid #F7B500;border-radius:12px;padding:16px 18px;font-weight:600}
+.d-hero{background:linear-gradient(135deg,#17352C 0%,#1F1B19 45%,#14284A 100%);border:2px solid #F7B500;border-radius:28px;padding:clamp(28px,6vw,52px) clamp(22px,5vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:32px;align-items:center}
 .cd{background:#FFF4E8;color:#141414;margin-top:clamp(48px,8vw,80px)}
 .cd-in{max-width:1200px;margin:0 auto;padding:clamp(48px,8vw,88px) 24px}
 .cd-k{font-family:'Courier New',ui-monospace,monospace;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6B5A4A}
@@ -94,7 +107,7 @@ img{max-width:100%}
 </div>
 <nav class="hide-mobile" style="display: flex; align-items: center; gap: 4px 24px; font-weight: 500">
 <a href="https://bitpub.app.br/pedido/" style="text-decoration: none; padding: 12px 0">Cardápio</a>
-<a href="#bitcoin" style="text-decoration: none; padding: 12px 0">Bitcoin</a>
+<a href="#bitcoin" style="text-decoration: none; padding: 12px 0">Cripto</a>
 <a href="#noticias" style="text-decoration: none; padding: 12px 0">Notícias</a>
 <a href="#local" style="text-decoration: none; padding: 12px 0">Onde estamos</a>
 </nav>
@@ -104,7 +117,7 @@ img{max-width:100%}
 <div style="max-width:1200px;margin:0 auto;padding:12px 24px 0"><span id="status" class="chip" aria-live="polite"><i></i><span id="statusTxt">Verificando horário…</span></span></div>
 <nav class="only-mobile" style="max-width: 1200px; margin: 0 auto; padding: 4px 24px 0; font-weight: 500">
 <a href="https://bitpub.app.br/pedido/" style="text-decoration: none; padding: 12px 0">Cardápio</a>
-<a href="#bitcoin" style="text-decoration: none; padding: 12px 0">Bitcoin</a>
+<a href="#bitcoin" style="text-decoration: none; padding: 12px 0">Cripto</a>
 <a href="#noticias" style="text-decoration: none; padding: 12px 0">Notícias</a>
 <a href="#local" style="text-decoration: none; padding: 12px 0">Onde estamos</a>
 </nav>
@@ -128,7 +141,7 @@ img{max-width:100%}
 <!-- Faixa -->
 <div style="background: #F7B500; color: #141414; font-family: 'Anton', Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.06em; font-size: clamp(17px, 4.4vw, 24px)">
 <div style="max-width: 1200px; margin: 0 auto; padding: 18px 24px; display: flex; flex-wrap: wrap; justify-content: center; text-align: center; gap: 6px 28px">
-<span>Prova de sabor</span><span>HODL na fome</span><span>Aceitamos Bitcoin</span><span>10% off em BTC</span>
+<span>Prova de sabor</span><span>HODL na fome</span><span>Aceitamos Bitcoin</span><span>10% off em BTC</span><span class="js-cripto">USDT e USDC aceitos</span>
 </div>
 </div>
 
@@ -222,10 +235,45 @@ img{max-width:100%}
 <details><summary>Preciso entender de Bitcoin?</summary><p>Não. Se você já tem uma carteira Lightning no celular, é só escanear o QR Code. Se não tem, pode pagar no Pix ou cartão, sem problema.</p></details>
 <details><summary>O que é Lightning?</summary><p>É uma rede em cima do Bitcoin para pagamentos rápidos e baratos. O pagamento cai em segundos.</p></details>
 <details><summary>Quanto é o desconto?</summary><p class="btc-desc2">Pagando em Bitcoin você ganha desconto no pedido. O valor aparece na tela de pagamento.</p></details>
-<details id="faqCripto" hidden><summary>Aceitam dólar digital (USDT e USDC)?</summary><p>Sim. Na hora de pagar o pedido, escolha dólar digital e envie USDT ou USDC pela rede Polygon. O valor em dólar é calculado na hora pela cotação do dia.</p></details>
+<details class="js-cripto"><summary>Aceitam dólar digital (USDT e USDC)?</summary><p>Sim. Na hora de pagar o pedido, escolha dólar digital e envie USDT ou USDC pela rede Polygon. O valor em dólar é calculado na hora pela cotação do dia.</p></details>
 <details><summary>Dá para pagar pessoalmente?</summary><p>Sim. Pergunte no balcão ou chame no WhatsApp.</p></details>
 </div>
 <div style="margin-top: 20px"><a class="btn p" href="https://bitpub.app.br/pedido/">Fazer pedido e pagar com Bitcoin</a></div>
+</section>
+
+<!-- Dólar digital -->
+<section id="dolar" class="js-cripto" style="max-width: 1200px; margin: 0 auto; padding: clamp(40px, 8vw, 72px) 24px 24px">
+<div class="d-hero">
+<div style="display: flex; flex-direction: column; gap: 18px">
+<div style="font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; font-size: 14px; color: #F7B500">Novidade · Também aceitamos</div>
+<h2 style="margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(32px, 6vw, 60px); line-height: 1.02; text-transform: uppercase; text-wrap: balance">Pague com dólar digital. <span style="color: #F7B500">USDT e USDC.</span></h2>
+<p style="margin: 0; font-size: 20px; color: #E6D6C4; max-width: 560px; text-wrap: pretty">Moedas que valem 1 dólar, sem sobe e desce. Peça seu lanche e pague com a carteira que você já tem.</p>
+</div>
+<div>
+<div class="moedas" aria-hidden="true"><span class="moeda m-usdt">&#8366;</span><span class="moeda m-usdc">$</span></div>
+<div class="mtxt"><span>USDT<small>Tether</small></span><span>USDC<small>USD Coin</small></span></div>
+</div>
+</div>
+
+<div class="dg">
+<div class="dc"><span class="em">&#128181;</span><b>O que é dólar digital?</b><span>São as chamadas stablecoins. Cada USDT ou USDC vale 1 dólar americano, então o preço não oscila como o do Bitcoin.</span></div>
+<div class="dc"><span class="em">&#9889;</span><b>Rede Polygon, taxa mínima</b><span>O pagamento é feito na rede Polygon. É rápido e a taxa costuma custar centavos.</span></div>
+<div class="dc"><span class="em">&#129518;</span><b>Quanto eu pago?</b><span>O valor do pedido em reais é convertido para dólar pela cotação do dia. A tela de pagamento mostra o total certinho.</span></div>
+<div class="dc"><span class="em">&#127873;</span><b>E o desconto?</b><span>O desconto de <b class="btc-pct" style="display:inline;font-size:inherit">10%</b> é exclusivo para quem paga em Bitcoin &#8383;. No dólar digital o preço é o do cardápio.</span></div>
+</div>
+
+<h3 style="margin: 36px 0 16px; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(24px, 4.5vw, 36px); text-transform: uppercase">Como pagar em 4 passos</h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px">
+<div class="pass"><b class="n">1</b><b>Monte seu pedido</b><span>Escolha os lanches no cardápio online e finalize o cadastro.</span></div>
+<div class="pass"><b class="n">2</b><b>Toque em dólar digital</b><span>Na tela do pedido, escolha <b style="display:inline">Pague com dólar digital</b> e depois USDT ou USDC.</span></div>
+<div class="pass"><b class="n">3</b><b>Envie pela Polygon</b><span>Copie o endereço ou leia o QR Code e envie o valor mostrado, pela rede Polygon.</span></div>
+<div class="pass"><b class="n">4</b><b>Cole o código</b><span>Cole o código da transação (começa com 0x). A gente confere na rede e confirma o pedido.</span></div>
+</div>
+<div class="alerta">&#9888;&#65039; Atenção: envie <u>somente USDT ou USDC</u> pela rede <u>Polygon</u>. Enviar por outra rede pode perder o dinheiro e não conseguimos recuperar.</div>
+<div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<a class="btn p" href="https://bitpub.app.br/pedido/">Fazer pedido e pagar em USDT / USDC</a>
+<span style="color: #D9C9B8">Dúvida? Chame no <a href="https://wa.me/5511917846050" style="color: #F7B500">WhatsApp</a>.</span>
+</div>
 </section>
 
 <!-- Novidades -->
