@@ -1,6 +1,13 @@
 {
-  "atualizado": "2026-11-21T16:27:38+00:00",
+  "atualizado": "2026-11-22T00:45:07+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "Entenda o que é a Power Law do Bitcoin que Renato 38tão diz estar em momento histórico para quem quer comprar para o longo prazo",
+      "link": "https://livecoins.com.br/entenda-o-que-e-a-power-law-do-bitcoin-que-renato-38tao-diz-estar-em-momento-historico-para-quem-quer-comprar-para-o-longo-prazo/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Renato-Amoedo-38tao.jpg",
+      "data": "2026-11-21T19:05:11+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Flash crash derruba Bitcoin para US$ 17.000 na Kraken em par contra o dólar canadense",
@@ -35,13 +42,6 @@
       "link": "https://livecoins.com.br/flavio-dino-da-prazo-ate-janeiro-para-cvm-e-banco-central-unirem-regulacao-sobre-tokenizacao-e-criptoativos/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Flavio-Dino-no-STF-em-plenario.jpg",
       "data": "2026-11-20T18:14:45+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "ETF da BlackRock registra a sua maior venda da história e adiciona pressão ao Bitcoin",
-      "link": "https://livecoins.com.br/etf-da-blackrock-registra-a-sua-maior-venda-da-historia-e-adiciona-pressao-ao-bitcoin/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/blackrock-bitcoin.jpg",
-      "data": "2026-11-20T15:45:49+00:00"
     }
   ]
 }
