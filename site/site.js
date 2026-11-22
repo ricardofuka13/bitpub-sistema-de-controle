@@ -64,6 +64,7 @@
   if(C.url&&C.key){
     rpc('cardapio_publico',{}).then(function(d){
       if(!d)return; status(d); tabela(d.horarios); btc(d); burgers(d);
+      var fc=$('faqCripto'); if(fc&&d.cripto===true)fc.hidden=false;
       setInterval(function(){status(d)},60000);
     }).catch(function(){var c=$('status'); if(c)c.style.display='none'});
   }else{var c=$('status'); if(c)c.style.display='none'}
