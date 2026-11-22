@@ -1,6 +1,20 @@
 {
-  "atualizado": "2026-11-22T00:45:07+00:00",
+  "atualizado": "2026-11-22T16:45:19+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "Desenvolvedores lançam nova versão do Bitcoin Core para corrigir vulnerabilidade encontrada por IA",
+      "link": "https://livecoins.com.br/desenvolvedores-lancam-nova-versao-do-bitcoin-core-para-corrigir-vulnerabilidade-encontrada-por-ia/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/bug-bitcoin.jpg",
+      "data": "2026-11-22T15:30:24+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "Brasil pede no Mercosul para rastrear e confiscar criptomoedas do crime organizado como prioridade",
+      "link": "https://livecoins.com.br/brasil-pede-no-mercosul-para-rastrear-e-confiscar-criptomoedas-do-crime-organizado-como-prioridade/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Reuniao-dos-Ministros-de-Estado-no-MERCOSUL.jpg",
+      "data": "2026-11-22T12:11:15+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Entenda o que é a Power Law do Bitcoin que Renato 38tão diz estar em momento histórico para quem quer comprar para o longo prazo",
@@ -28,20 +42,6 @@
       "link": "https://livecoins.com.br/rodrigo-valadares-cobra-fazenda-apos-associacao-entre-compra-de-stablecoins-e-lavagem-de-dinheiro/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Rodrigo-Valadares-deputado-federal.jpg",
       "data": "2026-11-21T10:00:16+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Robert Kiyosaki se diz animado com bitcoin, ouro e prata caindo, mas recomenda esperar fim da queda: “não pegue a faca caindo”",
-      "link": "https://livecoins.com.br/robert-kiyosaki-se-diz-animado-com-bitcoin-ouro-e-prata-caindo-mas-recomenda-esperar-fim-da-queda-nao-pegue-a-faca-caindo/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Robert-Kiyosaki.jpg",
-      "data": "2026-11-21T01:00:32+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Flávio Dino dá prazo até janeiro para CVM e Banco Central unirem regulação sobre tokenização e criptoativos",
-      "link": "https://livecoins.com.br/flavio-dino-da-prazo-ate-janeiro-para-cvm-e-banco-central-unirem-regulacao-sobre-tokenizacao-e-criptoativos/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Flavio-Dino-no-STF-em-plenario.jpg",
-      "data": "2026-11-20T18:14:45+00:00"
     }
   ]
 }
