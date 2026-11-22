@@ -113,6 +113,20 @@ textarea{min-height:76px;resize:vertical}
 .btc-btn{background:none;border:0;padding:0;width:100%;display:grid;place-items:center;min-height:0;cursor:pointer}
 .btc-btn img{max-width:280px;width:100%;height:auto;display:block}
 .btc-btn:disabled{opacity:.6}
+.pg-grupo{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.pg-tit{margin:0;font-weight:800;font-size:15px;text-align:center;color:#444}
+.pg-tit[hidden]{display:none}
+.pg-op{display:flex;align-items:center;gap:14px;width:100%;min-height:68px;padding:10px 14px;border:2px solid var(--preto);border-radius:12px;background:#fff;color:var(--preto);text-align:left;cursor:pointer;font:inherit;box-sizing:border-box}
+.pg-op[hidden]{display:none}
+.pg-op:hover{background:#FFF6E5}
+.pg-op:disabled{opacity:.6}
+.pg-op b{display:block;font-size:18px;line-height:1.2}
+.pg-op small{display:block;font-size:14px;color:#444;font-weight:500;margin-top:2px}
+.pg-op small b{display:inline;font-size:inherit;color:#141414}
+.pg-ic{display:flex;flex:none}
+.pg-ic i{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 24px/1 Arial,sans-serif;font-style:normal;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.pg-ic i+i{margin-left:-14px}
+.pg-seta{margin-left:auto;font-size:26px;line-height:1;flex:none}
 .principal{background:var(--laranja);color:var(--preto);border:2px solid var(--preto);font-weight:800;font-size:17px;min-height:54px;padding:0 18px;width:100%;border-radius:0}
 .principal:hover{background:#FF7D21}
 .principal[disabled]{opacity:.55;cursor:wait}
@@ -540,8 +554,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
   <div class="d-in" style="align-items:center;text-align:center">
     <div class="d-topo" style="width:100%"><h2 id="tCripto">Pagar em d&oacute;lar digital</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
     <div id="crEscolha" style="display:flex;flex-direction:column;gap:10px;width:100%">
-      <p style="margin:0">Escolha a moeda. O pagamento &eacute; na rede <b>Polygon</b>.</p>
-      <p class="btc-promo" id="crPromo" hidden></p>
+      <p style="margin:0">Escolha a moeda. O pagamento &eacute; na rede <b>Polygon</b>, pelo valor em d&oacute;lar do dia.</p>
       <button class="principal" type="button" data-cr="usdt">USDT (Tether)</button>
       <button class="principal" type="button" data-cr="usdc">USDC (USD Coin)</button>
     </div>
@@ -569,8 +582,9 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
     <button class="secundario" type="button" id="okTrack">Acompanhar meu pedido</button>
     <button class="principal" type="button" id="okPagar">Pagar agora (Pix ou cartão)</button>
     <p class="btc-promo" id="btcPromo" hidden></p>
-    <button class="btc-btn" type="button" id="okBtc" aria-label="Pagar com Bitcoin" hidden><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>
-    <button class="secundario" type="button" id="okCripto" hidden>Pagar em d&oacute;lar digital (USDT / USDC)</button>
+    <p class="pg-tit" id="pgTit" hidden>Ou pague com cripto</p>
+    <button class="pg-op" type="button" id="okBtc" hidden><span class="pg-ic"><i style="background:#F7931A">&#8383;</i></span><span><b>Pague com Bitcoin</b><small id="okBtcSub">Pagamento r&aacute;pido pela carteira</small></span><span class="pg-seta" aria-hidden="true">&rsaquo;</span></button>
+    <button class="pg-op" type="button" id="okCripto" hidden><span class="pg-ic"><i style="background:#26A17B">&#8366;</i><i style="background:#2775CA">$</i></span><span><b>Pague com d&oacute;lar digital</b><small>USDT ou USDC &middot; rede Polygon</small></span><span class="pg-seta" aria-hidden="true">&rsaquo;</span></button>
     <p class="erro" id="erroPagar" role="alert" style="margin:0"></p>
     <a class="secundario" id="okZap" href="#" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Enviar no WhatsApp</a>
     <button class="secundario" type="button" data-fechar>Voltar ao cardápio</button>
@@ -585,7 +599,7 @@ var CFG = window.BITPUB_CFG || {};
 var WHATS_LOJA = '5511917846050';
 /* Pagamento online (InfinitePay): o cliente escolhe pagar agora (Pix ou cartão) ou combinar pelo WhatsApp. O frete é sempre combinado no WhatsApp. */
 var PAGAMENTO_ONLINE = true;
-var BTC_ON = false, BTC_DESC = 0, CRIPTO_ON = false, CRIPTO_DESC = 0;
+var BTC_ON = false, BTC_DESC = 0, CRIPTO_ON = false;
 
 var $ = function(s,el){return (el||document).querySelector(s)};
 var $$ = function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s))};
@@ -683,7 +697,7 @@ async function carregarMenu(){
   try{
     var d=await http('/rest/v1/rpc/cardapio_publico',{method:'POST',auth:false,body:{}});
     M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',rodape:d.rodape||null,horarios:d.horarios||null,modo:d.modo_loja||'auto',msgFechado:d.msg_fechado||'',regras:d.regras||{},tops:d.tops||[],frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
-    BTC_ON=d.bitcoin===true; BTC_DESC=Number(d.bitcoin_desconto)||0; CRIPTO_ON=d.cripto===true; CRIPTO_DESC=Number(d.cripto_desconto)||0;
+    BTC_ON=d.bitcoin===true; BTC_DESC=Number(d.bitcoin_desconto)||0; CRIPTO_ON=d.cripto===true;
     try{localStorage.setItem('bitpub_site_menu',JSON.stringify(M))}catch(e){}
   }catch(e){
     try{var c=JSON.parse(localStorage.getItem('bitpub_site_menu')||'null'); if(c){M=c; toast('Sem conexão: mostrando o último cardápio salvo.')}}catch(x){}
@@ -1254,7 +1268,7 @@ async function abrirConta(silencioso){
         (Number(p.desconto_fidelidade)>0?'<small>🎁 Desconto fidelidade: -'+R(p.desconto_fidelidade)+'</small>':'')+
         '<b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+(Number(p.frete)===0?'frete grátis':R(p.frete)+' de frete')+' = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+
         (p.itens&&p.itens.length?'<button class="repetir" type="button" data-repetir="'+esc(p.id)+'">Pedir de novo</button>':'')+
-        (PAGAMENTO_ONLINE&&!p.pago&&ativo?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button>'+(BTC_ON?(BTC_DESC>0?'<p class="btc-promo" style="margin-top:8px">\u20bf <b>'+String(BTC_DESC).replace('.',',')+'% de desconto</b> com Bitcoin: <b>'+R(btcPreco(p))+'</b></p>':'')+'<button class="btc-btn" type="button" data-btc="'+esc(p.id)+'" style="margin-top:8px" aria-label="Pagar com Bitcoin"><img src="bitcoin.png" alt="Bitcoin accepted here" width="280" height="107"></button>':'')+(CRIPTO_ON?'<button class="secundario" type="button" data-cripto="'+esc(p.id)+'" style="margin-top:8px">Pagar em dólar digital (USDT / USDC)</button>':'')+'<p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+
+        (PAGAMENTO_ONLINE&&!p.pago&&ativo?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button>'+(BTC_ON?''+'<button class="pg-op" type="button" data-btc="'+esc(p.id)+'" style="margin-top:8px"><span class="pg-ic"><i style="background:#F7931A">\u20bf</i></span><span><b>Pague com Bitcoin</b><small>'+btcSub(p)+'</small></span><span class="pg-seta" aria-hidden="true">\u203a</span></button>':'')+(CRIPTO_ON?'<button class="pg-op" type="button" data-cripto="'+esc(p.id)+'" style="margin-top:8px"><span class="pg-ic"><i style="background:#26A17B">\u20ae</i><i style="background:#2775CA">$</i></span><span><b>Pague com dólar digital</b><small>USDT ou USDC · rede Polygon</small></span><span class="pg-seta" aria-hidden="true">\u203a</span></button>':'')+'<p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+
         (p.status==='entregue'?(p.nota?'<div class="aval"><b>Sua avaliação: <span style="color:#F5A400">'+estrelas(p.nota)+'</span></b>'+(p.nota_obs?'<small>'+esc(p.nota_obs)+'</small>':'')+'</div>':
           '<div class="aval"><b>Como foi seu pedido?</b><div class="stars" role="group" aria-label="Nota de 1 a 5">'+[1,2,3,4,5].map(function(n){return '<button type="button" data-star="'+n+'" aria-label="'+n+' estrela'+(n>1?'s':'')+'">★</button>'}).join('')+'</div><textarea maxlength="300" placeholder="Quer contar mais? (opcional)" aria-label="Comentário da avaliação" hidden></textarea><button class="principal" type="button" data-avsend hidden>Enviar avaliação</button><p class="erro erroAv" role="alert" style="margin:0"></p></div>'):'')+
         '</div>';
@@ -1350,12 +1364,14 @@ function btcPreco(p){ /* desconto só nos itens; frete cheio */
   var it=Number(p.total)||0, fr=Number(p.frete)||0;
   return Math.round(it*(1-BTC_DESC/100)*100)/100+fr;
 }
+function btcSub(p){return BTC_DESC>0?'Ganhe '+String(BTC_DESC).replace('.',',')+'% de desconto'+(p?'<br>De '+R(Number(p.total)+(Number(p.frete)||0))+' por <b>'+R(btcPreco(p))+'</b>':''):'Pagamento rápido pela carteira'}
 function btcRotulo(p){
+  var sb=$('#okBtcSub'); if(sb)sb.innerHTML=btcSub(p);
   var e=$('#btcPromo'); if(!e)return;
   if(!(BTC_ON&&BTC_DESC>0)){e.hidden=true;return}
   var d=String(BTC_DESC).replace('.',',');
   e.innerHTML='\u20bf <b>'+d+'% de desconto</b> pagando com Bitcoin'+(p?'<br><small>De '+R(Number(p.total)+(Number(p.frete)||0))+' por <b>'+R(btcPreco(p))+'</b></small>':'');
-  e.hidden=false;
+  e.hidden=true;
 }
 function btcParar(){if(btcTimer){clearInterval(btcTimer);btcTimer=null}}
 async function btcVerificar(){
@@ -1391,7 +1407,6 @@ function crParar(){if(crTimer){clearInterval(crTimer);crTimer=null}}
 function crAbrir(id){
   crPid=id;crParar();crEnd='';
   $('#crEscolha').style.display='flex';$('#crPaga').style.display='none';$('#crErro').textContent='';$('#crStatus').textContent='';$('#crTx').value='';
-  var e=$('#crPromo');e.hidden=!(CRIPTO_DESC>0);if(CRIPTO_DESC>0)e.innerHTML='<b>'+String(CRIPTO_DESC).replace('.',',')+'% de desconto</b> pagando em d\u00f3lar digital (s\u00f3 nos itens)';
   var dc=$('#dConta'),dk=$('#dOk');if(dk.open)dk.close();if(dc.open)dc.close();
   $('#dCripto').showModal();
 }
@@ -1402,7 +1417,7 @@ async function crGerar(tk,btn){
     if(r&&r.pago){toast('Esse pedido já está pago.');$('#dCripto').close();return}
     if(!r||!r.endereco)throw new Error('Não foi possível gerar a cobrança.');
     crEnd=r.endereco;
-    $('#crValor').textContent='Envie US$ '+Number(r.usd).toFixed(2).replace('.',',')+' em '+tk.toUpperCase()+' (= '+R(r.brl)+(r.desconto>0?', com '+String(r.desconto).replace('.',',')+'% de desconto':'')+')';
+    $('#crValor').textContent='Envie US$ '+Number(r.usd).toFixed(2).replace('.',',')+' em '+tk.toUpperCase()+' (= '+R(r.brl)+')';
     $('#crEnd').textContent=r.endereco;
     $('#crEscolha').style.display='none';$('#crPaga').style.display='flex';
     $('#crStatus').textContent='Aguardando o pagamento...';$('#crStatus').style.color='';
@@ -1482,7 +1497,7 @@ async function enviarPedido(){
     $('#obsGeral').value=''; $('#dCarrinho').close();
     $('#okTexto').textContent='Seu pedido '+p.numero+(p.agendado_para?' está agendado para '+quandoRotulo(p.agendado_para)+'.':' já está com a gente.')+(Number(p.desconto)>0?' Desconto fidelidade de '+R(p.desconto)+' aplicado.':'')+(p.brinde?' Brinde de fidelidade incluso.':'')+(Number(p.desconto_aniversario)>0?' Desconto de aniversário de '+R(p.desconto_aniversario)+' aplicado.':'')+(p.cupom?' Cupom '+p.cupom+' aplicado.':'')+(p.frete!=null?' Total com frete: '+R(Number(p.total)+Number(p.frete))+'.':'')+' Você pode pagar agora ou enviar no WhatsApp para combinar '+(p.tipo==='entrega'&&p.frete==null?'o frete e ':'')+'o pagamento.';
     CUPOM=null; desenharCupom(); carregarFid(); atualizarTrack();
-    pedidoPagarId=p.id; btcRotulo(p); $('#erroPagar').textContent=''; $('#okPagar').hidden=!PAGAMENTO_ONLINE; $('#okBtc').hidden=!(BTC_ON&&PAGAMENTO_ONLINE); $('#okCripto').hidden=!(CRIPTO_ON&&PAGAMENTO_ONLINE);
+    pedidoPagarId=p.id; btcRotulo(p); $('#erroPagar').textContent=''; $('#okPagar').hidden=!PAGAMENTO_ONLINE; $('#okBtc').hidden=!(BTC_ON&&PAGAMENTO_ONLINE); $('#okCripto').hidden=!(CRIPTO_ON&&PAGAMENTO_ONLINE); $('#pgTit').hidden=$('#okBtc').hidden&&$('#okCripto').hidden;
     $('#okZap').href='https://wa.me/'+WHATS_LOJA+'?text='+encodeURIComponent(mensagemZap(p));
     abrir($('#dOk'));
   }catch(e){

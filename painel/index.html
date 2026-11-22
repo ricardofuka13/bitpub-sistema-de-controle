@@ -193,8 +193,7 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
         <p class="mini" style="margin:-4px 0 0">O desconto vale só sobre os itens, não sobre o frete. O endereço Lightning é público, parecido com um e-mail (não é senha). Deixe em branco para esconder o botão Bitcoin no site.</p>
         <h2 class="cat">Pagamento em dólar digital (USDT e USDC)</h2>
         <label>Endereço da sua carteira na rede Polygon<input type="text" id="lCripto" maxlength="42" placeholder="0x..." autocapitalize="none" autocomplete="off" spellcheck="false"></label>
-        <label>Desconto para quem pagar em dólar digital (%)<input type="number" id="lDescCripto" min="0" max="50" step="0.5" inputmode="decimal" placeholder="0"></label>
-        <p class="mini" style="margin:-4px 0 0">O endereço é público (começa com 0x, 42 caracteres) e serve para USDT e USDC. Use um endereço da rede Polygon que você controla. O site confere a transação na blockchain e marca o pedido como pago sozinho. Se não conseguir conferir, aparece o botão Confirmar pagamento no pedido. Deixe em branco para esconder essa opção.</p>
+        <p class="mini" style="margin:-4px 0 0">O endereço é público (começa com 0x, 42 caracteres) e serve para USDT e USDC. Use um endereço da rede Polygon que você controla. O site confere a transação na blockchain e marca o pedido como pago sozinho. Se não conseguir conferir, aparece o botão Confirmar pagamento no pedido. Não há desconto nessa forma de pagamento (o desconto é só do Bitcoin). Deixe em branco para esconder essa opção.</p>
         <h2 class="cat">Frete por distância</h2>
         <label style="flex-direction:row;align-items:center;gap:10px"><input type="checkbox" id="lFreteOn" style="width:22px;height:22px"> Calcular o frete pelo endereço do cliente</label>
         <label>Endereço de saída das entregas<input type="text" id="lLoja" maxlength="160" placeholder="Rua Baruel 859, Suzano, SP"></label>
@@ -539,7 +538,7 @@ async function carregarLoja(){
     await carregarBrindes(c.fidelidade_item);$('#lFidTipo').value=c.fidelidade_tipo==='item'?'item':'valor';ajustarFidTipo();
     $('#lAgOn').checked=c.agendamento_ativo!==false;$('#lAniv').value=c.aniversario_valor>0?c.aniversario_valor:'';$('#lMin').value=c.pedido_minimo>0?c.pedido_minimo:'';$('#lGratis').value=c.frete_gratis_acima>0?c.frete_gratis_acima:'';$('#lFidMeta').value=c.fidelidade_meta>0?c.fidelidade_meta:'';$('#lFidValor').value=c.fidelidade_valor>0?c.fidelidade_valor:'';$('#lModo').value=c.modo_loja||'auto';$('#lMsgF').value=c.msg_fechado||'';desenharHorarios(c.horarios);
     $('#lRazao').value=c.rodape_razao||'';$('#lCnpj').value=c.rodape_cnpj||'';$('#lRodExtra').value=c.rodape_extra||'';$('#lEnd').value=c.endereco||'';$('#lHor').value=c.horario||'';$('#lInfo').value=c.info||'';cabUrl=c.cabecalho_foto||'';pintarCab();
-    $('#lFreteOn').checked=c.frete_ativo!==false;$('#lLn').value=c.lightning_address||'';$('#lDescBtc').value=c.desconto_btc>0?c.desconto_btc:'';$('#lCripto').value=c.cripto_endereco||'';$('#lDescCripto').value=c.desconto_cripto>0?c.desconto_cripto:'';$('#lLoja').value=c.loja_endereco||'';lojaOrig=c.loja_endereco||'';$('#lMax').value=c.frete_max_km!=null?c.frete_max_km:8;
+    $('#lFreteOn').checked=c.frete_ativo!==false;$('#lLn').value=c.lightning_address||'';$('#lDescBtc').value=c.desconto_btc>0?c.desconto_btc:'';$('#lCripto').value=c.cripto_endereco||'';$('#lLoja').value=c.loja_endereco||'';lojaOrig=c.loja_endereco||'';$('#lMax').value=c.frete_max_km!=null?c.frete_max_km:8;
     $('#lFaixas').innerHTML=(c.frete_faixas||[]).map(function(f){return linhaFaixa(f.ate_km,f.valor)}).join('');
     $('#lErro').textContent='';
   }catch(e){$('#lErro').textContent=e.message}
@@ -566,9 +565,8 @@ $('#formLoja').addEventListener('submit',async function(e){
   if(ln&&!/^[a-z0-9._+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(ln)){er.textContent='Endereço Lightning inválido. Deve ser parecido com nome@carteira.com';return}
   var dsc=Number($('#lDescBtc').value||0);
   if(!(dsc>=0&&dsc<=50)){er.textContent='O desconto em Bitcoin deve ficar entre 0 e 50%.';return}
-  var cr=$('#lCripto').value.trim(),dcr=Number($('#lDescCripto').value||0);
+  var cr=$('#lCripto').value.trim();
   if(cr&&!/^0x[0-9a-fA-F]{40}$/.test(cr)){er.textContent='Endereço da carteira inválido. Precisa começar com 0x e ter 42 caracteres.';return}
-  if(!(dcr>=0&&dcr<=50)){er.textContent='O desconto em dólar digital deve ficar entre 0 e 50%.';return}
   var cnpj=$('#lCnpj').value.trim();var dg=cnpj.replace(/\D/g,'');if(cnpj&&dg.length!==14){er.textContent='CNPJ inválido: precisa ter 14 números.';return}
   if(dg.length===14)cnpj=dg.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5');
   var hr={},dias=$$('#lHorarios .hrow'),hErr='';
@@ -580,7 +578,7 @@ $('#formLoja').addEventListener('submit',async function(e){
   if(fmeta>0&&ftipo==='valor'&&!(fval>0)){er.textContent='Fidelidade: informe também o valor do desconto em R$.';return}
   if(fmeta>0&&ftipo==='item'&&!fitem){er.textContent='Fidelidade: escolha o item de brinde.';return}
   var vaniv=Number($('#lAniv').value||0); if(!(vaniv>=0)){er.textContent='Desconto de aniversário: use um número positivo.';return}
-  var body={aniversario_valor:vaniv,agendamento_ativo:$('#lAgOn').checked,pedido_minimo:vmin,frete_gratis_acima:vgr,fidelidade_meta:fmeta,fidelidade_valor:fmeta>0&&ftipo==='valor'?fval:0,fidelidade_tipo:ftipo,fidelidade_item:ftipo==='item'?fitem:null,horarios:Object.keys(hr).length?hr:null,modo_loja:$('#lModo').value,msg_fechado:$('#lMsgF').value.trim()||null,rodape_razao:$('#lRazao').value.trim()||null,rodape_cnpj:cnpj||null,rodape_extra:$('#lRodExtra').value.trim()||null,desconto_btc:dsc,lightning_address:ln||null,cripto_endereco:cr||null,desconto_cripto:dcr,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
+  var body={aniversario_valor:vaniv,agendamento_ativo:$('#lAgOn').checked,pedido_minimo:vmin,frete_gratis_acima:vgr,fidelidade_meta:fmeta,fidelidade_valor:fmeta>0&&ftipo==='valor'?fval:0,fidelidade_tipo:ftipo,fidelidade_item:ftipo==='item'?fitem:null,horarios:Object.keys(hr).length?hr:null,modo_loja:$('#lModo').value,msg_fechado:$('#lMsgF').value.trim()||null,rodape_razao:$('#lRazao').value.trim()||null,rodape_cnpj:cnpj||null,rodape_extra:$('#lRodExtra').value.trim()||null,desconto_btc:dsc,lightning_address:ln||null,cripto_endereco:cr||null,endereco:$('#lEnd').value.trim()||null,horario:$('#lHor').value.trim()||null,info:$('#lInfo').value.trim()||null,cabecalho_foto:cabUrl||null,
     frete_ativo:on,frete_max_km:max>0?max:8,frete_faixas:faixas,loja_endereco:$('#lLoja').value.trim()||null,atualizado_em:new Date().toISOString()};
   if(body.loja_endereco!==lojaOrig){body.loja_lat=null;body.loja_lng=null}
   var btn=$('#formLoja button[type=submit]');btn.disabled=true;
