@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1F1B19"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><style>html{color-scheme:light}:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#ECEDEB;color:#1A1C1D}img{max-width:100%}[hidden]{display:none!important}.mftabs{display:flex;gap:6px;margin:0 0 14px;border-bottom:2px solid var(--line,#ddd);position:sticky;top:0;background:var(--surface);z-index:2;padding-top:2px}
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"><meta name="theme-color" content="#1F1B19"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><style>html{color-scheme:light}:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#ECEDEB;color:#1A1C1D}img{max-width:100%}[hidden]{display:none!important}.mftabs{display:flex;gap:6px;margin:0 0 14px;border-bottom:2px solid var(--line,#ddd);position:sticky;top:0;background:var(--surface);z-index:2;padding-top:2px}
 .mftabs button{flex:1;padding:10px 6px;border:0;background:none;font:inherit;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:inherit;opacity:.65;min-height:44px}
 .mftabs button.on{opacity:1;border-bottom-color:var(--accent,#F7B500)}
 .mftabs .cnt{font-weight:400;font-size:12px}
@@ -279,6 +279,11 @@ td.r,th.r{text-align:right}
 .scrim{position:fixed;inset:0;z-index:50;background:rgba(10,12,12,.55);display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--surface);color:var(--ink);width:100%;max-width:520px;max-height:92%;overflow:auto;border-radius:16px 16px 0 0;border:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (min-width:720px){.scrim{align-items:center;padding:20px}.sheet{border-radius:16px}}
+@media (max-width:719px){
+  .scrim{top:var(--vvt,0px);bottom:auto;height:var(--vvh,100dvh)}
+  body.kb .nav{display:none}
+  body.kb .tk-foot{bottom:0!important}
+}
 .sheet-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 16px 8px}
 .sheet-b{padding:8px 16px 18px;display:flex;flex-direction:column;gap:14px}
 .sheet form{display:flex;flex-direction:column;gap:14px}
@@ -1641,6 +1646,8 @@ function draw(){
 var dt=0;function render(){clearTimeout(dt);dt=setTimeout(draw,0)}
 
 /* ---------- modal ---------- */
+var TOUCH=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+function isTxt(el){return !!el&&((el.tagName==='INPUT'&&!/^(checkbox|radio|button|submit|range|file|color|reset|image)$/.test(el.type))||el.tagName==='TEXTAREA')}
 function openModal(title,body,mount){
   closeModal(true);
   S.lastFocus=document.activeElement;
@@ -1650,7 +1657,7 @@ function openModal(title,body,mount){
   sc.addEventListener('mousedown',function(e){if(e.target===sc)closeModal()});
   r.querySelectorAll('[data-close]').forEach(function(b){b.addEventListener('click',function(){closeModal()})});
   var sh=$('.sheet',r);if(mount)mount(sh);
-  var f=$('input:not([type=checkbox]),select',sh);if(f)f.focus();
+  var f=$('input:not([type=checkbox]),select',sh);if(f&&!TOUCH)f.focus();
 }
 function closeModal(quiet){$('#modal-root').innerHTML='';if(!quiet&&S.lastFocus&&S.lastFocus.isConnected&&S.lastFocus.focus)S.lastFocus.focus({preventScroll:true})}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('#modal-root').firstChild)closeModal()});
@@ -2131,7 +2138,7 @@ function custPicker(host,onPick){
       b.disabled=true;
       saveCustomer(null,{name:name,phone:digits(res.querySelector('#cf-p').value),bday:bk,note:res.querySelector('#cf-o').value.trim()}).then(function(id){onPick(id,S.cust[id])},function(er){b.disabled=false;err.textContent=errMsg(er)})}});
   paint();
-  return {focus:function(){q.focus()}};
+  return {focus:function(){if(!TOUCH)q.focus()}};
 }
 function custStrip(o){
   var c=o.cid&&S.cust[o.cid];
@@ -2379,6 +2386,28 @@ document.addEventListener('change',function(e){
   if(t.id==='blk'){if(!canWrite){t.checked=!t.checked;toast('Você está no modo leitura.','err');return}var v=t.checked;enqueue(function(){return db.doc('meta/config').set(Object.assign({},S.cfg,{blockOut:v}))})}
 });
 
+/* ---------- celular: o teclado atrapalha menos ---------- */
+(function(){
+  var vv=window.visualViewport;
+  if(vv){var fit=function(){var r=document.documentElement.style;r.setProperty('--vvh',vv.height+'px');r.setProperty('--vvt',vv.offsetTop+'px')};vv.addEventListener('resize',fit);vv.addEventListener('scroll',fit);fit()}
+  if(!TOUCH)return;
+  var b=document.body,sy=null,sx=null;
+  document.addEventListener('focusin',function(e){if(isTxt(e.target))b.classList.add('kb')});
+  document.addEventListener('focusout',function(){setTimeout(function(){if(!isTxt(document.activeElement))b.classList.remove('kb')},80)});
+  /* rolar a tela fecha o teclado (menos dentro de formulários) */
+  document.addEventListener('touchstart',function(e){sy=e.touches[0].clientY;sx=e.touches[0].clientX},{passive:true});
+  document.addEventListener('touchmove',function(e){
+    var a=document.activeElement;if(!isTxt(a)||sy==null)return;
+    if(Math.abs(e.touches[0].clientY-sy)<24||Math.abs(e.touches[0].clientX-sx)>Math.abs(e.touches[0].clientY-sy))return;
+    var t=e.target;if(t&&t.closest&&(t.closest('form')||t.closest('.cform')))return;
+    a.blur()},{passive:true});
+  /* Enter / Buscar fecha o teclado */
+  document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target&&e.target.type==='search')e.target.blur()});
+  /* tocar num botão ou item fecha o teclado antes da ação */
+  document.addEventListener('click',function(e){var a=document.activeElement;if(!isTxt(a))return;
+    var t=e.target.closest&&e.target.closest('button,[data-act]');
+    if(t&&t!==a&&!t.closest('.cform')&&!t.closest('form'))a.blur()},true);
+})();
 function updPrev(){var p=$('#st-prev');if(p)p.innerHTML=prevHtml(thermalText(SAMPLE,readSet()))}
 document.addEventListener('input',function(e){
   var t=e.target;
