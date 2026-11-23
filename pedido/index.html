@@ -124,8 +124,11 @@ textarea{min-height:76px;resize:vertical}
 .pg-op small{display:block;font-size:14px;color:#444;font-weight:500;margin-top:2px}
 .pg-op small b{display:inline;font-size:inherit;color:#141414}
 .pg-ic{display:flex;flex:none}
-.pg-ic i{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 24px/1 Arial,sans-serif;font-style:normal;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
-.pg-ic i+i{margin-left:-14px}
+.pg-ic img{width:44px;height:44px;display:block;border-radius:50%}
+.pg-ic img+img{margin-left:6px}
+.tit-ic{display:inline-block!important;width:28px;height:28px;vertical-align:-6px;margin-right:6px}
+.btn-ic{display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.btn-ic img{width:26px;height:26px}
 .pg-seta{margin-left:auto;font-size:26px;line-height:1;flex:none}
 .principal{background:var(--laranja);color:var(--preto);border:2px solid var(--preto);font-weight:800;font-size:17px;min-height:54px;padding:0 18px;width:100%;border-radius:0}
 .principal:hover{background:#FF7D21}
@@ -538,7 +541,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
 <!-- pagamento bitcoin -->
 <dialog id="dBtc" aria-labelledby="tBtc">
   <div class="d-in" style="align-items:center;text-align:center">
-    <div class="d-topo" style="width:100%"><h2 id="tBtc">Pagar com Bitcoin</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
+    <div class="d-topo" style="width:100%"><h2 id="tBtc"><img class="tit-ic" src="ico-btc.svg" alt="">Pagar com Bitcoin</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
     <p id="btcValor" style="margin:0;font-weight:800"></p>
     <canvas id="btcQr" width="240" height="240" style="max-width:100%;border:2px solid var(--preto);background:#fff" aria-label="QR Code do pagamento"></canvas>
     <p class="mini" style="margin:0" id="btcDica">Escaneie com sua carteira Lightning ou toque em abrir.</p>
@@ -552,11 +555,11 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
 <!-- pagamento em dolar digital -->
 <dialog id="dCripto" aria-labelledby="tCripto">
   <div class="d-in" style="align-items:center;text-align:center">
-    <div class="d-topo" style="width:100%"><h2 id="tCripto">Pagar em d&oacute;lar digital</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
+    <div class="d-topo" style="width:100%"><h2 id="tCripto"><img class="tit-ic" src="ico-usdt.svg" alt=""><img class="tit-ic" src="ico-usdc.svg" alt="">Pague com d&oacute;lar digital</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
     <div id="crEscolha" style="display:flex;flex-direction:column;gap:10px;width:100%">
       <p style="margin:0">Escolha a moeda. O pagamento &eacute; na rede <b>Polygon</b>, pelo valor em d&oacute;lar do dia.</p>
-      <button class="principal" type="button" data-cr="usdt">USDT (Tether)</button>
-      <button class="principal" type="button" data-cr="usdc">USDC (USD Coin)</button>
+      <button class="principal btn-ic" type="button" data-cr="usdt"><img src="ico-usdt.svg" alt="">USDT (Tether)</button>
+      <button class="principal btn-ic" type="button" data-cr="usdc"><img src="ico-usdc.svg" alt="">USDC (USD Coin)</button>
     </div>
     <div id="crPaga" style="display:none;flex-direction:column;gap:10px;width:100%;align-items:center">
       <p id="crValor" style="margin:0;font-weight:800"></p>
@@ -583,8 +586,8 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
     <button class="principal" type="button" id="okPagar">Pagar agora (Pix ou cartão)</button>
     <p class="btc-promo" id="btcPromo" hidden></p>
     <p class="pg-tit" id="pgTit" hidden>Ou pague com cripto</p>
-    <button class="pg-op" type="button" id="okBtc" hidden><span class="pg-ic"><i style="background:#F7931A">&#8383;</i></span><span><b>Pague com Bitcoin</b><small id="okBtcSub">Pagamento r&aacute;pido pela carteira</small></span><span class="pg-seta" aria-hidden="true">&rsaquo;</span></button>
-    <button class="pg-op" type="button" id="okCripto" hidden><span class="pg-ic"><i style="background:#26A17B">&#8366;</i><i style="background:#2775CA">$</i></span><span><b>Pague com d&oacute;lar digital</b><small>USDT ou USDC &middot; rede Polygon</small></span><span class="pg-seta" aria-hidden="true">&rsaquo;</span></button>
+    <button class="pg-op" type="button" id="okBtc" hidden><span class="pg-ic"><img src="ico-btc.svg" width="44" height="44" alt=""></span><span><b>Pague com Bitcoin</b><small id="okBtcSub">Pagamento r&aacute;pido pela carteira</small></span><span class="pg-seta" aria-hidden="true">&rsaquo;</span></button>
+    <button class="pg-op" type="button" id="okCripto" hidden><span class="pg-ic"><img src="ico-usdt.svg" width="44" height="44" alt=""><img src="ico-usdc.svg" width="44" height="44" alt=""></span><span><b>Pague com d&oacute;lar digital</b><small>USDT ou USDC &middot; rede Polygon</small></span><span class="pg-seta" aria-hidden="true">&rsaquo;</span></button>
     <p class="erro" id="erroPagar" role="alert" style="margin:0"></p>
     <a class="secundario" id="okZap" href="#" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Enviar no WhatsApp</a>
     <button class="secundario" type="button" data-fechar>Voltar ao cardápio</button>
@@ -1268,7 +1271,7 @@ async function abrirConta(silencioso){
         (Number(p.desconto_fidelidade)>0?'<small>🎁 Desconto fidelidade: -'+R(p.desconto_fidelidade)+'</small>':'')+
         '<b>'+R(p.total)+' em itens'+(p.frete!=null?' + '+(Number(p.frete)===0?'frete grátis':R(p.frete)+' de frete')+' = '+R(Number(p.total)+Number(p.frete)):'')+'</b>'+
         (p.itens&&p.itens.length?'<button class="repetir" type="button" data-repetir="'+esc(p.id)+'">Pedir de novo</button>':'')+
-        (PAGAMENTO_ONLINE&&!p.pago&&ativo?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button>'+(BTC_ON?''+'<button class="pg-op" type="button" data-btc="'+esc(p.id)+'" style="margin-top:8px"><span class="pg-ic"><i style="background:#F7931A">\u20bf</i></span><span><b>Pague com Bitcoin</b><small>'+btcSub(p)+'</small></span><span class="pg-seta" aria-hidden="true">\u203a</span></button>':'')+(CRIPTO_ON?'<button class="pg-op" type="button" data-cripto="'+esc(p.id)+'" style="margin-top:8px"><span class="pg-ic"><i style="background:#26A17B">\u20ae</i><i style="background:#2775CA">$</i></span><span><b>Pague com dólar digital</b><small>USDT ou USDC · rede Polygon</small></span><span class="pg-seta" aria-hidden="true">\u203a</span></button>':'')+'<p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+
+        (PAGAMENTO_ONLINE&&!p.pago&&ativo?'<button class="principal" type="button" data-pagar="'+esc(p.id)+'" style="margin-top:8px">Pagar agora (Pix ou cartão)</button>'+(BTC_ON?''+'<button class="pg-op" type="button" data-btc="'+esc(p.id)+'" style="margin-top:8px"><span class="pg-ic"><img src="ico-btc.svg" width="44" height="44" alt=""></span><span><b>Pague com Bitcoin</b><small>'+btcSub(p)+'</small></span><span class="pg-seta" aria-hidden="true">\u203a</span></button>':'')+(CRIPTO_ON?'<button class="pg-op" type="button" data-cripto="'+esc(p.id)+'" style="margin-top:8px"><span class="pg-ic"><img src="ico-usdt.svg" width="44" height="44" alt=""><img src="ico-usdc.svg" width="44" height="44" alt=""></span><span><b>Pague com dólar digital</b><small>USDT ou USDC · rede Polygon</small></span><span class="pg-seta" aria-hidden="true">\u203a</span></button>':'')+'<p class="erro erroPed" role="alert" style="margin:4px 0 0"></p>':'')+
         (p.status==='entregue'?(p.nota?'<div class="aval"><b>Sua avaliação: <span style="color:#F5A400">'+estrelas(p.nota)+'</span></b>'+(p.nota_obs?'<small>'+esc(p.nota_obs)+'</small>':'')+'</div>':
           '<div class="aval"><b>Como foi seu pedido?</b><div class="stars" role="group" aria-label="Nota de 1 a 5">'+[1,2,3,4,5].map(function(n){return '<button type="button" data-star="'+n+'" aria-label="'+n+' estrela'+(n>1?'s':'')+'">★</button>'}).join('')+'</div><textarea maxlength="300" placeholder="Quer contar mais? (opcional)" aria-label="Comentário da avaliação" hidden></textarea><button class="principal" type="button" data-avsend hidden>Enviar avaliação</button><p class="erro erroAv" role="alert" style="margin:0"></p></div>'):'')+
         '</div>';
