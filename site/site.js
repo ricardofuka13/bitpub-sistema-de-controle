@@ -63,7 +63,7 @@
   }
   /* promoções (foto ou vídeo + texto) */
   function promos(d){
-    var L=(d.promocoes||[]).filter(function(p){return p&&p.titulo}),sec=$('promocoes'),g=$('promoGrid');
+    var L=(d.promocoes||[]).filter(function(p){return p&&p.titulo&&p.onde!=='pedido'}),sec=$('promocoes'),g=$('promoGrid');
     if(!sec||!g||!L.length)return;
     var ok=function(u){return /^https:\/\/[^\s"'<>]+$/.test(u||'')};
     var R=function(v){return 'R$ '+Number(v).toFixed(2).replace('.',',')};

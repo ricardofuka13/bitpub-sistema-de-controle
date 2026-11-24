@@ -743,10 +743,10 @@ function desenharMenu(){
   var okImg=function(u){return /^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(u||'')};
   var hb=$('#heroBox'),hi=$('#hero');
   if(okImg(M.cabecalho)){ if(hi.getAttribute('src')!==M.cabecalho)hi.src=M.cabecalho; hi.hidden=false; hb.classList.remove('sem') }else{ hi.hidden=true; hb.classList.add('sem') }
-  var pr=(M.promocoes||[]).filter(function(p){return p&&p.titulo});
+  var pr=(M.promocoes||[]).filter(function(p){return p&&p.titulo&&p.onde!=='site'});
   $('#promos').hidden=!pr.length;
   $('#promosLista').innerHTML=pr.map(function(p,n){
-    return '<button type="button" class="promo" data-promo="'+n+'">'+(p.video&&!okImg(p.foto)?'<span class="p-play" aria-hidden="true">&#9654; vídeo</span>':'')+(okImg(p.foto)?'<img src="'+esc(p.foto)+'" alt="" loading="lazy" decoding="async">':'')+'<h3 class="p-t">'+esc(p.titulo)+'</h3>'+precoPromo(p)+(p.preco_por!=null?'<span class="p-btn">Adicionar à sacola</span>':'')+(p.descricao?'<p class="p-d">'+esc(p.descricao)+'</p>':'')+'</button>';
+    return '<button type="button" class="promo" data-promo="'+M.promocoes.indexOf(p)+'">'+(p.video&&!okImg(p.foto)?'<span class="p-play" aria-hidden="true">&#9654; vídeo</span>':'')+(okImg(p.foto)?'<img src="'+esc(p.foto)+'" alt="" loading="lazy" decoding="async">':'')+'<h3 class="p-t">'+esc(p.titulo)+'</h3>'+precoPromo(p)+(p.preco_por!=null?'<span class="p-btn">Adicionar à sacola</span>':'')+(p.descricao?'<p class="p-d">'+esc(p.descricao)+'</p>':'')+'</button>';
   }).join('');
   var cats=M.cats.slice(); M.itens.forEach(function(i){ if(cats.indexOf(i.cat)<0)cats.push(i.cat) });
   cats=cats.filter(function(c){return M.itens.some(function(i){return i.cat===c})});
