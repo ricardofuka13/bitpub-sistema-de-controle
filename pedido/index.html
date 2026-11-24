@@ -681,6 +681,7 @@ function promoDe(id){ return (M.promocoes||[]).find(function(p){return 'promo:'+
 var _fotoMapa=null;
 function chaveNome(n){ return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\d+\s*(ml|l|g|kg)\b/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim() }
 function fotoOpcao(nome){
+  var ex=(M.opfotos||{})[chaveNome(nome)]; if(ex&&/^https:\/\/[^\s"'<>]+$/.test(ex))return ex;
   if(!_fotoMapa){ _fotoMapa={}; (M.itens||[]).forEach(function(i){ if(/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(i.foto||'')){ var k=chaveNome(i.nome); if(k&&!_fotoMapa[k])_fotoMapa[k]=i.foto } }) }
   return _fotoMapa[chaveNome(nome)]||'';
 }
@@ -706,7 +707,7 @@ function qtdTotal(){ return carrinho.reduce(function(s,i){return s+i.qtd},0) }
 async function carregarMenu(){
   try{
     var d=await http('/rest/v1/rpc/cardapio_publico',{method:'POST',auth:false,body:{}});
-    _fotoMapa=null; M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',rodape:d.rodape||null,horarios:d.horarios||null,modo:d.modo_loja||'auto',msgFechado:d.msg_fechado||'',regras:d.regras||{},tops:d.tops||[],frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
+    _fotoMapa=null; M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',rodape:d.rodape||null,horarios:d.horarios||null,modo:d.modo_loja||'auto',msgFechado:d.msg_fechado||'',regras:d.regras||{},tops:d.tops||[],frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],opfotos:d.opfotos||{},itens:d.itens||[]};
     BTC_ON=d.bitcoin===true; BTC_DESC=Number(d.bitcoin_desconto)||0; CRIPTO_ON=d.cripto===true;
     try{localStorage.setItem('bitpub_site_menu',JSON.stringify(M))}catch(e){}
   }catch(e){

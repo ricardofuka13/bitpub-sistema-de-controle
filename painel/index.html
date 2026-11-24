@@ -211,6 +211,10 @@ input[type=text],input[type=password],input[type=email],input[type=search],input
       <div id="avisoFotos" class="aviso" hidden></div>
       <input type="file" id="arqFoto" accept="image/*" hidden>
       <div id="listaFotos"></div>
+      <h2 class="cat" style="margin-top:22px">Fotos das opções (bebidas, sucos, adicionais)</h2>
+      <p class="mini" style="margin:0 0 10px">São as opções que o cliente escolhe dentro do lanche. A foto aparece pequena ao lado do nome e vale para todos os lanches.</p>
+      <input type="file" id="arqOpc" accept="image/*" hidden>
+      <div id="listaOpc"></div>
     </section>
   </main>
 </div>
@@ -427,14 +431,19 @@ $('#listaClientes').addEventListener('click',async function(e){
 /* ---------- fotos do cardápio ---------- */
 var itensFoto=[],descFoto={},descTxt={},itemAlvo=null,BUCKET='cardapio-fotos';
 function urlFoto(f){if(!f)return '';if(/^https:\/\//.test(f))return f;if(/^fotos\/[\w.-]+$/.test(f))return '../pedido/'+f;return ''}
-var descTag={},descSug={};
+var descTag={},descSug={},opcLista=[],opcFoto={},opcAlvo=null;
+function chaveNome(n){return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\d+\s*(ml|l|g|kg)\b/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim()}
 async function carregarFotos(){
   try{
-    var r=await Promise.all([http('/rest/v1/docs?coll=eq.menu&select=id,data&limit=1000'),http('/rest/v1/cardapio_desc?select=item_id,foto,descricao,tag,sugerir&limit=1000')]);
+    var r=await Promise.all([http('/rest/v1/docs?coll=eq.menu&select=id,data&limit=1000'),http('/rest/v1/cardapio_desc?select=item_id,foto,descricao,tag,sugerir&limit=1000'),http('/rest/v1/opcao_fotos?select=chave,foto&limit=1000')]);
     descFoto={};descTxt={};descTag={};descSug={};r[1].forEach(function(d){descFoto[d.item_id]=d.foto||'';descTxt[d.item_id]=d.descricao||'';descTag[d.item_id]=d.tag||'';descSug[d.item_id]=!!d.sugerir});
     itensFoto=r[0].filter(function(d){return d.data&&d.data.active!==false}).map(function(d){return {id:d.id,nome:d.data.name||d.id,cat:d.data.cat||'Outros'}})
       .sort(function(a,b){return a.cat.localeCompare(b.cat,'pt-BR')||a.nome.localeCompare(b.nome,'pt-BR')});
-    desenharFotos();
+    opcFoto={};r[2].forEach(function(d){opcFoto[d.chave]=d.foto||''});
+    var vistos={};opcLista=[];
+    r[0].forEach(function(d){if(!d.data||d.data.active===false||!Array.isArray(d.data.siteOpts))return;d.data.siteOpts.forEach(function(g){(g.opts||[]).forEach(function(o){var k=chaveNome(o.name);if(k&&!vistos[k]){vistos[k]=1;opcLista.push({chave:k,nome:o.name,grupo:g.label||''})}})})});
+    opcLista.sort(function(a,b){return a.grupo.localeCompare(b.grupo,'pt-BR')||a.nome.localeCompare(b.nome,'pt-BR')});
+    desenharFotos();desenharOpc();
   }catch(e){$('#listaFotos').innerHTML='<p class="erro">'+esc(e.message)+'</p>'}
 }
 function desenharFotos(){
@@ -450,6 +459,35 @@ function desenharFotos(){
   });
   $('#listaFotos').innerHTML=h||'<p class="vazio">Nenhum item no cardápio.</p>';
 }
+function desenharOpc(){
+  var g=null,h='';
+  opcLista.forEach(function(o){
+    if(o.grupo!==g){g=o.grupo;h+='<h3 class="cat" style="font-size:18px">'+esc(g||'Outras')+'</h3>'}
+    var u=urlFoto(opcFoto[o.chave]);
+    h+='<div class="fi" data-chave="'+esc(o.chave)+'" data-nome="'+esc(o.nome)+'">'+(u?'<img class="th" src="'+esc(u)+'" alt="Foto de '+esc(o.nome)+'" loading="lazy">':'<div class="th">sem foto</div>')+
+      '<div><b>'+esc(o.nome)+'</b><br><span class="mini erroFi"></span></div><div class="bt"><button class="sec" type="button" data-otrocar>'+(u?'Trocar foto':'Colocar foto')+'</button>'+(u?'<button class="sec" type="button" data-otirar>Tirar foto</button>':'')+'</div></div>';
+  });
+  $('#listaOpc').innerHTML=h||'<p class="vazio">Nenhuma opção cadastrada nos lanches.</p>';
+}
+async function gravarOpc(chave,nome,valor){
+  await http('/rest/v1/opcao_fotos?on_conflict=chave',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{chave:chave,nome:nome,foto:valor}});
+  opcFoto[chave]=valor||'';
+}
+$('#listaOpc').addEventListener('click',async function(e){
+  var box=e.target.closest('.fi');if(!box)return;var ch=box.getAttribute('data-chave');
+  if(e.target.closest('[data-otrocar]')){opcAlvo=box;$('#arqOpc').value='';$('#arqOpc').click();return}
+  if(e.target.closest('[data-otirar]')){
+    if(!confirm('Tirar a foto de '+box.getAttribute('data-nome')+'?'))return;
+    box.classList.add('ocup');
+    try{await gravarOpc(ch,box.getAttribute('data-nome'),null);desenharOpc()}catch(er){box.classList.remove('ocup');box.querySelector('.erroFi').textContent='Erro: '+er.message}
+  }
+});
+$('#arqOpc').addEventListener('change',async function(){
+  var f=this.files&&this.files[0],box=opcAlvo;if(!f||!box)return;
+  var ch=box.getAttribute('data-chave'),nome=box.getAttribute('data-nome');box.classList.add('ocup');box.querySelector('.erroFi').textContent='Enviando...';
+  try{var url=await subirImagem(f,'opc-'+ch.replace(/ /g,'-'),400);await gravarOpc(ch,nome,url);desenharOpc()}
+  catch(er){box.classList.remove('ocup');box.querySelector('.erroFi').textContent=er.message}
+});
 function reduzir(file,max){
   return new Promise(function(ok,no){
     var img=new Image(),u=URL.createObjectURL(file);
