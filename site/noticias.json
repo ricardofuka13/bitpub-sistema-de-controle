@@ -1,6 +1,13 @@
 {
-  "atualizado": "2026-11-23T20:39:05+00:00",
+  "atualizado": "2026-11-24T05:02:26+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "Mercado Bitcoin anuncia anuidade de R$ 46,80 que substitui taxa de inatividade e detalha regras de débito em saldo de clientes",
+      "link": "https://livecoins.com.br/mercado-bitcoin-anuncia-anuidade-de-r-4680-que-substitui-taxa-de-inatividade-e-detalha-regras-de-debito-em-saldo-de-clientes/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Bitcoin-ao-lado-de-calculadora.jpg",
+      "data": "2026-11-23T21:23:11+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Uma chance em 1.650 anos: minerador solo encontra bloco de Bitcoin e ganha R$ 1,15 milhão",
@@ -35,13 +42,6 @@
       "link": "https://livecoins.com.br/comissao-da-camara-retoma-debate-sobre-projeto-que-torna-rolante-a-capital-nacional-do-bitcoin/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Comissao-Rolante-Bitcoin.jpeg",
       "data": "2026-11-23T12:32:13+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Corretora Binance busca investigador de sanções em blockchain para atuar na América Latina",
-      "link": "https://livecoins.com.br/corretora-binance-busca-investigador-de-sancoes-em-blockchain-para-atuar-na-america-latina/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Lupa-com-bitcoin-em-destaque-e-nota-de-dinheiro-ao-fundo.jpg",
-      "data": "2026-11-23T07:25:39+00:00"
     }
   ]
 }
