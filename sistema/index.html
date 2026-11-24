@@ -1198,15 +1198,15 @@ function addItem(orderId,menuId,sel){
     var o=S.open[orderId],m=S.menu[menuId];if(!o||!m)return;
     var blk=S.cfg.blockOut!==false;
     if(blk&&avail(m)<1){toast('Sem estoque para '+m.name,'err');return}
-    var rec=(m.recipe||[]).map(function(r){return [r.ing,r.qty]}),extra=0,cost=costOf(m),sig='',nm=m.name;
+    var rec=(m.recipe||[]).map(function(r){return [r.ing,r.qty]}),extra=0,cost=costOf(m),sig='',nm=m.name,kn=m.name;
     if(sel&&sel.length){
       var cost0=cost;sel.forEach(function(s){if(s.ing)rec.push([s.ing,s.qty]);extra+=s.extra||0;var st=S.stock[s.ing];if(st&&!(s.v&&cost0>0))cost+=st.cost*s.qty});
-      sig=sel.map(function(s){return s.ing||('v:'+s.name)}).join('|');nm=m.name+' + '+sel.map(function(s){return s.name}).join(' + ');
+      sig=sel.map(function(s){return s.ing||('v:'+s.name)}).join('|');nm=m.name+' + '+sel.map(function(s){return s.name}).join(' + ');kn=[m.name].concat(sel.filter(function(s){return !DRINK_G.test(s.g||'')}).map(function(s){return s.name})).join(' + ');
       if(blk&&!recOk(rec)){toast('Sem estoque da opção escolhida.','err');return}
     }
     var items=(o.items||[]).map(function(x){return Object.assign({},x)});
     var line=items.find(function(x){return x.k===menuId&&!x.note&&(x.sig||'')===sig});
-    if(line){line.qty+=1}else{items.push({lid:lid(),k:menuId,name:nm,price:r2(m.price+extra),cost:r2(cost),qty:1,note:'',rec:rec,sig:sig})}
+    if(line){line.qty+=1}else{items.push({lid:lid(),k:menuId,name:nm,price:r2(m.price+extra),cost:r2(cost),qty:1,note:'',rec:rec,sig:sig,kn:kn})}
     await db.doc('orders/'+orderId).update({items:items});
     S.open[orderId]=Object.assign({},o,{items:items});
     await applyStock(recDelta(rec,1,-1));
@@ -1994,6 +1994,7 @@ function wrapTxt(s,w){var out=[],cur='';String(s).split(' ').forEach(function(wd
 function lr(l,r){var sp=W-l.length-r.length;return l+(sp>0?new Array(sp+1).join(' '):' ')+r}
 function ctr(s){var sp=Math.max(0,Math.floor((W-s.length)/2));return new Array(sp+1).join(' ')+s}
 /* ---------- impressão da cozinha ---------- */
+var DRINK_G=/bebida|suco|refri/i;
 function isKit(it){var m=S.menu[it.k];return !!(m&&m.kitchen)}
 function hasKit(o){return (o.items||[]).some(isKit)}
 function kPending(o){return (o.items||[]).reduce(function(t,it){return t+(isKit(it)?Math.max(0,it.qty-(it.kSent||0)):0)},0)}
@@ -2011,7 +2012,7 @@ function kitchenText(o,all){
   L.push(dash);
   it.forEach(function(x){
     var q=all?x.qty:x.qty-(x.kSent||0);
-    B(q+'x '+x.name);
+    B(q+'x '+(x.kn||x.name));
     if(x.note)wrapTxt('>> '+plain(x.note),hw).forEach(function(t){L.push('\x02'+t)});
     L.push(dash);
   });
@@ -2475,7 +2476,8 @@ async function importOnline(p,claimed){
       }
       ops.forEach(function(o){var st=o.ing&&S.stock[o.ing],q=o.qty>0?+o.qty:1;if(st){rec.push([o.ing,q]);xc+=st.cost*q}});
       var d=recDelta(rec,it.qtd,-1);Object.keys(d).forEach(function(k){total[k]=r3((total[k]||0)+d[k])});
-      return {lid:lid(),k:it.id,name:(m?m.name:it.nome)+(it.brinde?' (BRINDE)':'')+(ops.length?' + '+ops.map(function(o){return o.nome}).join(' + '):''),price:r2(it.preco),cost:m?r2(costOf(m)+xc):r2(xc),qty:it.qtd,note:it.obs||'',rec:rec,sig:ops.map(function(o){return o.ing||('v:'+o.nome)}).join('|')};
+      var kops=ops.filter(function(o){return !DRINK_G.test(o.grupo||'')});
+      return {lid:lid(),k:it.id,kn:(m?m.name:it.nome)+(it.brinde?' (BRINDE)':'')+(kops.length?' + '+kops.map(function(o){return o.nome}).join(' + '):''),name:(m?m.name:it.nome)+(it.brinde?' (BRINDE)':'')+(ops.length?' + '+ops.map(function(o){return o.nome}).join(' + '):''),price:r2(it.preco),cost:m?r2(costOf(m)+xc):r2(xc),qty:it.qtd,note:it.obs||'',rec:rec,sig:ops.map(function(o){return o.ing||('v:'+o.nome)}).join('|')};
     });
     var fv=r2(Number(p.frete)||0);
     if(fv>0)items.push({lid:lid(),k:'__frete',name:'Frete',price:fv,cost:0,qty:1,note:'',rec:[],sig:'',isFrete:true});
