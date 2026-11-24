@@ -154,6 +154,7 @@ textarea{min-height:76px;resize:vertical}
 .opc-o{display:flex;flex-direction:row;align-items:center;gap:12px;border:2px solid var(--preto);padding:10px 12px;min-height:48px;cursor:pointer;font-weight:600}
 .opc-o input{width:22px;height:22px;flex:none;accent-color:var(--laranja)}
 .opc-o span.n{flex:1}
+.opc-th{width:48px;height:48px;flex:none;object-fit:cover;border:1px solid #D9D9DE;border-radius:8px;background:var(--cinza)}
 .opc-o span.p{white-space:nowrap;font-weight:800}
 .opc-o:has(input:checked){background:#FFF1E3;border-color:var(--laranja);box-shadow:inset 0 0 0 2px var(--laranja)}
 .opc-rod{display:flex;gap:12px;align-items:center;position:sticky;bottom:0;background:var(--papel);padding-top:10px;border-top:3px solid var(--preto)}
@@ -677,6 +678,12 @@ function salvarCarrinho(){ try{localStorage.setItem(CK,JSON.stringify(carrinho))
 carrinho.forEach(function(l){ if(!l.key)l.key=l.id });
 function linha(key){ return carrinho.find(function(i){return i.key===key}) }
 function promoDe(id){ return (M.promocoes||[]).find(function(p){return 'promo:'+p.id===id}) }
+var _fotoMapa=null;
+function chaveNome(n){ return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\d+\s*(ml|l|g|kg)\b/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim() }
+function fotoOpcao(nome){
+  if(!_fotoMapa){ _fotoMapa={}; (M.itens||[]).forEach(function(i){ if(/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(i.foto||'')){ var k=chaveNome(i.nome); if(k&&!_fotoMapa[k])_fotoMapa[k]=i.foto } }) }
+  return _fotoMapa[chaveNome(nome)]||'';
+}
 function itemDe(id){ return M.itens.find(function(i){return i.id===id}) }
 function temOpc(it){ return !!(it&&it.opcoes&&it.opcoes.length) }
 function qtdDoItem(id){ return carrinho.reduce(function(s,l){return l.id===id?s+l.qtd:s},0) }
@@ -699,7 +706,7 @@ function qtdTotal(){ return carrinho.reduce(function(s,i){return s+i.qtd},0) }
 async function carregarMenu(){
   try{
     var d=await http('/rest/v1/rpc/cardapio_publico',{method:'POST',auth:false,body:{}});
-    M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',rodape:d.rodape||null,horarios:d.horarios||null,modo:d.modo_loja||'auto',msgFechado:d.msg_fechado||'',regras:d.regras||{},tops:d.tops||[],frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
+    _fotoMapa=null; M={nome:d.nome||'BitPub',telefone:d.telefone||'',endereco:d.endereco||'',frase:d.frase||'',horario:d.horario||'',info:d.info||'',cabecalho:d.cabecalho||'',rodape:d.rodape||null,horarios:d.horarios||null,modo:d.modo_loja||'auto',msgFechado:d.msg_fechado||'',regras:d.regras||{},tops:d.tops||[],frete:d.frete||null,promocoes:d.promocoes||[],cats:d.cats||[],itens:d.itens||[]};
     BTC_ON=d.bitcoin===true; BTC_DESC=Number(d.bitcoin_desconto)||0; CRIPTO_ON=d.cripto===true;
     try{localStorage.setItem('bitpub_site_menu',JSON.stringify(M))}catch(e){}
   }catch(e){
@@ -914,7 +921,8 @@ function abrirOpcoes(id){
     var tag=g.req?'<small class="obr">Obrigatório</small>':'<small>'+(multi?'Opcional · até '+g.max:'Opcional')+'</small>';
     var linhas=(!g.req&&!multi?'<label class="opc-o"><input type="radio" name="'+nome+'" value="" checked><span class="n">Nenhum</span></label>':'')+
       g.opts.map(function(o,oi){
-        return '<label class="opc-o"><input type="'+(multi?'checkbox':'radio')+'" name="'+nome+'" value="'+oi+'"><span class="n">'+esc(o.name)+'</span>'+(Number(o.price)>0?'<span class="p">+ '+R(o.price)+'</span>':'')+'</label>';
+        var fo=fotoOpcao(o.name);
+        return '<label class="opc-o"><input type="'+(multi?'checkbox':'radio')+'" name="'+nome+'" value="'+oi+'">'+(fo?'<img class="opc-th" src="'+esc(fo)+'" alt="" width="48" height="48" loading="lazy" decoding="async">':'')+'<span class="n">'+esc(o.name)+'</span>'+(Number(o.price)>0?'<span class="p">+ '+R(o.price)+'</span>':'')+'</label>';
       }).join('');
     return '<fieldset class="opc-g" data-g="'+gi+'"><legend><b>'+esc(g.label||'Escolha')+'</b> '+tag+'</legend>'+linhas+'</fieldset>';
   }).join('');
