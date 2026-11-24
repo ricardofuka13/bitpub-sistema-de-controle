@@ -61,10 +61,31 @@
       if(Number(i.preco)>0)a.querySelector('.bg-p').textContent='R$ '+Number(i.preco).toFixed(2).replace('.',',');
     });
   }
+  /* promoções (foto ou vídeo + texto) */
+  function promos(d){
+    var L=(d.promocoes||[]).filter(function(p){return p&&p.titulo}),sec=$('promocoes'),g=$('promoGrid');
+    if(!sec||!g||!L.length)return;
+    var ok=function(u){return /^https:\/\/[^\s"'<>]+$/.test(u||'')};
+    var R=function(v){return 'R$ '+Number(v).toFixed(2).replace('.',',')};
+    g.innerHTML='';
+    L.forEach(function(p){
+      var c=document.createElement('article');c.style.cssText='background:#1b1410;border:1px solid #3a2c22;border-radius:14px;overflow:hidden;display:flex;flex-direction:column';
+      var m='';
+      if(ok(p.video))m='<video src="'+p.video+'"'+(ok(p.foto)?' poster="'+p.foto+'"':'')+' muted loop playsinline autoplay preload="metadata" style="width:100%;aspect-ratio:4/3;object-fit:cover;background:#000"></video>';
+      else if(ok(p.foto))m='<img src="'+p.foto+'" alt="" loading="lazy" decoding="async" style="width:100%;aspect-ratio:4/3;object-fit:cover">';
+      var b=document.createElement('div');b.style.cssText='padding:16px;display:flex;flex-direction:column;gap:8px;flex:1';
+      var h=document.createElement('h3');h.style.cssText='margin:0;font-size:22px;line-height:1.2';h.textContent=p.titulo;b.appendChild(h);
+      if(p.preco_por!=null){var pr=document.createElement('p');pr.style.cssText='margin:0;font-size:18px';pr.innerHTML=(p.preco_de!=null?'<s style="opacity:.6">'+R(p.preco_de)+'</s> ':'')+'<b>'+R(p.preco_por)+'</b>';b.appendChild(pr)}
+      if(p.descricao){var t=document.createElement('p');t.style.cssText='margin:0;color:#E6D6C4;white-space:pre-line';t.textContent=p.descricao;b.appendChild(t)}
+      var a=document.createElement('a');a.href='https://bitpub.app.br/pedido/';a.textContent='Pedir agora';a.className='btn p';a.style.cssText='margin-top:auto;align-self:flex-start';b.appendChild(a);
+      c.innerHTML=m;c.appendChild(b);g.appendChild(c);
+    });
+    sec.hidden=false;
+  }
   /* dados da loja */
   if(C.url&&C.key){
     rpc('cardapio_publico',{}).then(function(d){
-      if(!d)return; status(d); tabela(d.horarios); btc(d); burgers(d);
+      if(!d)return; status(d); tabela(d.horarios); btc(d); burgers(d); promos(d);
       Array.prototype.forEach.call(document.querySelectorAll('.js-cripto'),function(e){e.hidden=d.cripto!==true});
       setInterval(function(){status(d)},60000);
     }).catch(function(){var c=$('status'); if(c)c.style.display='none'});

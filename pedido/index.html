@@ -177,6 +177,8 @@ textarea{min-height:76px;resize:vertical}
 .promo .p-t{margin:0;background:var(--preto);color:#fff;font:700 15px/1.2 var(--f-corpo);text-transform:uppercase;padding:8px 10px}
 .promo .p-d{margin:0;padding:8px 10px 10px;color:var(--suave);font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .promo-foto{width:100%;max-height:260px;object-fit:cover;border:2px solid var(--preto)}
+.promo-foto[hidden]{display:none}
+.p-play{display:inline-block;background:#111;color:#fff;font:700 12px/1 var(--f-corpo);padding:6px 10px;border-radius:99px;margin-bottom:6px}
 #boxEndereco{display:flex;flex-direction:column;gap:8px}#boxEndereco[hidden]{display:none}
 .btn-frete{background:var(--preto);color:#fff;border:0;min-height:44px;font-weight:700;padding:0 16px;border-radius:0}
 .freteMsg{margin:0;font-size:14px;color:var(--suave);min-height:1.2em}
@@ -423,6 +425,7 @@ input[type=text],input[type=tel],input[type=password],textarea,.aniv select{bord
 <dialog id="dPromo" aria-labelledby="tPromo">
   <div class="d-in">
     <div class="d-topo"><h2 id="tPromo">Promoção</h2><button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button></div>
+    <video class="promo-foto" id="promoVid" muted loop playsinline controls preload="metadata" hidden></video>
     <img class="promo-foto" id="promoFoto" alt="" hidden>
     <div id="promoPreco"></div>
     <p id="promoInclui" style="margin:0"></p>
@@ -743,7 +746,7 @@ function desenharMenu(){
   var pr=(M.promocoes||[]).filter(function(p){return p&&p.titulo});
   $('#promos').hidden=!pr.length;
   $('#promosLista').innerHTML=pr.map(function(p,n){
-    return '<button type="button" class="promo" data-promo="'+n+'">'+(okImg(p.foto)?'<img src="'+esc(p.foto)+'" alt="" loading="lazy" decoding="async">':'')+'<h3 class="p-t">'+esc(p.titulo)+'</h3>'+precoPromo(p)+(p.preco_por!=null?'<span class="p-btn">Adicionar à sacola</span>':'')+(p.descricao?'<p class="p-d">'+esc(p.descricao)+'</p>':'')+'</button>';
+    return '<button type="button" class="promo" data-promo="'+n+'">'+(p.video&&!okImg(p.foto)?'<span class="p-play" aria-hidden="true">&#9654; vídeo</span>':'')+(okImg(p.foto)?'<img src="'+esc(p.foto)+'" alt="" loading="lazy" decoding="async">':'')+'<h3 class="p-t">'+esc(p.titulo)+'</h3>'+precoPromo(p)+(p.preco_por!=null?'<span class="p-btn">Adicionar à sacola</span>':'')+(p.descricao?'<p class="p-d">'+esc(p.descricao)+'</p>':'')+'</button>';
   }).join('');
   var cats=M.cats.slice(); M.itens.forEach(function(i){ if(cats.indexOf(i.cat)<0)cats.push(i.cat) });
   cats=cats.filter(function(c){return M.itens.some(function(i){return i.cat===c})});
@@ -1090,6 +1093,7 @@ $('#promosLista').addEventListener('click',function(e){
   var b=e.target.closest('[data-promo]'); if(!b)return; var p=(M.promocoes||[])[Number(b.getAttribute('data-promo'))]; if(!p)return;
   $('#tPromo').textContent=p.titulo; $('#promoTexto').textContent=p.descricao||''; $('#promoPreco').innerHTML=precoPromo(p); $('#promoInclui').innerHTML=(p.inclui&&p.inclui.length)?'<b>Inclui:</b> '+p.inclui.map(function(x){return x.qtd+'x '+esc(x.nome)}).join(', '):'';
   var f=$('#promoFoto'); if(/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(p.foto||'')){f.src=p.foto;f.alt=p.titulo;f.hidden=false}else{f.hidden=true}
+  var pv=$('#promoVid'), tv=/^https:\/\/[^\s"'<>]+$/.test(p.video||''); if(tv){pv.src=p.video;if(f&&!f.hidden)pv.poster=f.src;pv.hidden=false;f.hidden=true;pv.play&&pv.play().catch(function(){})}else{pv.pause&&pv.pause();pv.removeAttribute('src');pv.hidden=true}
   var add=$('#promoAdd'), tem=p.preco_por!=null;
   add.hidden=!tem; add.setAttribute('data-key','promo:'+p.id); if(tem)add.textContent='Adicionar à sacola · '+R(p.preco_por);
   $('#promoVer').textContent=tem?'Continuar vendo o cardápio':'Ver o cardápio';
@@ -1413,6 +1417,7 @@ async function pagarBtc(id,btn,msgEl){
   finally{btn.disabled=false}
 }
 $('#dBtc').addEventListener('close',btcParar);
+$('#dPromo').addEventListener('close',function(){var v=$('#promoVid');if(v&&v.pause)v.pause()});
 /* ---------- dólar digital (USDT / USDC na Polygon) ---------- */
 var crPid=null,crTimer=null,crEnd='';
 function crParar(){if(crTimer){clearInterval(crTimer);crTimer=null}}
