@@ -432,7 +432,7 @@ $('#listaClientes').addEventListener('click',async function(e){
 var itensFoto=[],descFoto={},descTxt={},itemAlvo=null,BUCKET='cardapio-fotos';
 function urlFoto(f){if(!f)return '';if(/^https:\/\//.test(f))return f;if(/^fotos\/[\w.-]+$/.test(f))return '../pedido/'+f;return ''}
 var descTag={},descSug={},opcLista=[],opcFoto={},opcAlvo=null;
-function chaveNome(n){return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\d+\s*(ml|l|g|kg)\b/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim()}
+function chaveNome(n){return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/(\d)\s+(ml|l|g|kg)\b/g,'$1$2').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim()}
 async function carregarFotos(){
   try{
     var r=await Promise.all([http('/rest/v1/docs?coll=eq.menu&select=id,data&limit=1000'),http('/rest/v1/cardapio_desc?select=item_id,foto,descricao,tag,sugerir&limit=1000'),http('/rest/v1/opcao_fotos?select=chave,foto&limit=1000')]);

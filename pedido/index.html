@@ -679,7 +679,7 @@ carrinho.forEach(function(l){ if(!l.key)l.key=l.id });
 function linha(key){ return carrinho.find(function(i){return i.key===key}) }
 function promoDe(id){ return (M.promocoes||[]).find(function(p){return 'promo:'+p.id===id}) }
 var _fotoMapa=null;
-function chaveNome(n){ return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\d+\s*(ml|l|g|kg)\b/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim() }
+function chaveNome(n){ return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/(\d)\s+(ml|l|g|kg)\b/g,'$1$2').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim() }
 function fotoOpcao(nome){
   var ex=(M.opfotos||{})[chaveNome(nome)]; if(ex&&/^https:\/\/[^\s"'<>]+$/.test(ex))return ex;
   if(!_fotoMapa){ _fotoMapa={}; (M.itens||[]).forEach(function(i){ if(/^(fotos\/[\w.-]+|https:\/\/[^\s"'<>]+)$/.test(i.foto||'')){ var k=chaveNome(i.nome); if(k&&!_fotoMapa[k])_fotoMapa[k]=i.foto } }) }
