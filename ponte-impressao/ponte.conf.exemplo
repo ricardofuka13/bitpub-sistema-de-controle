@@ -1,0 +1,9 @@
+# Copie este arquivo para "ponte.conf" e preencha.
+# As 3 primeiras linhas vêm do sistema: Ajustes > Ponte de impressão > "Copiar dados de ligação".
+URL=
+KEY=
+TOKEN=
+# IP de cada impressora de rede (sai no teste de autoimpressão da impressora).
+# Se a impressora usar outra porta que não a 9100, escreva assim: 192.168.0.50:9100
+COMANDA_IP=192.168.0.50
+COZINHA_IP=

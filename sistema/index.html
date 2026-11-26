@@ -1333,7 +1333,7 @@ function gridHtml(cat){
     if(lista)return '<button type="button" class="mi mr'+(block?' out':'')+'" data-act="add" data-id="'+x[0]+'"'+(block?' aria-disabled="true"':'')+'>'+mrBody(m,a,s)+'</button>';
     return '<button type="button" class="mi'+(block?' out':'')+'" data-act="add" data-id="'+x[0]+'"'+(block?' aria-disabled="true"':'')+'><span class="mi-n">'+esc(m.name)+'</span>'+(ch?'<small class="mi-c">escolher: '+esc(ch)+'</small>':'')+'<span class="mi-p">'+brl(m.price)+'</span></button>'}).join('')+'</div>'}
 function printBar(o){
-  var can=window.BTP&&(window.BTP.supported||(window.BTP.mode&&window.BTP.mode()==='rawbt'));
+  var can=window.BTP&&(window.BTP.supported||(window.BTP.mode&&window.BTP.mode()==='rawbt')||destRede('comanda')||destRede('cozinha'));
   var kit=kitchenLines(o,false).length||hasKit(o),b='';
   if(can)b+='<button type="button" class="btn pb-btn" data-act="btprint"><span>Imprimir</span><small>comanda do cliente</small></button>';
   else b+='<button type="button" class="btn pb-btn" data-act="copyt"><span>Copiar p/ impressora</span><small>cole no app da impressora</small></button>'+(S.dl?'<button type="button" class="btn pb-btn" data-act="savet"><span>Salvar .txt</span><small>arquivo de texto</small></button>':'');
@@ -1516,8 +1516,11 @@ function vAjustes0(){
   f('st-msg','Mensagem final',c.msg,'Ex.: Obrigado pela preferência!',60)+
   '<label>Mensagem de aniversário (WhatsApp)<textarea id="st-bm" rows="3" maxlength="300" autocomplete="off" placeholder="Use {nome} para o primeiro nome do cliente">'+esc(c.bdayMsg||'')+'</textarea><small class="muted">Se ficar em branco, usa uma mensagem padrão. {nome} vira o primeiro nome do cliente.</small></label>'+
   (window.BTP?'<div><div class="muted" style="font-size:13px;font-weight:500;margin-bottom:8px">Logo no topo da impressão</div><div class="logo-row"><img id="st-logo-img" alt="Logo"'+(c.logo?' src="'+c.logo+'"':' hidden')+'><div class="acts"><button type="button" class="btn sm" id="st-logo-pick">Escolher imagem</button><button type="button" class="btn sm ghost" id="st-logo-del"'+(c.logo?'':' hidden')+'>Remover</button></div></div><input type="file" id="st-logo-file" accept="image/*" hidden></div><label>Tamanho do logo<select id="st-logo-size">'+opt('40','Pequeno',Number(c.logoSize)===40)+opt('60','Médio',!c.logoSize||Number(c.logoSize)===60)+opt('90','Grande',Number(c.logoSize)===90)+'</select></label>':'')+
-  '<div class="row2"><label>Largura do papel<select id="st-paper">'+opt('58','58 mm (32 colunas)',Number(c.paper)!==80)+opt('80','80 mm (48 colunas)',Number(c.paper)===80)+'</select></label>'+
-  '<label>Taxa de serviço (%)<input id="st-svc" inputmode="decimal" value="'+inpN(svcPct())+'"></label></div>'+
+  '<div class="row2"><label>Papel da comanda e conta<select id="st-paper">'+opt('58','58 mm (32 colunas)',Number(c.paper)!==80)+opt('80','80 mm (48 colunas)',Number(c.paper)===80)+'</select></label>'+
+  '<label>Papel da ficha da cozinha<select id="st-paperk">'+opt('58','58 mm (32 colunas)',Number(c.paperK)!==80)+opt('80','80 mm (48 colunas)',Number(c.paperK)===80)+'</select></label></div>'+
+  '<div class="row2"><label>Comanda e conta imprimem em<select id="st-pc">'+opt('local','Este aparelho (Bluetooth/USB/RawBT)',c.printComanda!=='rede')+opt('rede','Impressora de rede (pela ponte)',c.printComanda==='rede')+'</select></label>'+
+  '<label>Cozinha e pedidos do site imprimem em<select id="st-pk">'+opt('local','Este aparelho (Bluetooth/USB/RawBT)',c.printCozinha!=='rede')+opt('rede','Impressora de rede (pela ponte)',c.printCozinha==='rede')+'</select></label></div>'+
+  '<div class="row2"><label>Taxa de serviço (%)<input id="st-svc" inputmode="decimal" value="'+inpN(svcPct())+'"></label></div>'+
   '<label>Tamanho da letra na comanda<select id="st-fs">'+opt('g','Grande (itens em letra alta) - mais legível',c.fs!=='n'&&c.fs!=='c')+opt('n','Média (negrito, total grande)',c.fs==='n')+opt('c','Compacta (menor, gasta menos papel)',c.fs==='c')+'</select></label>'+
   '<label class="toggle"><input type="checkbox" id="st-fisc"'+(c.fiscal?' checked':'')+'>Imprimir aviso "Não é documento fiscal"</label>'+
   '<p class="err" id="st-e"></p><div class="actions"><button class="btn primary" type="submit">Salvar ajustes</button></div></form>'+
@@ -1526,13 +1529,14 @@ function vAjustes0(){
 function readSet(){
   var v=function(id){return ($('#'+id)||{}).value||''};
   var svc=parseN(v('st-svc'));
-  return {name:v('st-name').trim(),tagline:v('st-tag').trim(),address:v('st-addr').trim(),phone:v('st-phone').trim(),cnpj:v('st-cnpj').trim(),pix:v('st-pix').trim(),msg:v('st-msg').trim(),bdayMsg:v('st-bm').trim(),paper:Number(v('st-paper'))||58,fs:v('st-fs')||'g',svcPct:Math.min(Math.max(svc,0),30),fiscal:!!($('#st-fisc')||{}).checked,hTitle:v('st-ht').trim(),hDesc:v('st-hd').trim(),hLogo:curHLogo(),logo:curLogo(),logoSize:Number(v('st-logo-size'))||(S.cfg&&S.cfg.logoSize)||60,cats:(S.cfg&&S.cfg.cats)||undefined};
+  return {name:v('st-name').trim(),tagline:v('st-tag').trim(),address:v('st-addr').trim(),phone:v('st-phone').trim(),cnpj:v('st-cnpj').trim(),pix:v('st-pix').trim(),msg:v('st-msg').trim(),bdayMsg:v('st-bm').trim(),paper:Number(v('st-paper'))||58,paperK:Number(v('st-paperk'))||58,printComanda:v('st-pc')==='rede'?'rede':'local',printCozinha:v('st-pk')==='rede'?'rede':'local',fs:v('st-fs')||'g',svcPct:Math.min(Math.max(svc,0),30),fiscal:!!($('#st-fisc')||{}).checked,hTitle:v('st-ht').trim(),hDesc:v('st-hd').trim(),hLogo:curHLogo(),logo:curLogo(),logoSize:Number(v('st-logo-size'))||(S.cfg&&S.cfg.logoSize)||60,cats:(S.cfg&&S.cfg.cats)||undefined};
 }
 function btPrint(id,test){
   var o=test?SAMPLE:S.open[id];if(!o||!window.BTP)return;
   var c=S.cfg||{};
   var text=thermalText(o,c);
   var opt=c.logo?{logo:c.logo,paper:Number(c.paper)===80?576:384,size:c.logoSize||60}:null;
+  if(destRede('comanda')){toast('Enviando para a impressora da rede...');printJob('comanda',text,opt).then(function(){toast('Enviado para a impressora')},function(e){toast(e&&e.name==='PonteOff'?MSG_PONTE:'Não foi possível enviar para a impressora da rede.','err')});return}
   if(window.BTP.mode&&window.BTP.mode()==='rawbt'){toast('Abrindo o RawBT...');window.BTP.printRaw(text,opt).catch(function(){toast('Não foi possível enviar ao RawBT. Confira se o app está instalado.','err')});return}
   toast('Conectando à impressora...');
   window.BTP.print(text,opt).then(function(){toast('Enviado para a impressora')},function(e){
@@ -1560,7 +1564,21 @@ function vAjExtra(){
   var sup=window.BTP.supported,pm=window.BTP.mode?window.BTP.mode():'direct';
   return '<div class="two" style="margin-top:16px"><div class="card"><h3>Impressora Bluetooth</h3><p class="muted" style="margin-bottom:12px">Como imprimir neste celular:</p><div class="acts" style="margin-bottom:12px"><button type="button" class="btn'+(pm==='rawbt'?' primary':'')+'" data-act="pmraw">Pelo app RawBT</button><button type="button" class="btn'+(pm==='direct'?' primary':'')+'" data-act="pmdir">Direto (Chrome)</button>'+(window.BTP.usbSupported?'<button type="button" class="btn'+(pm==='usb'?' primary':'')+'" data-act="pmusb">USB (computador)</button>':'')+'</div><p class="muted" style="margin-bottom:12px">'+(pm==='rawbt'?'O RawBT recebe a comanda e imprime. Instale o app RawBT na Play Store e conecte a impressora lá uma vez.':'')+(pm==='usb'?'Modo USB: a impressora fica ligada por cabo no computador (Chrome ou Chromium). Na primeira vez, toque em Testar impressão e escolha a impressora na lista. Se der erro de permissão no Linux, rode o arquivo de configuração que a Claude enviou.':'')+(sup?' Modo direto: toque em Imprimir numa comanda para enviar direto à impressora. Na primeira vez você escolhe a impressora na lista. Se ela não aparecer ou o teste falhar, use Copiar p/ impressora.':'Este navegador não permite imprimir por Bluetooth. Abra no Chrome do Android ou use Copiar p/ impressora.')+'</p>'+((sup||pm==='rawbt')?'<button type="button" class="btn" data-act="bttest">Testar impressão</button>':'')+
   '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line,rgba(128,128,128,.3))"><h3 style="margin-bottom:6px">Pedidos do site</h3><button type="button" class="btn'+(autoPrintOn()?' primary':'')+'" data-act="autop">'+(autoPrintOn()?'Imprimir sozinho neste aparelho: ligado':'Imprimir sozinho neste aparelho: desligado')+'</button><p class="muted" style="margin-top:10px">Ligue só no aparelho que fica perto da impressora. Ele precisa ficar com o sistema aberto e a tela ligada. '+(pm==='rawbt'?'No modo RawBT o Android pede um toque para cada impressão, então aqui o pedido chega e aparece o botão Imprimir. Para imprimir sozinho, use o modo Direto (Chrome).':'No modo Direto, depois que a impressora for conectada uma vez (toque em Testar impressão), os pedidos novos saem sozinhos.')+'</p></div></div>'+
+  '<div class="card" id="ponte-card"><h3>Ponte de impressão (impressora de rede)</h3><div id="ponte-box"><p class="muted">Carregando...</p></div></div>'+
   (window.__DB?'<div class="card"><h3>Backup dos dados</h3><p class="muted" style="margin-bottom:12px">'+(window.__logout?'Os dados ficam na nuvem. Baixe uma cópia de vez em quando e guarde no Drive ou no WhatsApp, por segurança.':'Os dados ficam só neste aparelho. Baixe uma cópia de vez em quando e guarde no Drive ou no WhatsApp.')+'</p><div class="acts"><button type="button" class="btn" data-act="bkexp">Baixar backup</button><button type="button" class="btn" data-act="bkimp">Restaurar backup</button></div><input type="file" id="bk-file" accept="application/json,.json" hidden></div>':'')+(window.__logout?'<div class="card"><h3>Conta</h3><p class="muted" style="margin-bottom:12px">Conectado como <b style="color:var(--ink)">'+esc(window.__userEmail||'')+'</b>. As comandas e o estoque aparecem em todos os celulares da equipe.</p><button type="button" class="btn" data-act="logout">Sair</button></div>':'')+'</div>';
+}
+function ponteLoad(){
+  var h=window.__bpHttp,box=$('#ponte-box');if(!box)return;
+  if(!h){box.innerHTML='<p class="muted">Disponível só com o sistema conectado à nuvem.</p>';return}
+  h('POST','/rest/v1/rpc/ponte_info',{}).then(function(inf){
+    box=$('#ponte-box');if(!box)return;
+    if(!inf){box.innerHTML='<p class="muted">Só a equipe de gestão vê esta área.</p>';return}
+    var ok=inf.segundos!=null&&inf.segundos<=30,cf=window.BITPUB_CFG||{};
+    S.ponte={url:cf.url||'',key:cf.key||'',token:inf.token};
+    box.innerHTML='<p style="margin-bottom:10px"><b>'+(ok?'Ponte conectada':(inf.segundos==null?'Ponte nunca conectou':'Ponte desligada'))+'</b> <span class="muted">'+(ok?'(respondeu há '+inf.segundos+' s)':(inf.segundos==null?'':'(última resposta há '+Math.round(inf.segundos/60)+' min)'))+'</span></p>'+
+      '<p class="muted" style="margin-bottom:12px">A ponte é um programinha que fica ligado no computador da loja e manda as fichas para as impressoras de rede. Instale com o passo a passo da pasta ponte-impressao e use o botão abaixo para copiar os dados de ligação.</p>'+
+      '<div class="acts"><button type="button" class="btn" data-act="pcopy">Copiar dados de ligação</button><button type="button" class="btn" data-act="ptestc">Testar comanda (rede)</button><button type="button" class="btn" data-act="ptestk">Testar cozinha (rede)</button></div>';
+  },function(){var b=$('#ponte-box');if(b)b.innerHTML='<p class="muted">Não foi possível consultar a ponte agora.</p>'});
 }
 function clampP(v){return Math.min(Math.max(v,0),30)}
 function mqInner(){
@@ -1587,7 +1605,7 @@ function vStaff(){
   '<div class="acts" style="margin-bottom:12px"><button type="button" class="btn primary" data-act="staffadd">Adicionar atendente</button></div>'+
   '<label class="toggle"><input type="checkbox" id="staff-pay"'+(c.staffPay?' checked':'')+'>Atendente também pode fechar a conta (receber)</label>'+
   '<p class="muted" style="margin-top:12px;font-size:13px">Ao adicionar, o sistema já cria o login (e-mail e senha) do atendente. Passe o e-mail e a senha para ele entrar nesta mesma página. Isto esconde as telas; não é uma trava de segurança do banco de dados.</p></div>'}
-function vAjustes(){return vAjustes0()+vStaff()+vMaq()+vAjExtra()}
+function vAjustes(){var h=vAjustes0()+vStaff()+vMaq()+vAjExtra();setTimeout(ponteLoad,0);return h}
 document.addEventListener('click',function(e){
   var t=e.target;if(!t.closest)return;
   if(t.closest('#st-logo-pick')){var f=$('#st-logo-file');if(f)f.click()}
@@ -1993,6 +2011,22 @@ var plain=function(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').r
 function wrapTxt(s,w){var out=[],cur='';String(s).split(' ').forEach(function(wd){while(wd.length>w){if(cur){out.push(cur);cur=''}out.push(wd.slice(0,w));wd=wd.slice(w)}if((cur?cur.length+1:0)+wd.length<=w){cur=cur?cur+' '+wd:wd}else{out.push(cur);cur=wd}});if(cur)out.push(cur);return out}
 function lr(l,r){var sp=W-l.length-r.length;return l+(sp>0?new Array(sp+1).join(' '):' ')+r}
 function ctr(s){var sp=Math.max(0,Math.floor((W-s.length)/2));return new Array(sp+1).join(' ')+s}
+/* ---------- roteamento de impressão: este aparelho ou impressora de rede (ponte) ---------- */
+function cfgPaper(kind){var c=S.cfg||{};return Number(kind==='cozinha'?c.paperK:c.paper)===80?80:58}
+function destRede(kind){var c=S.cfg||{};return (kind==='cozinha'?c.printCozinha:c.printComanda)==='rede'}
+function toB64(u){var b='',i;for(i=0;i<u.length;i+=8192)b+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(b)}
+async function printJob(kind,text,opt){
+  if(destRede(kind)){
+    var h=window.__bpHttp;if(!h){var e0=new Error('sem_banco');throw e0}
+    var inf=await h('POST','/rest/v1/rpc/ponte_info',{});
+    if(!inf||inf.segundos==null||inf.segundos>30){var er=new Error('ponte_off');er.name='PonteOff';throw er}
+    var u=await window.BTP._build(text,opt);
+    await h('POST','/rest/v1/fila_impressao',{destino:kind,dados:toB64(u)},{Prefer:'return=minimal'});
+    return;
+  }
+  return window.BTP.mode&&window.BTP.mode()==='rawbt'?window.BTP.printRaw(text,opt):window.BTP.print(text,opt);
+}
+var MSG_PONTE='A ponte de impressão da loja está desligada. Ligue o programa no computador da loja (veja em Ajustes).';
 /* ---------- impressão da cozinha ---------- */
 var DRINK_G=/bebida|suco|refri/i;
 function isKit(it){var m=S.menu[it.k];return !!(m&&m.kitchen)}
@@ -2000,7 +2034,7 @@ function hasKit(o){return (o.items||[]).some(isKit)}
 function kPending(o){return (o.items||[]).reduce(function(t,it){return t+(isKit(it)?Math.max(0,it.qty-(it.kSent||0)):0)},0)}
 function kitchenLines(o,all){return (o.items||[]).filter(function(it){return isKit(it)&&(all?it.qty>0:it.qty-(it.kSent||0)>0)})}
 function kitchenText(o,all){
-  var cfg=S.cfg||{},w=Number(cfg.paper)===80?48:32,hw=Math.floor(w/2)-1,dash=new Array(w+1).join('-'),eq=new Array(w+1).join('=');
+  var cfg=S.cfg||{},w=cfgPaper('cozinha')===80?48:32,hw=Math.floor(w/2)-1,dash=new Array(w+1).join('-'),eq=new Array(w+1).join('=');
   var L=[],B=function(s){wrapTxt(plain(s),hw).forEach(function(x){L.push('\x02'+x)})};
   var it=kitchenLines(o,all);
   L.push(eq);B('COZINHA');if(all)L.push('(REIMPRESSAO - TUDO)');L.push(eq);
@@ -2024,14 +2058,14 @@ function kPrint(id){
   var all=!kPending(o);
   if(all&&!kitchenLines(o,true).length){toast('Nenhum item da cozinha nesta comanda.','err');return}
   var text=kitchenText(o,all);
-  var send=(window.BTP.mode&&window.BTP.mode()==='rawbt')?window.BTP.printRaw(text,null):window.BTP.print(text,null);
+  var send=printJob('cozinha',text,null);
   toast(all?'Reimprimindo tudo para a cozinha...':'Enviando para a cozinha...');
   Promise.resolve(send).then(function(){
     toast('Enviado para a cozinha');
     if(all)return;
     return enqueue(function(){var cur=S.open[id];if(!cur)return;var items=(cur.items||[]).map(function(x){return isKit(x)?Object.assign({},x,{kSent:x.qty}):x});
       return db.doc('orders/'+id).update({items:items}).then(function(){S.open[id]=Object.assign({},cur,{items:items});render()})});
-  },function(e){var m=(e&&e.message)||'';if(e&&e.name==='NotFoundError'&&/cancel/i.test(m)){$('#toast').hidden=true;return}toast('Não foi possível imprimir na cozinha.','err')});
+  },function(e){var m=(e&&e.message)||'';if(e&&e.name==='NotFoundError'&&/cancel/i.test(m)){$('#toast').hidden=true;return}if(e&&e.name==='PonteOff'){toast(MSG_PONTE,'err');return}toast('Não foi possível imprimir na cozinha.','err')});
 }
 function thermalText(o,cfg){
   cfg=cfg||S.cfg||{};
@@ -2336,6 +2370,12 @@ document.addEventListener('click',function(e){
     case 'pmraw':window.BTP.setMode('rawbt');draw();break;
     case 'pmdir':window.BTP.setMode('direct');draw();break;
     case 'pmusb':window.BTP.setMode('usb');draw();break;
+    case 'pcopy':{var pt=S.ponte||{};var cf2='URL='+pt.url+'\nKEY='+pt.key+'\nTOKEN='+pt.token+'\nCOMANDA_IP=\nCOZINHA_IP=\n';
+      (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(cf2):Promise.reject()).then(function(){toast('Copiado. Cole no arquivo ponte.conf e preencha os IPs.')},function(){toast('Não consegui copiar neste aparelho.','err')});break}
+    case 'ptestc':{if(!destRede('comanda')){toast('Em Ajustes, escolha "Impressora de rede" para a comanda e salve antes de testar.','err');break}btPrint(null,true);break}
+    case 'ptestk':{if(!destRede('cozinha')){toast('Em Ajustes, escolha "Impressora de rede" para a cozinha e salve antes de testar.','err');break}
+      var tw=cfgPaper('cozinha')===80?48:32,tl=new Array(tw+1).join('-');
+      printJob('cozinha','\x02TESTE COZINHA\n'+tl+'\nSe voce leu isto,\na impressora da cozinha\nesta funcionando.\n'+tl+'\n\n',null).then(function(){toast('Teste enviado para a cozinha')},function(e){toast(e&&e.name==='PonteOff'?MSG_PONTE:'Não foi possível enviar o teste.','err')});break}
     case 'goal':openGoal();break;
     case 'staffadd':{var em=($('#staff-email')||{}).value||'';em=em.trim().toLowerCase();var pw=($('#staff-pw')||{}).value||'';var se=$('#staff-e'),sl=(S.cfg&&S.cfg.staff||[]).slice();
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){se.textContent='Digite um e-mail válido.';break}
@@ -2431,7 +2471,7 @@ var AP_KEY='bitpub.autoprint';
 function autoPrintOn(){try{return localStorage.getItem(AP_KEY)==='1'}catch(e){return false}}
 function setAutoPrint(v){try{localStorage.setItem(AP_KEY,v?'1':'0')}catch(e){}}
 function btMode(){return (window.BTP&&window.BTP.mode)?window.BTP.mode():'direct'}
-function autoCan(){return !!(window.BTP&&window.BTP.supported&&btMode()!=='rawbt')}
+function autoCan(){return !!(window.BTP&&((window.BTP.supported&&btMode()!=='rawbt')||destRede('cozinha')))}
 function tocarSom(get){
   try{
     var c=get(); if(c.state==='suspended')c.resume();
@@ -2512,7 +2552,7 @@ async function claimAndImport(p){
   await importOnline(p);
 }
 function onlineText(o){
-  var cfg=S.cfg||{},w=Number(cfg.paper)===80?48:32;W=w;
+  var cfg=S.cfg||{},w=cfgPaper('cozinha')===80?48:32;W=w;
   var hw=Math.floor(w/2)-1,dash=new Array(w+1).join('-'),eq=new Array(w+1).join('='),L=[];
   var B=function(s){wrapTxt(plain(s),hw).forEach(function(x){L.push('\x02'+x)})};
   var N=function(s){wrapTxt(plain(s),w).forEach(function(x){L.push('\x04'+x)})};
@@ -2546,20 +2586,20 @@ async function printOnline(id,manual){
   ON.printing[id]=1;
   try{
     var text=onlineText(o);
-    if(btMode()==='rawbt')await window.BTP.printRaw(text,null);else await window.BTP.print(text,null);
+    await printJob('cozinha',text,null);
     await enqueue(function(){var cur=S.open[id];if(!cur)return;
       var items=(cur.items||[]).map(function(x){return isKit(x)?Object.assign({},x,{kSent:x.qty}):x});
       return db.doc('orders/'+id).update({onlinePrinted:true,items:items}).then(function(){S.open[id]=Object.assign({},cur,{onlinePrinted:true,items:items});render()})});
     return true;
   }catch(e){
     ON.failed[id]=Date.now();
-    if(manual){var m=(e&&e.message)||'';if(!(e&&e.name==='NotFoundError'&&/cancel/i.test(m)))toast('Não foi possível imprimir. Confira a impressora e tente de novo.','err')}
+    if(manual){var m=(e&&e.message)||'';if(e&&e.name==='PonteOff')toast(MSG_PONTE,'err');else if(!(e&&e.name==='NotFoundError'&&/cancel/i.test(m)))toast('Não foi possível imprimir. Confira a impressora e tente de novo.','err')}
     return false;
   }finally{delete ON.printing[id]}
 }
 async function printPendingOnline(manual){
   var ids=pendingPrint();
-  if(manual&&btMode()==='rawbt')ids=ids.slice(0,1);
+  if(manual&&btMode()==='rawbt'&&!destRede('cozinha'))ids=ids.slice(0,1);
   for(var i=0;i<ids.length;i++){if(!(await printOnline(ids[i],manual)))break}
 }
 async function onlineTick(){
