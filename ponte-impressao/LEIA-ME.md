@@ -6,7 +6,15 @@ Este programinha fica ligado no **computador da loja** e leva cada ficha até a 
 - **Comanda e conta**: impressora de 80 mm (rede/LAN)
 - **Ficha da cozinha e pedidos do site**: impressora de 58 mm (se for de rede, preencha também `COZINHA_IP`; se for Bluetooth/USB, deixe em branco e escolha "Este aparelho" nos Ajustes)
 
-## Instalar (uma vez)
+## Jeito mais fácil no Linux (um comando)
+
+No sistema, em **Ajustes > Ponte de impressão**, toque em **Copiar dados de ligação**. Depois abra o Terminal e rode:
+
+    curl -fsSL https://bitpub.app.br/ponte-impressao/instalar.sh | bash
+
+O programa pede para colar os dados (botão direito > Colar) e o IP da impressora, e deixa a ponte ligando sozinha com o computador. Se preferir fazer à mão, siga os passos abaixo.
+
+## Instalar à mão (uma vez)
 
 1. Ligue a impressora de 80 mm com cabo de rede no roteador e imprima o **teste de autoimpressão** (segurar o botão FEED ao ligar). Anote o **IP** que sai no papel. Dica: peça ao técnico do roteador (ou pelo painel do roteador) para deixar esse IP **fixo** para a impressora.
 2. Confira que o computador tem Python 3: abra o Terminal e digite `python3 --version`. No Mac, se não tiver, o próprio Mac oferece instalar.
