@@ -1,6 +1,13 @@
 {
-  "atualizado": "2026-11-25T18:52:34+00:00",
+  "atualizado": "2026-11-26T03:15:37+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "Deputado pede convocação da Receita, MPF e Justiça para debater regulação de criptomoedas e stablecoins do BC",
+      "link": "https://livecoins.com.br/deputado-pede-convocacao-da-receita-mpf-e-justica-para-debater-regulacao-de-criptomoedas-e-stablecoins-do-bc/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Vinicius-Carvalho.jpg",
+      "data": "2026-11-25T22:13:00+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Bitcoin pode cair até US$ 37 mil se repetir padrão de mercados de baixa anteriores, alerta Glassnode",
@@ -35,13 +42,6 @@
       "link": "https://livecoins.com.br/camara-dos-deputados-lanca-livro-gratuito-que-explica-blockchain-criptoativos-e-inteligencia-artificial/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Iluminacao-em-laranja-do-predio-do-Congresso-Nacional.jpg",
       "data": "2026-11-24T22:12:39+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "ETFs de Bitcoin acumulam US$ 4,7 bilhões em saídas em novembro e caminham para o pior mês da história",
-      "link": "https://livecoins.com.br/etfs-de-bitcoin-acumulam-us-47-bilhoes-em-saidas-em-novembro-e-caminham-para-o-pior-mes-da-historia/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/bitcoin-saidas-etfs.jpg",
-      "data": "2026-11-24T17:23:57+00:00"
     }
   ]
 }
