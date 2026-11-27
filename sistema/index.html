@@ -585,7 +585,10 @@ th{font:600 12px/1 var(--f-body);letter-spacing:0;text-transform:none;color:var(
       }).catch(function () { return []; });
     }
     return p.then(function (img) {
-      return new Uint8Array(head.concat(img, textBytes(text), [0x0A, 0x0A]));
+      var tail = [0x0A, 0x0A];
+      if (opt && opt.cut === 'parcial') tail = [0x0A, 0x0A, 0x1D, 0x56, 0x42, 0x03];
+      else if (opt && opt.cut === 'total') tail = [0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03];
+      return new Uint8Array(head.concat(img, textBytes(text), tail));
     });
   }
   /* ---------- USB (PC com Chrome/Chromium): envia os bytes ESC/POS direto pela porta USB ---------- */
@@ -1520,6 +1523,8 @@ function vAjustes0(){
   '<label>Papel da ficha da cozinha<select id="st-paperk">'+opt('58','58 mm (32 colunas)',Number(c.paperK)!==80)+opt('80','80 mm (48 colunas)',Number(c.paperK)===80)+'</select></label></div>'+
   '<div class="row2"><label>Comanda e conta imprimem em<select id="st-pc">'+opt('local','Este aparelho (Bluetooth/USB/RawBT)',c.printComanda!=='rede')+opt('rede','Impressora de rede (pela ponte)',c.printComanda==='rede')+'</select></label>'+
   '<label>Cozinha e pedidos do site imprimem em<select id="st-pk">'+opt('local','Este aparelho (Bluetooth/USB/RawBT)',c.printCozinha!=='rede')+opt('rede','Impressora de rede (pela ponte)',c.printCozinha==='rede')+'</select></label></div>'+
+  '<div class="row2"><label>Cortar papel: comanda e conta<select id="st-cc">'+opt('parcial','Sim, corte parcial',(c.corteComanda||'parcial')==='parcial')+opt('total','Sim, corte total',c.corteComanda==='total')+opt('nao','Não cortar',c.corteComanda==='nao')+'</select></label>'+
+  '<label>Cortar papel: cozinha<select id="st-ck">'+opt('nao','Não cortar',(c.corteCozinha||'nao')==='nao')+opt('parcial','Sim, corte parcial',c.corteCozinha==='parcial')+opt('total','Sim, corte total',c.corteCozinha==='total')+'</select></label></div>'+
   '<div class="row2"><label>Taxa de serviço (%)<input id="st-svc" inputmode="decimal" value="'+inpN(svcPct())+'"></label></div>'+
   '<label>Tamanho da letra na comanda<select id="st-fs">'+opt('g','Grande (itens em letra alta) - mais legível',c.fs!=='n'&&c.fs!=='c')+opt('n','Média (negrito, total grande)',c.fs==='n')+opt('c','Compacta (menor, gasta menos papel)',c.fs==='c')+'</select></label>'+
   '<label class="toggle"><input type="checkbox" id="st-fisc"'+(c.fiscal?' checked':'')+'>Imprimir aviso "Não é documento fiscal"</label>'+
@@ -1529,13 +1534,14 @@ function vAjustes0(){
 function readSet(){
   var v=function(id){return ($('#'+id)||{}).value||''};
   var svc=parseN(v('st-svc'));
-  return {name:v('st-name').trim(),tagline:v('st-tag').trim(),address:v('st-addr').trim(),phone:v('st-phone').trim(),cnpj:v('st-cnpj').trim(),pix:v('st-pix').trim(),msg:v('st-msg').trim(),bdayMsg:v('st-bm').trim(),paper:Number(v('st-paper'))||58,paperK:Number(v('st-paperk'))||58,printComanda:v('st-pc')==='rede'?'rede':'local',printCozinha:v('st-pk')==='rede'?'rede':'local',fs:v('st-fs')||'g',svcPct:Math.min(Math.max(svc,0),30),fiscal:!!($('#st-fisc')||{}).checked,hTitle:v('st-ht').trim(),hDesc:v('st-hd').trim(),hLogo:curHLogo(),logo:curLogo(),logoSize:Number(v('st-logo-size'))||(S.cfg&&S.cfg.logoSize)||60,cats:(S.cfg&&S.cfg.cats)||undefined};
+  return {name:v('st-name').trim(),tagline:v('st-tag').trim(),address:v('st-addr').trim(),phone:v('st-phone').trim(),cnpj:v('st-cnpj').trim(),pix:v('st-pix').trim(),msg:v('st-msg').trim(),bdayMsg:v('st-bm').trim(),paper:Number(v('st-paper'))||58,paperK:Number(v('st-paperk'))||58,corteComanda:v('st-cc')||'parcial',corteCozinha:v('st-ck')||'nao',printComanda:v('st-pc')==='rede'?'rede':'local',printCozinha:v('st-pk')==='rede'?'rede':'local',fs:v('st-fs')||'g',svcPct:Math.min(Math.max(svc,0),30),fiscal:!!($('#st-fisc')||{}).checked,hTitle:v('st-ht').trim(),hDesc:v('st-hd').trim(),hLogo:curHLogo(),logo:curLogo(),logoSize:Number(v('st-logo-size'))||(S.cfg&&S.cfg.logoSize)||60,cats:(S.cfg&&S.cfg.cats)||undefined};
 }
 function btPrint(id,test){
   var o=test?SAMPLE:S.open[id];if(!o||!window.BTP)return;
   var c=S.cfg||{};
   var text=thermalText(o,c);
   var opt=c.logo?{logo:c.logo,paper:Number(c.paper)===80?576:384,size:c.logoSize||60}:null;
+  if(!destRede('comanda')){var ctb=corteDe('comanda');if(ctb)opt=Object.assign({},opt||{},{cut:ctb})}
   if(destRede('comanda')){toast('Enviando para a impressora da rede...');printJob('comanda',text,opt).then(function(){toast('Enviado para a impressora')},function(e){toast(e&&e.name==='PonteOff'?MSG_PONTE:'Não foi possível enviar para a impressora da rede.','err')});return}
   if(window.BTP.mode&&window.BTP.mode()==='rawbt'){toast('Abrindo o RawBT...');window.BTP.printRaw(text,opt).catch(function(){toast('Não foi possível enviar ao RawBT. Confira se o app está instalado.','err')});return}
   toast('Conectando à impressora...');
@@ -2013,9 +2019,11 @@ function lr(l,r){var sp=W-l.length-r.length;return l+(sp>0?new Array(sp+1).join(
 function ctr(s){var sp=Math.max(0,Math.floor((W-s.length)/2));return new Array(sp+1).join(' ')+s}
 /* ---------- roteamento de impressão: este aparelho ou impressora de rede (ponte) ---------- */
 function cfgPaper(kind){var c=S.cfg||{};return Number(kind==='cozinha'?c.paperK:c.paper)===80?80:58}
+function corteDe(kind){var c=S.cfg||{},v=kind==='cozinha'?c.corteCozinha:c.corteComanda;if(!v)v=kind==='cozinha'?'nao':'parcial';return v==='nao'?null:v}
 function destRede(kind){var c=S.cfg||{};return (kind==='cozinha'?c.printCozinha:c.printComanda)==='rede'}
 function toB64(u){var b='',i;for(i=0;i<u.length;i+=8192)b+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(b)}
 async function printJob(kind,text,opt){
+  var ct=corteDe(kind);if(ct)opt=Object.assign({},opt||{},{cut:ct});
   if(destRede(kind)){
     var h=window.__bpHttp;if(!h){var e0=new Error('sem_banco');throw e0}
     var inf=await h('POST','/rest/v1/rpc/ponte_info',{});
