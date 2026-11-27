@@ -52,9 +52,19 @@ def chamar(conf, rpc, corpo):
         return json.loads(txt) if txt else None
 
 
+def endereco(ip_porta):
+    """Aceita 192.168.0.50 ou 192.168.0.50:9100 e confere se está certo."""
+    host, _, porta = ip_porta.strip().partition(":")
+    partes = host.split(".")
+    ok = len(partes) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in partes)
+    if not ok or (porta and not porta.isdigit()):
+        raise ValueError("endereço inválido '%s'. Use algo como 192.168.0.50 (confira no ponte.conf)" % ip_porta)
+    return host, int(porta or 9100)
+
+
 def enviar(ip_porta, dados):
-    host, _, porta = ip_porta.partition(":")
-    with socket.create_connection((host, int(porta or 9100)), timeout=6) as s:
+    host, porta = endereco(ip_porta)
+    with socket.create_connection((host, porta), timeout=6) as s:
         s.sendall(dados)
         time.sleep(0.3)  # deixa o último pedaço sair antes de fechar
 
