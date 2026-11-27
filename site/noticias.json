@@ -1,6 +1,20 @@
 {
-  "atualizado": "2026-11-26T18:41:34+00:00",
+  "atualizado": "2026-11-27T03:19:54+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "Reviravolta na Brasil Bitcoin leva Justiça a impedir exclusão de sócio horas após nota do CEO",
+      "link": "https://livecoins.com.br/reviravolta-na-brasil-bitcoin-leva-justica-a-impedir-exclusao-de-socio-horas-apos-nota-do-ceo/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/estande-da-Brasil-Bitcoin-em-evento.jpg",
+      "data": "2026-11-26T22:47:11+00:00"
+    },
+    {
+      "fonte": "Livecoins",
+      "titulo": "Alerta do Reino Unido leva PF a investigar furto de R$ 350 mil em criptomoedas no Mato Grosso",
+      "link": "https://livecoins.com.br/alerta-do-reino-unido-leva-pf-a-investigar-furto-de-r-350-mil-em-criptomoedas-no-mato-grosso/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/PF-26-11.jpg",
+      "data": "2026-11-26T21:27:05+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Bitcoin pode cair para US$ 37.200, diz 21shares",
@@ -28,20 +42,6 @@
       "link": "https://livecoins.com.br/galaxy-reconhece-que-estava-errada-sobre-o-fim-do-mercado-de-baixa-e-alerta-que-bitcoin-pode-cair-para-us-28-200/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/galaxy.jpg",
       "data": "2026-11-26T14:38:31+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Deputado pede convocação da Receita, MPF e Justiça para debater regulação de criptomoedas e stablecoins do BC",
-      "link": "https://livecoins.com.br/deputado-pede-convocacao-da-receita-mpf-e-justica-para-debater-regulacao-de-criptomoedas-e-stablecoins-do-bc/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Vinicius-Carvalho.jpg",
-      "data": "2026-11-25T22:13:00+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "Bitcoin pode cair até US$ 37 mil se repetir padrão de mercados de baixa anteriores, alerta Glassnode",
-      "link": "https://livecoins.com.br/bitcoin-pode-cair-ate-us-37-mil-se-repetir-padrao-de-mercados-de-baixa-anteriores-alerta-glassnode/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/bitcoin-queda.jpg",
-      "data": "2026-11-25T18:26:36+00:00"
     }
   ]
 }
