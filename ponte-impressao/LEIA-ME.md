@@ -14,6 +14,12 @@ No sistema, em **Ajustes > Ponte de impressão**, toque em **Copiar dados de lig
 
 O programa pede para colar os dados (botão direito > Colar) e o IP da impressora, e deixa a ponte ligando sozinha com o computador. Se preferir fazer à mão, siga os passos abaixo.
 
+## Trocar ou arrumar o IP da impressora (um comando)
+
+    curl -fsSL https://bitpub.app.br/ponte-impressao/configurar-ip.sh | bash
+
+Ele procura as impressoras na rede, você escolhe pelo número, e ele arruma o `ponte.conf` e reinicia a ponte.
+
 ## Instalar à mão (uma vez)
 
 1. Ligue a impressora de 80 mm com cabo de rede no roteador e imprima o **teste de autoimpressão** (segurar o botão FEED ao ligar). Anote o **IP** que sai no papel. Dica: peça ao técnico do roteador (ou pelo painel do roteador) para deixar esse IP **fixo** para a impressora.
