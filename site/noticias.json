@@ -1,6 +1,13 @@
 {
-  "atualizado": "2026-11-27T18:32:08+00:00",
+  "atualizado": "2026-11-28T02:59:35+00:00",
   "noticias": [
+    {
+      "fonte": "Livecoins",
+      "titulo": "STF mantém investigação sobre fazenda de mineração de criptomoedas com furto de energia em São Paulo",
+      "link": "https://livecoins.com.br/stf-mantem-investigacao-sobre-fazenda-de-mineracao-de-criptomoedas-com-furto-de-energia-em-sao-paulo/",
+      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Foto-de-plenaria-do-STF-em-26-11.jpg",
+      "data": "2026-11-27T21:12:56+00:00"
+    },
     {
       "fonte": "Livecoins",
       "titulo": "Baleias estão aproveitando a queda para acumular mais Bitcoin, diz CryptoQuant",
@@ -35,13 +42,6 @@
       "link": "https://livecoins.com.br/preco-do-bitcoin-chega-a-black-friday-com-desconto-de-32-no-ano-mas-acumula-alta-de-20-milhoes-por-cento-desde-2010/",
       "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Bitcoin-em-carrinho-de-compras-com-notas-de-Dolar.jpg",
       "data": "2026-11-27T12:13:58+00:00"
-    },
-    {
-      "fonte": "Livecoins",
-      "titulo": "TSE alerta para entrada de dinheiro estrangeiro com criptomoedas e anúncios ilegais nas eleições",
-      "link": "https://livecoins.com.br/tse-alerta-para-entrada-de-dinheiro-estrangeiro-com-criptomoedas-e-anuncios-ilegais-nas-eleicoes/",
-      "imagem": "https://livecoins.com.br/wp-content/uploads/2026/11/Chefe-da-Asepa-do-TSE-Ademar-Costa-Shiraishi-realiza-palestra-no-Panama-sobre-desafios-da-fiscalizacao-financeira.jpg",
-      "data": "2026-11-27T11:22:59+00:00"
     }
   ]
 }
